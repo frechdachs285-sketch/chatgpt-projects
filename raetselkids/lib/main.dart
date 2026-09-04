@@ -7,8 +7,8 @@ import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  final introSeen = prefs.getBool('intro_seen') ?? false;
+  final prefs = SharedPreferencesAsync();
+  final introSeen = await prefs.getBool('intro_seen') ?? false;
   runApp(RaetselKidsApp(introSeen: introSeen));
 }
 
