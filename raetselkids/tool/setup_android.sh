@@ -12,6 +12,11 @@ cd "$ROOT"
 echo "1/5 Android-Projektstruktur erzeugen ..."
 flutter create . --platforms=android --org de.raetselkids --project-name raetselkids
 
+# flutter create erzeugt einen Standard-Widget-Test, der MyApp erwartet.
+# RätselKids verwendet einen eigenen App-Einstiegspunkt, daher darf dieser
+# generierte Beispieltest den Build nicht blockieren.
+rm -f test/widget_test.dart
+
 echo "2/5 Pakete laden ..."
 flutter pub get
 
