@@ -76,6 +76,85 @@ class CubicBezierCurve {
   }
 }
 
+class SideSeamCurveBuilder {
+  const SideSeamCurveBuilder();
+
+  CubicBezierCurve build({
+    required PatternPoint start,
+    required PatternPoint end,
+    double maxDeviation = 0.5,
+  }) {
+    if (maxDeviation <= 0) {
+      throw ArgumentError('Die Ausformung muss groesser als 0 sein.');
+    }
+
+    final dx = end.x - start.x;
+    final dy = end.y - start.y;
+
+    if (dy <= 0) {
+      throw ArgumentError('Der Hueftpunkt muss unterhalb des Taillenpunkts liegen.');
+    }
+    if (dx.abs() < 0.000001) {
+      throw ArgumentError('Die Seitenkurve benoetigt eine horizontale Ausladung.');
+    }
+
+    final outwardSign = dx.sign;
+    final baseControl1X = start.x + dx / 3;
+    final control1Y = start.y + dy / 3;
+    final control2 = PatternPoint(end.x, start.y + 2 * dy / 3);
+
+    CubicBezierCurve curveFor(double outwardOffset) {
+      return CubicBezierCurve(
+        start: start,
+        control1: PatternPoint(
+          baseControl1X + outwardSign * outwardOffset,
+          control1Y,
+        ),
+        control2: control2,
+        end: end,
+      );
+    }
+
+    final baseline = curveFor(0).maxDeviationFromChord();
+
+    double low;
+    double high;
+
+    if (baseline < maxDeviation) {
+      low = 0;
+      high = 0.25;
+      while (curveFor(high).maxDeviationFromChord() < maxDeviation) {
+        high *= 2;
+        if (high > 20) {
+          throw StateError('Seitenkurve konnte nicht auf die Zielausformung eingestellt werden.');
+        }
+      }
+    } else {
+      high = 0;
+      low = -0.25;
+      while (curveFor(low).maxDeviationFromChord() > maxDeviation) {
+        low *= 2;
+        if (low < -20) {
+          throw StateError('Seitenkurve konnte nicht auf die Zielausformung eingestellt werden.');
+        }
+      }
+    }
+
+    for (var i = 0; i < 60; i++) {
+      final mid = (low + high) / 2;
+      final deviation = curveFor(mid).maxDeviationFromChord();
+
+      if (deviation < maxDeviation) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+
+    return curveFor((low + high) / 2);
+  }
+}
+
 class SideSeamCurveValidationResult {
   final List<String> errors;
 
