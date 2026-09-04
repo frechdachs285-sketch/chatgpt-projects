@@ -147,7 +147,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
               child: Text(widget.categoryEmoji, style: const TextStyle(fontSize: 54)),
             ),
             const SizedBox(height: 14),
-            Text('Abzeichen freigeschaltet!', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF7A5B00))),
+            const Text('Abzeichen freigeschaltet!', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF7A5B00))),
             const SizedBox(height: 4),
             Text(badgeName, textAlign: TextAlign.center, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900)),
             const SizedBox(height: 8),
@@ -221,6 +221,12 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
               } else if (answered && answerIsCorrect) {
                 background = const Color(0xFFDDF5E6);
               }
+              Widget marker = const SizedBox(width: 34);
+              if (answered && answerIsCorrect) {
+                marker = const Icon(Icons.check_circle_rounded, color: Color(0xFF258A4B), size: 30);
+              } else if (answered && chosen) {
+                marker = const Icon(Icons.cancel_rounded, color: Color(0xFFD64A4A), size: 30);
+              }
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: SizedBox(
@@ -242,7 +248,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(child: Text(answer, textAlign: TextAlign.center, style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w900))),
-                      const SizedBox(width: 50),
+                      const SizedBox(width: 8),
+                      marker,
                     ]),
                   ),
                 ),
