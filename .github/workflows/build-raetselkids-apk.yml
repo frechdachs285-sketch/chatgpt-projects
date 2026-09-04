@@ -24,18 +24,28 @@ jobs:
         with:
           channel: stable
           cache: true
-      - name: Restore stable debug keystore
-        working-directory: raetselkids
-        run: |
-          mkdir -p ~/.android
-          echo "${{ secrets.RAETSELKIDS_KEYSTORE_BASE64 }}" | base64 --decode > ~/.android/debug.keystore
+
       - name: Set up Android project
         working-directory: raetselkids
         run: bash tool/setup_android.sh
 
+      - name: Restore verified stable debug keystore
+        working-directory: raetselkids
+        run: |
+          mkdir -p ~/.android
+          echo "${{ secrets.RAETSELKIDS_KEYSTORE_BASE64 }}" | base64 --decode > ~/.android/debug.keystore
+          keytool -list -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey >/dev/null
+
       - name: Build debug APK
         working-directory: raetselkids
         run: bash tool/build_debug_apk.sh
+
+      - name: Verify APK signature
+        working-directory: raetselkids
+        run: |
+          APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-debug.apk
+          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-debug.apk | grep -qi '4d6e090d0483423098e1e10b279811505a82110e05a16d718df03dc4910a3f7e'
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
