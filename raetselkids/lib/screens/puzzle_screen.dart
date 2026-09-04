@@ -26,6 +26,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   int currentIndex = 0;
   int stars = 0;
   bool answered = false;
+  bool _advancing = false;
   String? selectedAnswer;
   late List<String> _currentAnswers;
 
@@ -99,15 +100,20 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   }
 
   Future<void> nextPuzzle() async {
+    if (_advancing) return;
+    setState(() => _advancing = true);
+
     if (currentIndex >= widget.puzzles.length - 1) {
       await _finishRound();
       return;
     }
+
     setState(() {
       currentIndex++;
       answered = false;
       selectedAnswer = null;
       _prepareAnswers();
+      _advancing = false;
     });
     await _speakQuestion();
   }
@@ -264,7 +270,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
               SizedBox(
                 width: double.infinity, height: 56,
                 child: FilledButton(
-                  onPressed: nextPuzzle,
+                  onPressed: _advancing ? null : nextPuzzle,
                   style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
                   child: Text(currentIndex == widget.puzzles.length - 1 ? 'Fertig 🎉' : 'Weiter ➜', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
                 ),
