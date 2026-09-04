@@ -89,6 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final allowed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         title: const Text('Nur für Erwachsene 🔒'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -102,7 +103,9 @@ class _HomeScreenState extends State<HomeScreen> {
               controller: controller,
               keyboardType: TextInputType.number,
               autofocus: true,
+              textInputAction: TextInputAction.done,
               decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Ergebnis'),
+              onSubmitted: (_) => Navigator.pop(context, controller.text.trim() == '56'),
             ),
           ],
         ),
@@ -136,6 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
         letterPuzzles.length;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Stack(
           children: [
