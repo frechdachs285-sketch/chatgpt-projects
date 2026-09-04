@@ -1,6 +1,9 @@
 import 'dart:math' as math;
+
 import 'pattern_geometry.dart';
 import 'pattern_models.dart';
+import 'segmented_waist_curve.dart';
+import 'waist_curve_unfolder.dart';
 
 class MeasurementsValidator {
   List<String> validate(Measurements m) {
@@ -25,42 +28,97 @@ class SkirtPatternCalculator {
 
     final p = _calculatePoints(m, c);
     final backDart1 = _createDart(
-      center: p['P11']!, apex: p['P13']!, waistStart: p['P1']!, waistEnd: p['P10']!,
-      width: c.backDart1Width, length: c.backDart1Length,
+      center: p['P11']!,
+      apex: p['P13']!,
+      waistStart: p['P1']!,
+      waistEnd: p['P10']!,
+      width: c.backDart1Width,
+      length: c.backDart1Length,
     );
     final backDart2 = _createDart(
-      center: p['P12']!, apex: p['P14']!, waistStart: p['P1']!, waistEnd: p['P10']!,
-      width: c.backDart2Width, length: c.backDart2Length,
+      center: p['P12']!,
+      apex: p['P14']!,
+      waistStart: p['P1']!,
+      waistEnd: p['P10']!,
+      width: c.backDart2Width,
+      length: c.backDart2Length,
     );
     final frontDart = _createDart(
-      center: p['P17']!, apex: p['P18']!, waistStart: p['P2']!, waistEnd: p['P16']!,
-      width: c.frontDartWidth, length: c.frontDartLength,
+      center: p['P17']!,
+      apex: p['P18']!,
+      waistStart: p['P2']!,
+      waistEnd: p['P16']!,
+      width: c.frontDartWidth,
+      length: c.frontDartLength,
+    );
+
+    final targetPieceWaist = (m.waist + c.waistEase) / 4;
+    const waistSolver = SegmentedWaistCurveSolver();
+    const waistUnfolder = WaistCurveUnfolder();
+
+    final closedBackWaist = waistSolver.solve(
+      centerPoint: p['P1']!,
+      sidePoint: p['P10']!,
+      hipPoint: p['P7']!,
+      dartsFromCenterToSide: [backDart1, backDart2],
+      targetLength: targetPieceWaist,
+    );
+    final closedFrontWaist = waistSolver.solve(
+      centerPoint: p['P2']!,
+      sidePoint: p['P16']!,
+      hipPoint: p['P7']!,
+      dartsFromCenterToSide: [frontDart],
+      targetLength: targetPieceWaist,
+    );
+
+    final backWaistCurves = waistUnfolder.unfold(
+      closedCurve: closedBackWaist,
+      dartsFromCenterToSide: [backDart1, backDart2],
+    );
+    final frontWaistCurves = waistUnfolder.unfold(
+      closedCurve: closedFrontWaist,
+      dartsFromCenterToSide: [frontDart],
     );
 
     final curveBuilder = const SideSeamCurveBuilder();
-    final backSideCurve = curveBuilder.build(start: p['P10']!, end: p['P7']!);
-    final frontSideCurve = curveBuilder.build(start: p['P16']!, end: p['P7']!);
+    final backSideCurve = curveBuilder.build(
+      start: closedBackWaist.correctedSidePoint,
+      end: p['P7']!,
+    );
+    final frontSideCurve = curveBuilder.build(
+      start: closedFrontWaist.correctedSidePoint,
+      end: p['P7']!,
+    );
 
     final back = PatternPiece(
       id: 'skirt_back',
       name: 'Rock Rueckenteil',
-      points: {for (final key in ['P1','P3','P5','P7','P8','P9','P10','P11','P12','P13','P14']) key: p[key]!},
+      points: {
+        for (final key in [
+          'P1',
+          'P3',
+          'P5',
+          'P7',
+          'P8',
+          'P9',
+          'P10',
+          'P11',
+          'P12',
+          'P13',
+          'P14',
+        ])
+          key: p[key]!,
+      },
       darts: [backDart1, backDart2],
       outline: PatternPath([
-        CurveSegment(start: p['P1']!, end: backDart1.leg1, role: 'waist'),
+        _bezierSegment(backWaistCurves[0], 'waist'),
         LineSegment(backDart1.leg1, backDart1.apex),
         LineSegment(backDart1.apex, backDart1.leg2),
-        CurveSegment(start: backDart1.leg2, end: backDart2.leg1, role: 'waist'),
+        _bezierSegment(backWaistCurves[1], 'waist'),
         LineSegment(backDart2.leg1, backDart2.apex),
         LineSegment(backDart2.apex, backDart2.leg2),
-        CurveSegment(start: backDart2.leg2, end: p['P10']!, role: 'waist'),
-        BezierSegment(
-          start: backSideCurve.start,
-          control1: backSideCurve.control1,
-          control2: backSideCurve.control2,
-          end: backSideCurve.end,
-          role: 'sideSeam',
-        ),
+        _bezierSegment(backWaistCurves[2], 'waist'),
+        _bezierSegment(backSideCurve, 'sideSeam'),
         LineSegment(p['P7']!, p['P8']!),
         LineSegment(p['P8']!, p['P3']!),
         LineSegment(p['P3']!, p['P1']!),
@@ -70,20 +128,27 @@ class SkirtPatternCalculator {
     final front = PatternPiece(
       id: 'skirt_front',
       name: 'Rock Vorderteil',
-      points: {for (final key in ['P2','P4','P6','P7','P8','P15','P16','P17','P18']) key: p[key]!},
+      points: {
+        for (final key in [
+          'P2',
+          'P4',
+          'P6',
+          'P7',
+          'P8',
+          'P15',
+          'P16',
+          'P17',
+          'P18',
+        ])
+          key: p[key]!,
+      },
       darts: [frontDart],
       outline: PatternPath([
-        CurveSegment(start: p['P2']!, end: frontDart.leg1, role: 'waist'),
+        _bezierSegment(frontWaistCurves[0], 'waist'),
         LineSegment(frontDart.leg1, frontDart.apex),
         LineSegment(frontDart.apex, frontDart.leg2),
-        CurveSegment(start: frontDart.leg2, end: p['P16']!, role: 'waist'),
-        BezierSegment(
-          start: frontSideCurve.start,
-          control1: frontSideCurve.control1,
-          control2: frontSideCurve.control2,
-          end: frontSideCurve.end,
-          role: 'sideSeam',
-        ),
+        _bezierSegment(frontWaistCurves[1], 'waist'),
+        _bezierSegment(frontSideCurve, 'sideSeam'),
         LineSegment(p['P7']!, p['P8']!),
         LineSegment(p['P8']!, p['P4']!),
         LineSegment(p['P4']!, p['P2']!),
@@ -93,7 +158,20 @@ class SkirtPatternCalculator {
     return PatternResult(front: front, back: back);
   }
 
-  Map<String, PatternPoint> _calculatePoints(Measurements m, ConstructionValues c) {
+  BezierSegment _bezierSegment(CubicBezierCurve curve, String role) {
+    return BezierSegment(
+      start: curve.start,
+      control1: curve.control1,
+      control2: curve.control2,
+      end: curve.end,
+      role: role,
+    );
+  }
+
+  Map<String, PatternPoint> _calculatePoints(
+    Measurements m,
+    ConstructionValues c,
+  ) {
     final width = m.hip / 2 + c.hipEase / 2;
     final sideX = m.hip / 4 + c.hipEase / 2;
     final backWaistX = m.waist / 4 + 4.25;
@@ -127,9 +205,18 @@ class SkirtPatternCalculator {
     return p;
   }
 
-  PatternPoint _dartApex(PatternPoint center, PatternPoint waistVector, double length) {
-    final vectorLength = math.sqrt(waistVector.x * waistVector.x + waistVector.y * waistVector.y);
-    var normal = PatternPoint(-waistVector.y / vectorLength, waistVector.x / vectorLength);
+  PatternPoint _dartApex(
+    PatternPoint center,
+    PatternPoint waistVector,
+    double length,
+  ) {
+    final vectorLength = math.sqrt(
+      waistVector.x * waistVector.x + waistVector.y * waistVector.y,
+    );
+    var normal = PatternPoint(
+      -waistVector.y / vectorLength,
+      waistVector.x / vectorLength,
+    );
     if (normal.y < 0) normal = normal * -1;
     return center + normal * length;
   }
