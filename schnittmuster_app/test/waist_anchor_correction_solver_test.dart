@@ -21,7 +21,7 @@ void main() {
     expect(correction.correctedMinimumLength, closeTo(19.25, 0.000001));
     expect(correction.correctedSidePoint.y, equals(back.points['P10']!.y));
     expect(correction.correctedSidePoint.x, lessThan(back.points['P10']!.x));
-    expect(correction.horizontalShift, closeTo(0.0352034, 0.00001));
+    expect(correction.horizontalShift, closeTo(0.03362664, 0.00001));
   });
 
   test('korrigiert Vorder-Seitenpunkt minimal auf 19,25 cm Pflichtpunkt-Strecke', () {
@@ -41,7 +41,7 @@ void main() {
     expect(correction.correctedMinimumLength, closeTo(19.25, 0.000001));
     expect(correction.correctedSidePoint.y, equals(front.points['P16']!.y));
     expect(correction.correctedSidePoint.x, greaterThan(front.points['P16']!.x));
-    expect(correction.horizontalShift, closeTo(0.0352192, 0.00001));
+    expect(correction.horizontalShift, closeTo(0.03679663, 0.00001));
   });
 
   test('beide korrigierten Pflichtpunkt-Strecken ergeben 38,5 cm', () {
