@@ -14,16 +14,16 @@ const numberPuzzles = <Puzzle>[
 ];
 
 const animalPuzzles = <Puzzle>[
-  Puzzle(question: 'Welches Tier sagt Miau?', emojiLine: '🐶   🐱   🐮', answers: ['🐶', '🐱', '🐮'], correctAnswer: '🐱'),
-  Puzzle(question: 'Welches Tier lebt im Wasser?', emojiLine: '🐟   🐔   🐴', answers: ['🐟', '🐔', '🐴'], correctAnswer: '🐟'),
-  Puzzle(question: 'Welches Tier hat einen langen Rüssel?', emojiLine: '🐘   🐰   🦊', answers: ['🐘', '🐰', '🦊'], correctAnswer: '🐘'),
-  Puzzle(question: 'Welches Tier kann fliegen?', emojiLine: '🐢   🐦   🐷', answers: ['🐢', '🐦', '🐷'], correctAnswer: '🐦'),
-  Puzzle(question: 'Welches Tier gibt Milch?', emojiLine: '🐮   🐧   🐸', answers: ['🐮', '🐧', '🐸'], correctAnswer: '🐮'),
-  Puzzle(question: 'Welches Tier legt Eier?', emojiLine: '🐔   🐶   🐴', answers: ['🐔', '🐶', '🐴'], correctAnswer: '🐔', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welches Tier trägt sein Haus auf dem Rücken?', emojiLine: '🐌   🐭   🐑', answers: ['🐌', '🐭', '🐑'], correctAnswer: '🐌', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welches Tier ist das größte?', emojiLine: '🐭   🐘   🐱', answers: ['🐭', '🐘', '🐱'], correctAnswer: '🐘', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welches Tier hüpft und hat lange Ohren?', emojiLine: '🐰   🐷   🐟', answers: ['🐰', '🐷', '🐟'], correctAnswer: '🐰', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welches Tier lebt oft auf einem Bauernhof?', emojiLine: '🐄   🐬   🐧', answers: ['🐄', '🐬', '🐧'], correctAnswer: '🐄', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welches Tier sagt Miau?', emojiLine: '🐶   🐱   🐮', answers: ['Hund', 'Katze', 'Kuh'], correctAnswer: 'Katze'),
+  Puzzle(question: 'Welches Tier lebt im Wasser?', emojiLine: '🐟   🐔   🐴', answers: ['Fisch', 'Huhn', 'Pferd'], correctAnswer: 'Fisch'),
+  Puzzle(question: 'Welches Tier hat einen langen Rüssel?', emojiLine: '🐘   🐰   🦊', answers: ['Elefant', 'Hase', 'Fuchs'], correctAnswer: 'Elefant'),
+  Puzzle(question: 'Welches Tier kann fliegen?', emojiLine: '🐢   🐦   🐷', answers: ['Schildkröte', 'Vogel', 'Schwein'], correctAnswer: 'Vogel'),
+  Puzzle(question: 'Von welchem Tier bekommen Menschen oft Milch?', emojiLine: '🐮   🐧   🐸', answers: ['Kuh', 'Pinguin', 'Frosch'], correctAnswer: 'Kuh'),
+  Puzzle(question: 'Welches Tier legt Eier?', emojiLine: '🐔   🐶   🐴', answers: ['Huhn', 'Hund', 'Pferd'], correctAnswer: 'Huhn', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welches Tier trägt sein Haus auf dem Rücken?', emojiLine: '🐌   🐭   🐑', answers: ['Schnecke', 'Maus', 'Schaf'], correctAnswer: 'Schnecke', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welches Tier ist das größte?', emojiLine: '🐭   🐘   🐱', answers: ['Maus', 'Elefant', 'Katze'], correctAnswer: 'Elefant', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welches Tier hüpft und hat lange Ohren?', emojiLine: '🐰   🐷   🐟', answers: ['Hase', 'Schwein', 'Fisch'], correctAnswer: 'Hase', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welches Tier lebt oft auf einem Bauernhof?', emojiLine: '🐄   🐬   🐧', answers: ['Kuh', 'Delfin', 'Pinguin'], correctAnswer: 'Kuh', difficulty: PuzzleDifficulty.tricky),
 ];
 
 const colorPuzzles = <Puzzle>[
