@@ -9,8 +9,8 @@ class SpeechService {
   Future<void> _ensureReady() async {
     if (_ready) return;
     await _tts.setLanguage('de-DE');
-    await _tts.setSpeechRate(0.43);
-    await _tts.setPitch(1.08);
+    await _tts.setSpeechRate(0.54);
+    await _tts.setPitch(1.11);
     await _tts.setVolume(1.0);
     _ready = true;
   }
