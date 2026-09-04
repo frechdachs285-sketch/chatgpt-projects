@@ -39,7 +39,7 @@ class SkirtPatternCalculator {
     final back = PatternPiece(
       id: 'skirt_back',
       name: 'Rock Rueckenteil',
-      points: {for (final key in ['P1','P3','P5','P7','P8','P10','P11','P12','P13','P14']) key: p[key]!},
+      points: {for (final key in ['P1','P3','P5','P7','P8','P9','P10','P11','P12','P13','P14']) key: p[key]!},
       darts: [backDart1, backDart2],
       outline: PatternPath([
         CurveSegment(start: p['P1']!, end: backDart1.leg1, role: 'waist'),
@@ -59,7 +59,7 @@ class SkirtPatternCalculator {
     final front = PatternPiece(
       id: 'skirt_front',
       name: 'Rock Vorderteil',
-      points: {for (final key in ['P2','P4','P6','P7','P8','P16','P17','P18']) key: p[key]!},
+      points: {for (final key in ['P2','P4','P6','P7','P8','P15','P16','P17','P18']) key: p[key]!},
       darts: [frontDart],
       outline: PatternPath([
         CurveSegment(start: p['P2']!, end: frontDart.leg1, role: 'waist'),
