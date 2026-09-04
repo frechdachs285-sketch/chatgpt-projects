@@ -5,6 +5,7 @@ import '../widgets/big_menu_button.dart';
 import '../widgets/raetseli_mascot.dart';
 import 'achievements_screen.dart';
 import 'category_screen.dart';
+import 'daily_puzzle_screen.dart';
 import 'parents_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -35,11 +36,13 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadStars();
   }
 
+  Future<void> _openDailyPuzzle() async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const DailyPuzzleScreen()));
+    await _loadStars();
+  }
+
   Future<void> _showAchievements() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const AchievementsScreen()),
-    );
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementsScreen()));
     await _loadStars();
   }
 
@@ -89,13 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final totalPossible = numberPuzzles.length +
-        animalPuzzles.length +
-        colorPuzzles.length +
-        missingPuzzles.length +
-        shapePuzzles.length +
-        oppositePuzzles.length +
-        letterPuzzles.length;
+    final totalPossible = numberPuzzles.length + animalPuzzles.length + colorPuzzles.length + missingPuzzles.length + shapePuzzles.length + oppositePuzzles.length + letterPuzzles.length;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -106,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Positioned(top: 165, right: -60, child: Container(width: 170, height: 170, decoration: const BoxDecoration(color: Color(0x32D8D4FF), shape: BoxShape.circle))),
             Positioned(bottom: 120, left: -55, child: Container(width: 150, height: 150, decoration: const BoxDecoration(color: Color(0x2FAEE5CB), shape: BoxShape.circle))),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
               child: Column(
                 children: [
                   Row(
@@ -119,68 +116,31 @@ class _HomeScreenState extends State<HomeScreen> {
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFD966),
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: const [BoxShadow(color: Color(0x26000000), blurRadius: 9, offset: Offset(0, 4))],
-                        ),
+                        decoration: BoxDecoration(color: const Color(0xFFFFD966), borderRadius: BorderRadius.circular(24), boxShadow: const [BoxShadow(color: Color(0x26000000), blurRadius: 9, offset: Offset(0, 4))]),
                         child: Text('⭐ $_totalStars', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 18),
-                  const RaetseliMascot(
-                    message: 'Hallo! Ich bin Rätseli. Bereit für ein neues Abenteuer?',
-                    mascotSize: 104,
-                    mascotEmojiSize: 62,
-                    messageFontSize: 18,
-                  ),
-                  const SizedBox(height: 18),
-                  const Text('RätselKids', textAlign: TextAlign.center, style: TextStyle(fontSize: 46, fontWeight: FontWeight.w900, color: Color(0xFF302E48), height: 1.0)),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
+                  const RaetseliMascot(message: 'Hallo! Ich bin Rätseli. Bereit für ein neues Abenteuer?', mascotSize: 92, mascotEmojiSize: 55, messageFontSize: 17),
+                  const SizedBox(height: 10),
+                  const Text('RätselKids', textAlign: TextAlign.center, style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, color: Color(0xFF302E48), height: 1.0)),
+                  const SizedBox(height: 7),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                     decoration: BoxDecoration(color: const Color(0xFFFFF0B8), borderRadius: BorderRadius.circular(22)),
-                    child: Text('$totalPossible Rätsel · 7 Welten · jede Menge Spaß', textAlign: TextAlign.center, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF4B463B))),
+                    child: Text('$totalPossible Rätsel · 7 Welten · jede Menge Spaß', textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF4B463B))),
                   ),
                   const Spacer(),
-                  BigMenuButton(
-                    emoji: '🚀',
-                    label: 'Losspielen!',
-                    backgroundColor: const Color(0xFF91DEBC),
-                    height: 96,
-                    fontSize: 28,
-                    emojiSize: 40,
-                    onPressed: _openCategories,
-                  ),
-                  const SizedBox(height: 14),
+                  BigMenuButton(emoji: '🚀', label: 'Losspielen!', backgroundColor: const Color(0xFF91DEBC), height: 82, fontSize: 25, emojiSize: 36, onPressed: _openCategories),
+                  const SizedBox(height: 10),
+                  BigMenuButton(emoji: '🎁', label: 'Tagesrätsel', backgroundColor: const Color(0xFFFFC9DD), height: 72, fontSize: 21, emojiSize: 31, onPressed: _openDailyPuzzle),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
-                      Expanded(
-                        child: BigMenuButton(
-                          emoji: '🏆',
-                          label: 'Erfolge',
-                          backgroundColor: const Color(0xFFFFE39A),
-                          height: 82,
-                          fontSize: 18,
-                          emojiSize: 27,
-                          compact: true,
-                          onPressed: _showAchievements,
-                        ),
-                      ),
+                      Expanded(child: BigMenuButton(emoji: '🏆', label: 'Erfolge', backgroundColor: const Color(0xFFFFE39A), height: 70, fontSize: 17, emojiSize: 25, compact: true, onPressed: _showAchievements)),
                       const SizedBox(width: 12),
-                      Expanded(
-                        child: BigMenuButton(
-                          emoji: '⚙️',
-                          label: 'Eltern',
-                          backgroundColor: const Color(0xFFD8D4FF),
-                          height: 82,
-                          fontSize: 18,
-                          emojiSize: 27,
-                          compact: true,
-                          onPressed: _openParentsArea,
-                        ),
-                      ),
+                      Expanded(child: BigMenuButton(emoji: '⚙️', label: 'Eltern', backgroundColor: const Color(0xFFD8D4FF), height: 70, fontSize: 17, emojiSize: 25, compact: true, onPressed: _openParentsArea)),
                     ],
                   ),
                   const Spacer(),
