@@ -8,149 +8,20 @@ import 'category_screen.dart';
 import 'daily_puzzle_screen.dart';
 import 'parents_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  final ProgressService _progressService = ProgressService();
-  int _totalStars = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadStars();
-  }
-
-  Future<void> _loadStars() async {
-    final stars = await _progressService.getTotalStars();
-    if (!mounted) return;
-    setState(() => _totalStars = stars);
-  }
-
-  Future<void> _openCategories() async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoryScreen()));
-    await _loadStars();
-  }
-
-  Future<void> _openDailyPuzzle() async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const DailyPuzzleScreen()));
-    await _loadStars();
-  }
-
-  Future<void> _showAchievements() async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementsScreen()));
-    await _loadStars();
-  }
-
-  Future<void> _openParentsArea() async {
-    final controller = TextEditingController();
-    final allowed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        scrollable: true,
-        title: const Text('Nur für Erwachsene 🔒'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Bitte löse kurz diese Aufgabe:'),
-            const SizedBox(height: 10),
-            const Text('7 × 8 = ?', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 10),
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              autofocus: true,
-              textInputAction: TextInputAction.done,
-              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Ergebnis'),
-              onSubmitted: (_) => Navigator.pop(context, controller.text.trim() == '56'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Zurück')),
-          FilledButton(onPressed: () => Navigator.pop(context, controller.text.trim() == '56'), child: const Text('Öffnen')),
-        ],
-      ),
-    );
-    controller.dispose();
-
-    if (allowed != true || !mounted) {
-      if (allowed == false && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Das Ergebnis war noch nicht richtig.')));
-      }
-      return;
-    }
-
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const ParentsScreen()));
-    await _loadStars();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final totalPossible = numberPuzzles.length + animalPuzzles.length + colorPuzzles.length + missingPuzzles.length + shapePuzzles.length + oppositePuzzles.length + letterPuzzles.length;
-
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(top: -55, left: -45, child: Container(width: 180, height: 180, decoration: const BoxDecoration(color: Color(0x35FFE39A), shape: BoxShape.circle))),
-            Positioned(top: 165, right: -60, child: Container(width: 170, height: 170, decoration: const BoxDecoration(color: Color(0x32D8D4FF), shape: BoxShape.circle))),
-            Positioned(bottom: 120, left: -55, child: Container(width: 150, height: 150, decoration: const BoxDecoration(color: Color(0x2FAEE5CB), shape: BoxShape.circle))),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
-                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.86), borderRadius: BorderRadius.circular(18)),
-                        child: const Text('🧩 RätselKids', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF3D3A58))),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-                        decoration: BoxDecoration(color: const Color(0xFFFFD966), borderRadius: BorderRadius.circular(24), boxShadow: const [BoxShadow(color: Color(0x26000000), blurRadius: 9, offset: Offset(0, 4))]),
-                        child: Text('⭐ $_totalStars', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const RaetseliMascot(message: 'Hallo! Ich bin Rätseli. Bereit für ein neues Abenteuer?', mascotSize: 92, mascotEmojiSize: 55, messageFontSize: 17),
-                  const SizedBox(height: 10),
-                  const Text('RätselKids', textAlign: TextAlign.center, style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, color: Color(0xFF302E48), height: 1.0)),
-                  const SizedBox(height: 7),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                    decoration: BoxDecoration(color: const Color(0xFFFFF0B8), borderRadius: BorderRadius.circular(22)),
-                    child: Text('$totalPossible Rätsel · 7 Welten · jede Menge Spaß', textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF4B463B))),
-                  ),
-                  const Spacer(),
-                  BigMenuButton(emoji: '🚀', label: 'Losspielen!', backgroundColor: const Color(0xFF91DEBC), height: 82, fontSize: 25, emojiSize: 36, onPressed: _openCategories),
-                  const SizedBox(height: 10),
-                  BigMenuButton(emoji: '🎁', label: 'Tagesrätsel', backgroundColor: const Color(0xFFFFC9DD), height: 72, fontSize: 21, emojiSize: 31, onPressed: _openDailyPuzzle),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(child: BigMenuButton(emoji: '🏆', label: 'Erfolge', backgroundColor: const Color(0xFFFFE39A), height: 70, fontSize: 17, emojiSize: 25, compact: true, onPressed: _showAchievements)),
-                      const SizedBox(width: 12),
-                      Expanded(child: BigMenuButton(emoji: '⚙️', label: 'Eltern', backgroundColor: const Color(0xFFD8D4FF), height: 70, fontSize: 17, emojiSize: 25, compact: true, onPressed: _openParentsArea)),
-                    ],
-                  ),
-                  const Spacer(),
-                  const Text('🌟 Für kleine Knobelfans ab 5 Jahren 🌟', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF514F61))),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+class HomeScreen extends StatefulWidget { const HomeScreen({super.key}); @override State<HomeScreen> createState()=>_HomeScreenState(); }
+class _HomeScreenState extends State<HomeScreen>{
+ final ProgressService _progressService=ProgressService();int _totalStars=0;bool _dailyDone=false;
+ @override void initState(){super.initState();_loadProgress();}
+ Future<void> _loadProgress()async{final stars=await _progressService.getTotalStars();final dailyDone=await _progressService.isDailyCompletedToday();if(!mounted)return;setState((){_totalStars=stars;_dailyDone=dailyDone;});}
+ Future<void> _openCategories()async{await Navigator.push(context,MaterialPageRoute(builder:(_)=>const CategoryScreen()));await _loadProgress();}
+ Future<void> _openDailyPuzzle()async{await Navigator.push(context,MaterialPageRoute(builder:(_)=>const DailyPuzzleScreen()));await _loadProgress();}
+ Future<void> _showAchievements()async{await Navigator.push(context,MaterialPageRoute(builder:(_)=>const AchievementsScreen()));await _loadProgress();}
+ Future<void> _openParentsArea()async{final controller=TextEditingController();final allowed=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(scrollable:true,title:const Text('Nur für Erwachsene 🔒'),content:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Bitte löse kurz diese Aufgabe:'),const SizedBox(height:10),const Text('7 × 8 = ?',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900)),const SizedBox(height:10),TextField(controller:controller,keyboardType:TextInputType.number,autofocus:true,textInputAction:TextInputAction.done,decoration:const InputDecoration(border:OutlineInputBorder(),hintText:'Ergebnis'),onSubmitted:(_)=>Navigator.pop(context,controller.text.trim()=='56'))]),actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('Zurück')),FilledButton(onPressed:()=>Navigator.pop(context,controller.text.trim()=='56'),child:const Text('Öffnen'))]));controller.dispose();if(allowed!=true||!mounted){if(allowed==false&&mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Das Ergebnis war noch nicht richtig.')));return;}await Navigator.push(context,MaterialPageRoute(builder:(_)=>const ParentsScreen()));await _loadProgress();}
+ @override Widget build(BuildContext context){final totalPossible=numberPuzzles.length+animalPuzzles.length+colorPuzzles.length+missingPuzzles.length+shapePuzzles.length+oppositePuzzles.length+letterPuzzles.length;return Scaffold(resizeToAvoidBottomInset:false,body:SafeArea(child:Stack(children:[
+ Positioned(top:-55,left:-45,child:Container(width:180,height:180,decoration:const BoxDecoration(color:Color(0x35FFE39A),shape:BoxShape.circle))),Positioned(top:165,right:-60,child:Container(width:170,height:170,decoration:const BoxDecoration(color:Color(0x32D8D4FF),shape:BoxShape.circle))),Positioned(bottom:120,left:-55,child:Container(width:150,height:150,decoration:const BoxDecoration(color:Color(0x2FAEE5CB),shape:BoxShape.circle))),
+ Padding(padding:const EdgeInsets.symmetric(horizontal:22,vertical:12),child:Column(children:[Row(children:[Container(padding:const EdgeInsets.symmetric(horizontal:13,vertical:7),decoration:BoxDecoration(color:Colors.white.withValues(alpha:.86),borderRadius:BorderRadius.circular(18)),child:const Text('🧩 RätselKids',style:TextStyle(fontSize:15,fontWeight:FontWeight.w900,color:Color(0xFF3D3A58)))),const Spacer(),Container(padding:const EdgeInsets.symmetric(horizontal:16,vertical:9),decoration:BoxDecoration(color:const Color(0xFFFFD966),borderRadius:BorderRadius.circular(24),boxShadow:const[BoxShadow(color:Color(0x26000000),blurRadius:9,offset:Offset(0,4))]),child:Text('⭐ $_totalStars',style:const TextStyle(fontSize:20,fontWeight:FontWeight.w900)))]),
+ const SizedBox(height:12),const RaetseliMascot(message:'Hallo! Ich bin Rätseli. Bereit für ein neues Abenteuer?',mascotSize:92,mascotEmojiSize:55,messageFontSize:17),const SizedBox(height:10),const Text('RätselKids',textAlign:TextAlign.center,style:TextStyle(fontSize:42,fontWeight:FontWeight.w900,color:Color(0xFF302E48),height:1)),const SizedBox(height:7),Container(padding:const EdgeInsets.symmetric(horizontal:18,vertical:8),decoration:BoxDecoration(color:const Color(0xFFFFF0B8),borderRadius:BorderRadius.circular(22)),child:Text('$totalPossible Rätsel · 7 Welten · jede Menge Spaß',textAlign:TextAlign.center,style:const TextStyle(fontSize:14,fontWeight:FontWeight.w800,color:Color(0xFF4B463B)))),const Spacer(),
+ BigMenuButton(emoji:'🚀',label:'Losspielen!',backgroundColor:const Color(0xFF91DEBC),height:82,fontSize:25,emojiSize:36,onPressed:_openCategories),const SizedBox(height:10),BigMenuButton(emoji:_dailyDone?'✅':'🎁',label:_dailyDone?'Tagesrätsel geschafft!':'Tagesrätsel · +1 ⭐',backgroundColor:_dailyDone?const Color(0xFFDDF5E6):const Color(0xFFFFC9DD),height:72,fontSize:20,emojiSize:31,onPressed:_openDailyPuzzle),const SizedBox(height:10),
+ Row(children:[Expanded(child:BigMenuButton(emoji:'🏆',label:'Erfolge',backgroundColor:const Color(0xFFFFE39A),height:70,fontSize:17,emojiSize:25,compact:true,onPressed:_showAchievements)),const SizedBox(width:12),Expanded(child:BigMenuButton(emoji:'⚙️',label:'Eltern',backgroundColor:const Color(0xFFD8D4FF),height:70,fontSize:17,emojiSize:25,compact:true,onPressed:_openParentsArea))]),const Spacer(),const Text('🌟 Für kleine Knobelfans ab 5 Jahren 🌟',style:TextStyle(fontSize:14,fontWeight:FontWeight.w700,color:Color(0xFF514F61)))]))
+ ])));}
 }
