@@ -15,23 +15,58 @@ class _DailyPuzzleScreenState extends State<DailyPuzzleScreen> {
   final SpeechService _speech = SpeechService();
   int _nextNumber = 1;
   bool _finished = false;
+  late final _DailyMotif _motif;
 
-  static const _points = <Offset>[
-    Offset(0.50, 0.10),
-    Offset(0.61, 0.36),
-    Offset(0.89, 0.38),
-    Offset(0.68, 0.56),
-    Offset(0.76, 0.86),
-    Offset(0.50, 0.69),
-    Offset(0.24, 0.86),
-    Offset(0.32, 0.56),
-    Offset(0.11, 0.38),
-    Offset(0.39, 0.36),
+  static const _motifs = <_DailyMotif>[
+    _DailyMotif(
+      name: 'Stern',
+      emoji: '⭐',
+      points: [
+        Offset(0.50, 0.10), Offset(0.61, 0.36), Offset(0.89, 0.38), Offset(0.68, 0.56), Offset(0.76, 0.86),
+        Offset(0.50, 0.69), Offset(0.24, 0.86), Offset(0.32, 0.56), Offset(0.11, 0.38), Offset(0.39, 0.36),
+      ],
+    ),
+    _DailyMotif(
+      name: 'Haus',
+      emoji: '🏠',
+      points: [
+        Offset(0.20, 0.48), Offset(0.50, 0.18), Offset(0.80, 0.48), Offset(0.80, 0.82), Offset(0.60, 0.82),
+        Offset(0.60, 0.60), Offset(0.40, 0.60), Offset(0.40, 0.82), Offset(0.20, 0.82), Offset(0.20, 0.48),
+      ],
+    ),
+    _DailyMotif(
+      name: 'Fisch',
+      emoji: '🐟',
+      points: [
+        Offset(0.18, 0.50), Offset(0.34, 0.31), Offset(0.60, 0.24), Offset(0.79, 0.40), Offset(0.92, 0.29),
+        Offset(0.88, 0.50), Offset(0.92, 0.71), Offset(0.79, 0.60), Offset(0.60, 0.76), Offset(0.34, 0.69),
+      ],
+    ),
+    _DailyMotif(
+      name: 'Rakete',
+      emoji: '🚀',
+      points: [
+        Offset(0.50, 0.10), Offset(0.67, 0.29), Offset(0.71, 0.58), Offset(0.84, 0.73), Offset(0.64, 0.69),
+        Offset(0.57, 0.88), Offset(0.50, 0.73), Offset(0.43, 0.88), Offset(0.36, 0.69), Offset(0.16, 0.73),
+        Offset(0.29, 0.58), Offset(0.33, 0.29),
+      ],
+    ),
+    _DailyMotif(
+      name: 'Herz',
+      emoji: '❤️',
+      points: [
+        Offset(0.50, 0.82), Offset(0.28, 0.64), Offset(0.16, 0.43), Offset(0.22, 0.25), Offset(0.39, 0.20),
+        Offset(0.50, 0.35), Offset(0.61, 0.20), Offset(0.78, 0.25), Offset(0.84, 0.43), Offset(0.72, 0.64),
+      ],
+    ),
   ];
 
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    final dayKey = DateTime(now.year, now.month, now.day).millisecondsSinceEpoch ~/ Duration.millisecondsPerDay;
+    _motif = _motifs[dayKey % _motifs.length];
     WidgetsBinding.instance.addPostFrameCallback((_) => _speech.speak('Tagesrätsel! Tippe die Zahlen der Reihe nach an. Beginne mit der Eins.'));
   }
 
@@ -47,12 +82,12 @@ class _DailyPuzzleScreenState extends State<DailyPuzzleScreen> {
       return;
     }
     HapticFeedback.lightImpact();
-    if (number == _points.length) {
+    if (number == _motif.points.length) {
       setState(() {
         _nextNumber++;
         _finished = true;
       });
-      await _speech.speak('Juhuuu! Du hast alle Zahlen verbunden. Es ist ein Stern!');
+      await _speech.speak('Juhuuu! Du hast alle Zahlen verbunden. Es ist ein ${_motif.name}!');
     } else {
       setState(() => _nextNumber++);
     }
@@ -69,7 +104,9 @@ class _DailyPuzzleScreenState extends State<DailyPuzzleScreen> {
           child: Column(
             children: [
               RaetseliMascot(
-                message: _finished ? 'Geschafft! ⭐ Aus den Punkten ist ein Stern geworden!' : 'Verbinde die Zahlen von 1 bis 10. Was entsteht wohl? 🤔',
+                message: _finished
+                    ? 'Geschafft! ${_motif.emoji} Aus den Punkten ist ein ${_motif.name} geworden!'
+                    : 'Verbinde die Zahlen von 1 bis ${_motif.points.length}. Was entsteht wohl? 🤔',
                 mascotSize: 72,
                 mascotEmojiSize: 43,
                 messageFontSize: 15,
@@ -86,10 +123,10 @@ class _DailyPuzzleScreenState extends State<DailyPuzzleScreen> {
                           children: [
                             Positioned.fill(
                               child: CustomPaint(
-                                painter: _ConnectPainter(points: _points, connectedCount: _nextNumber - 1, finished: _finished),
+                                painter: _ConnectPainter(points: _motif.points, connectedCount: _nextNumber - 1, finished: _finished),
                               ),
                             ),
-                            ..._points.asMap().entries.map((entry) {
+                            ..._motif.points.asMap().entries.map((entry) {
                               final index = entry.key;
                               final point = entry.value;
                               final number = index + 1;
@@ -116,7 +153,7 @@ class _DailyPuzzleScreenState extends State<DailyPuzzleScreen> {
                               );
                             }),
                             if (_finished)
-                              const Center(child: Text('⭐', style: TextStyle(fontSize: 105))),
+                              Center(child: Text(_motif.emoji, style: const TextStyle(fontSize: 105))),
                           ],
                         ),
                       ),
@@ -154,6 +191,13 @@ class _DailyPuzzleScreenState extends State<DailyPuzzleScreen> {
   }
 }
 
+class _DailyMotif {
+  final String name;
+  final String emoji;
+  final List<Offset> points;
+  const _DailyMotif({required this.name, required this.emoji, required this.points});
+}
+
 class _ConnectPainter extends CustomPainter {
   final List<Offset> points;
   final int connectedCount;
@@ -182,5 +226,5 @@ class _ConnectPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _ConnectPainter oldDelegate) => oldDelegate.connectedCount != connectedCount || oldDelegate.finished != finished;
+  bool shouldRepaint(covariant _ConnectPainter oldDelegate) => oldDelegate.connectedCount != connectedCount || oldDelegate.finished != finished || oldDelegate.points != points;
 }
