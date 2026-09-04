@@ -15,13 +15,17 @@ class WaistCorrectionDistribution {
 class WaistCorrectionDistributor {
   const WaistCorrectionDistributor();
 
-  WaistCorrectionDistribution distribute(WaistSeamLengthMetrics metrics) {
-    final backNet = metrics.backBaselineLength;
-    final frontNet = metrics.frontBaselineLength;
+  WaistCorrectionDistribution distribute({
+    required WaistSeamLengthMetrics metrics,
+    required double backDartIntake,
+    required double frontDartIntake,
+  }) {
+    final backNet = metrics.backBaselineLength - backDartIntake;
+    final frontNet = metrics.frontBaselineLength - frontDartIntake;
     final totalNet = backNet + frontNet;
 
-    if (totalNet <= 0) {
-      throw ArgumentError('Taillen-Nahtlaengen muessen groesser als 0 sein.');
+    if (backNet <= 0 || frontNet <= 0 || totalNet <= 0) {
+      throw ArgumentError('Netto-Taillenlaengen muessen groesser als 0 sein.');
     }
 
     final correction = metrics.halfCorrectionRequired;
