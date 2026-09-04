@@ -24,7 +24,11 @@ jobs:
         with:
           channel: stable
           cache: true
-
+      - name: Restore stable debug keystore
+        working-directory: raetselkids
+        run: |
+          mkdir -p ~/.android
+          echo "${{ secrets.RAETSELKIDS_KEYSTORE_BASE64 }}" | base64 --decode > ~/.android/debug.keystore
       - name: Set up Android project
         working-directory: raetselkids
         run: bash tool/setup_android.sh
