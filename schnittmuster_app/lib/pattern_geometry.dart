@@ -47,6 +47,23 @@ class CubicBezierCurve {
     );
   }
 
+  double arcLength({int samples = 4000}) {
+    if (samples < 1) {
+      throw ArgumentError('samples muss mindestens 1 sein.');
+    }
+
+    var length = 0.0;
+    var previous = pointAt(0);
+
+    for (var i = 1; i <= samples; i++) {
+      final current = pointAt(i / samples);
+      length += previous.distanceTo(current);
+      previous = current;
+    }
+
+    return length;
+  }
+
   bool hasVerticalEndTangent({double tolerance = 0.000001}) {
     final tangent = derivativeAt(1.0);
     return tangent.x.abs() <= tolerance && tangent.y.abs() > tolerance;
