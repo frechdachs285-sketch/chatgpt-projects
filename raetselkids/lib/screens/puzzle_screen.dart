@@ -29,6 +29,16 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   String? selectedAnswer;
   late List<String> _currentAnswers;
 
+  static const _badgeNames = <String, String>{
+    'numbers': 'Zahlenprofi',
+    'animals': 'Tierdetektiv',
+    'colors': 'Farbenmeister',
+    'missing': 'Musterknacker',
+    'shapes': 'Formenfinder',
+    'opposites': 'Gegensatz-Genie',
+    'letters': 'Buchstabenstar',
+  };
+
   Puzzle get currentPuzzle => widget.puzzles[currentIndex];
 
   @override
@@ -106,22 +116,51 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     await _progressService.saveCompletedCount(widget.categoryId, widget.puzzles.length);
     final normalizedStars = ((stars / widget.puzzles.length) * widget.maxCategoryStars).round();
     final newBest = await _progressService.saveBestStars(widget.categoryId, normalizedStars);
-    await _speechService.speak('Geschafft! Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.');
+    final perfect = stars == widget.puzzles.length;
+    final badgeName = _badgeNames[widget.categoryId] ?? '${widget.title}-Profi';
+
+    if (perfect) {
+      await _speechService.speak('Wow! Alle Rätsel richtig! Du bekommst das Abzeichen $badgeName!');
+    } else {
+      await _speechService.speak('Geschafft! Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.');
+    }
     if (!mounted) return;
+
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Geschafft! 🎉'),
+        title: Text(perfect ? 'Perfekte Runde! 🏆' : 'Geschafft! 🎉'),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('🤩', style: TextStyle(fontSize: 62)),
-          const SizedBox(height: 10),
-          const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
-          Text(newBest ? 'Neue Bestleistung! ⭐ $stars von ${widget.puzzles.length}' : 'Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.', textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+          if (perfect) ...[
+            Container(
+              width: 108,
+              height: 108,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFFFFD76A), Color(0xFFFFF3BD)]),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFE0B42D), width: 4),
+                boxShadow: const [BoxShadow(blurRadius: 16, offset: Offset(0, 6), color: Color(0x33000000))],
+              ),
+              child: Text(widget.categoryEmoji, style: const TextStyle(fontSize: 54)),
+            ),
+            const SizedBox(height: 14),
+            Text('Abzeichen freigeschaltet!', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF7A5B00))),
+            const SizedBox(height: 4),
+            Text(badgeName, textAlign: TextAlign.center, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 8),
+            Text('⭐ $stars von ${widget.puzzles.length} · Alles richtig!', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          ] else ...[
+            const Text('🤩', style: TextStyle(fontSize: 62)),
+            const SizedBox(height: 10),
+            const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            Text(newBest ? 'Neue Bestleistung! ⭐ $stars von ${widget.puzzles.length}' : 'Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.', textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+          ],
         ]),
         actionsAlignment: MainAxisAlignment.center,
-        actions: [FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Juhu!'))],
+        actions: [FilledButton(onPressed: () => Navigator.pop(context), child: Text(perfect ? 'Juhuuu! 🏅' : 'Juhu!'))],
       ),
     );
     if (!mounted) return;
@@ -191,7 +230,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                     child: Row(children: [
                       Container(
                         width: 38, height: 38, alignment: Alignment.center,
-                        decoration: BoxDecoration(color: const Color(0xFFD8D4FF), shape: BoxShape.circle),
+                        decoration: const BoxDecoration(color: Color(0xFFD8D4FF), shape: BoxShape.circle),
                         child: Text('$number', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF4D478C))),
                       ),
                       const SizedBox(width: 12),
