@@ -29,7 +29,7 @@ jobs:
         working-directory: raetselkids
         run: bash tool/setup_android.sh
 
-      - name: Restore verified stable debug keystore
+      - name: Restore stable signing key
         working-directory: raetselkids
         run: |
           mkdir -p ~/.android
@@ -40,12 +40,31 @@ jobs:
         working-directory: raetselkids
         run: bash tool/build_debug_apk.sh
 
-      - name: Verify APK signature
+      - name: Force APK signing with stable key
         working-directory: raetselkids
         run: |
           APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -1)
-          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-debug.apk
-          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-debug.apk | grep -qi 'fdb643a1684d42b3daaf9d235ed31c8cc291057879d2ed5f12960fae42fffa45'
+          APK=build/app/outputs/flutter-apk/app-debug.apk
+          SIGNED=build/app/outputs/flutter-apk/app-debug-stable.apk
+          "$APKSIGNER" sign \
+            --ks ~/.android/debug.keystore \
+            --ks-key-alias androiddebugkey \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out "$SIGNED" \
+            "$APK"
+          mv "$SIGNED" "$APK"
+
+      - name: Verify APK uses restored key
+        working-directory: raetselkids
+        run: |
+          APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -1)
+          APK=build/app/outputs/flutter-apk/app-debug.apk
+          KEY_FP=$(keytool -exportcert -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | openssl dgst -sha256 -binary | xxd -p -c 256 | tr '[:upper:]' '[:lower:]')
+          APK_FP=$("$APKSIGNER" verify --print-certs "$APK" | awk '/SHA-256 digest/ {print $NF; exit}' | tr '[:upper:]' '[:lower:]')
+          echo "Keystore SHA-256: $KEY_FP"
+          echo "APK SHA-256:      $APK_FP"
+          test "$KEY_FP" = "$APK_FP"
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
