@@ -5,6 +5,9 @@ class BigMenuButton extends StatelessWidget {
   final String emoji;
   final VoidCallback onPressed;
   final Color? backgroundColor;
+  final double height;
+  final double fontSize;
+  final double emojiSize;
 
   const BigMenuButton({
     super.key,
@@ -12,6 +15,9 @@ class BigMenuButton extends StatelessWidget {
     required this.emoji,
     required this.onPressed,
     this.backgroundColor,
+    this.height = 82,
+    this.fontSize = 24,
+    this.emojiSize = 34,
   });
 
   @override
@@ -20,7 +26,7 @@ class BigMenuButton extends StatelessWidget {
 
     return SizedBox(
       width: double.infinity,
-      height: 82,
+      height: height,
       child: FilledButton(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
@@ -30,15 +36,15 @@ class BigMenuButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26),
           ),
-          textStyle: const TextStyle(
-            fontSize: 24,
+          textStyle: TextStyle(
+            fontSize: fontSize,
             fontWeight: FontWeight.w900,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 34)),
+            Text(emoji, style: TextStyle(fontSize: emojiSize)),
             const SizedBox(width: 14),
             Flexible(child: Text(label, textAlign: TextAlign.center)),
           ],
