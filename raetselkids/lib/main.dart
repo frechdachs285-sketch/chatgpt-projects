@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'screens/home_screen.dart';
+import 'screens/intro_screen.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const RaetselKidsApp());
+  final prefs = await SharedPreferences.getInstance();
+  final introSeen = prefs.getBool('intro_seen') ?? false;
+  runApp(RaetselKidsApp(introSeen: introSeen));
 }
 
 class RaetselKidsApp extends StatelessWidget {
-  const RaetselKidsApp({super.key});
+  final bool introSeen;
+
+  const RaetselKidsApp({super.key, required this.introSeen});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +23,7 @@ class RaetselKidsApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'RätselKids',
       theme: AppTheme.light,
-      home: const HomeScreen(),
+      home: introSeen ? const HomeScreen() : const IntroScreen(),
     );
   }
 }
