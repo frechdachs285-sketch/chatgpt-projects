@@ -226,7 +226,13 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                   width: double.infinity, height: 60,
                   child: FilledButton.tonal(
                     onPressed: answered ? null : () => checkAnswer(answer),
-                    style: FilledButton.styleFrom(backgroundColor: background, padding: const EdgeInsets.symmetric(horizontal: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: background,
+                      disabledBackgroundColor: background,
+                      disabledForegroundColor: const Color(0xFF2B2B3A),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    ),
                     child: Row(children: [
                       Container(
                         width: 38, height: 38, alignment: Alignment.center,
