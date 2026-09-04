@@ -113,15 +113,19 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   }
 
   Future<void> _finishRound() async {
+    final previousBest = await _progressService.getBestStars(widget.categoryId);
     await _progressService.addStars(stars);
     await _progressService.saveCompletedCount(widget.categoryId, widget.puzzles.length);
     final normalizedStars = ((stars / widget.puzzles.length) * widget.maxCategoryStars).round();
     final newBest = await _progressService.saveBestStars(widget.categoryId, normalizedStars);
     final perfect = stars == widget.puzzles.length;
+    final firstPerfect = perfect && previousBest < widget.maxCategoryStars;
     final badgeName = _badgeNames[widget.categoryId] ?? '${widget.title}-Profi';
 
-    if (perfect) {
+    if (firstPerfect) {
       await _speechService.speak('Wow! Alle Rätsel richtig! Du bekommst das Abzeichen $badgeName!');
+    } else if (perfect) {
+      await _speechService.speak('Wow! Wieder alle Rätsel richtig! Dein Abzeichen $badgeName glänzt weiter!');
     } else {
       await _speechService.speak('Geschafft! Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.');
     }
@@ -131,7 +135,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text(perfect ? 'Perfekte Runde! 🏆' : 'Geschafft! 🎉'),
+        title: Text(firstPerfect ? 'Neues Abzeichen! 🏆' : perfect ? 'Schon wieder perfekt! ✨' : 'Geschafft! 🎉'),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           if (perfect) ...[
             Container(
@@ -147,7 +151,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
               child: Text(widget.categoryEmoji, style: const TextStyle(fontSize: 54)),
             ),
             const SizedBox(height: 14),
-            const Text('Abzeichen freigeschaltet!', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF7A5B00))),
+            Text(firstPerfect ? 'Abzeichen freigeschaltet!' : 'Dein Abzeichen glänzt weiter!', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF7A5B00))),
             const SizedBox(height: 4),
             Text(badgeName, textAlign: TextAlign.center, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900)),
             const SizedBox(height: 8),
@@ -161,7 +165,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
           ],
         ]),
         actionsAlignment: MainAxisAlignment.center,
-        actions: [FilledButton(onPressed: () => Navigator.pop(context), child: Text(perfect ? 'Juhuuu! 🏅' : 'Juhu!'))],
+        actions: [FilledButton(onPressed: () => Navigator.pop(context), child: Text(firstPerfect ? 'Juhuuu! 🏅' : perfect ? 'Nochmal geschafft! ⭐' : 'Juhu!'))],
       ),
     );
     if (!mounted) return;
