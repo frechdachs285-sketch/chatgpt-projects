@@ -93,7 +93,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
       await _speechService.speak('Juhu! Super gemacht! Das ist richtig!');
     } else {
       await _playWrongFeedback();
-      await _speechService.speak('Ups! Fast geschafft. Schau noch einmal genau hin. Die richtige Antwort ist markiert.');
+      final correctIndex = _currentAnswers.indexOf(currentPuzzle.correctAnswer) + 1;
+      await _speechService.speak('Ups! Fast geschafft. Richtig ist Antwort $correctIndex: ${currentPuzzle.correctAnswer}.');
     }
   }
 
