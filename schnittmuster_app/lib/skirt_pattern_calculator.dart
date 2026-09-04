@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'pattern_geometry.dart';
 import 'pattern_models.dart';
 
 class MeasurementsValidator {
@@ -36,6 +37,10 @@ class SkirtPatternCalculator {
       width: c.frontDartWidth, length: c.frontDartLength,
     );
 
+    final curveBuilder = const SideSeamCurveBuilder();
+    final backSideCurve = curveBuilder.build(start: p['P10']!, end: p['P7']!);
+    final frontSideCurve = curveBuilder.build(start: p['P16']!, end: p['P7']!);
+
     final back = PatternPiece(
       id: 'skirt_back',
       name: 'Rock Rueckenteil',
@@ -49,7 +54,13 @@ class SkirtPatternCalculator {
         LineSegment(backDart2.leg1, backDart2.apex),
         LineSegment(backDart2.apex, backDart2.leg2),
         CurveSegment(start: backDart2.leg2, end: p['P10']!, role: 'waist'),
-        CurveSegment(start: p['P10']!, end: p['P7']!, role: 'sideSeam'),
+        BezierSegment(
+          start: backSideCurve.start,
+          control1: backSideCurve.control1,
+          control2: backSideCurve.control2,
+          end: backSideCurve.end,
+          role: 'sideSeam',
+        ),
         LineSegment(p['P7']!, p['P8']!),
         LineSegment(p['P8']!, p['P3']!),
         LineSegment(p['P3']!, p['P1']!),
@@ -66,7 +77,13 @@ class SkirtPatternCalculator {
         LineSegment(frontDart.leg1, frontDart.apex),
         LineSegment(frontDart.apex, frontDart.leg2),
         CurveSegment(start: frontDart.leg2, end: p['P16']!, role: 'waist'),
-        CurveSegment(start: p['P16']!, end: p['P7']!, role: 'sideSeam'),
+        BezierSegment(
+          start: frontSideCurve.start,
+          control1: frontSideCurve.control1,
+          control2: frontSideCurve.control2,
+          end: frontSideCurve.end,
+          role: 'sideSeam',
+        ),
         LineSegment(p['P7']!, p['P8']!),
         LineSegment(p['P8']!, p['P4']!),
         LineSegment(p['P4']!, p['P2']!),
