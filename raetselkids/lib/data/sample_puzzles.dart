@@ -40,15 +40,15 @@ const colorPuzzles = <Puzzle>[
 ];
 
 const missingPuzzles = <Puzzle>[
-  Puzzle(question: 'Was fehlt in der Reihe?', emojiLine: '🍎   🍌   🍎   ❓', answers: ['🍌', '🍓', '🍐'], correctAnswer: '🍌'),
-  Puzzle(question: 'Was fehlt in der Reihe?', emojiLine: '⭐   🌙   ⭐   ❓', answers: ['☀️', '🌙', '☁️'], correctAnswer: '🌙'),
-  Puzzle(question: 'Was fehlt in der Reihe?', emojiLine: '🐶   🐱   🐶   ❓', answers: ['🐱', '🐭', '🐰'], correctAnswer: '🐱'),
-  Puzzle(question: 'Was fehlt in der Reihe?', emojiLine: '🔵   🔺   🔵   ❓', answers: ['🔺', '🟩', '⭐'], correctAnswer: '🔺'),
-  Puzzle(question: 'Was fehlt in der Reihe?', emojiLine: '🚗   🚌   🚗   ❓', answers: ['🚲', '🚌', '🚕'], correctAnswer: '🚌'),
-  Puzzle(question: 'Was fehlt?', emojiLine: '🍓 🍓 🍌   🍓 🍓 ❓', answers: ['🍓', '🍌', '🍎'], correctAnswer: '🍌', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welche Form fehlt?', emojiLine: '🔵 🔵 🔺   🔵 🔵 ❓', answers: ['🔺', '🟦', '⭐'], correctAnswer: '🔺', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Was kommt als Nächstes?', emojiLine: '🌙 ⭐ ⭐ 🌙 ⭐ ⭐ ❓', answers: ['🌙', '⭐', '☀️'], correctAnswer: '🌙', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Was kommt als Nächstes?', emojiLine: '🐶 🐱 🐭 🐶 🐱 ❓', answers: ['🐶', '🐭', '🐰'], correctAnswer: '🐭', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Was fehlt in der Reihe?', emojiLine: '🍎   🍌   🍎   ❓', answers: ['Banane', 'Erdbeere', 'Birne'], correctAnswer: 'Banane'),
+  Puzzle(question: 'Was fehlt in der Reihe?', emojiLine: '⭐   🌙   ⭐   ❓', answers: ['Sonne', 'Mond', 'Wolke'], correctAnswer: 'Mond'),
+  Puzzle(question: 'Was fehlt in der Reihe?', emojiLine: '🐶   🐱   🐶   ❓', answers: ['Katze', 'Maus', 'Hase'], correctAnswer: 'Katze'),
+  Puzzle(question: 'Was fehlt in der Reihe?', emojiLine: '🔵   🔺   🔵   ❓', answers: ['Dreieck', 'Quadrat', 'Stern'], correctAnswer: 'Dreieck'),
+  Puzzle(question: 'Was fehlt in der Reihe?', emojiLine: '🚗   🚌   🚗   ❓', answers: ['Fahrrad', 'Bus', 'Taxi'], correctAnswer: 'Bus'),
+  Puzzle(question: 'Was fehlt?', emojiLine: '🍓 🍓 🍌   🍓 🍓 ❓', answers: ['Erdbeere', 'Banane', 'Apfel'], correctAnswer: 'Banane', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welche Form fehlt?', emojiLine: '🔵 🔵 🔺   🔵 🔵 ❓', answers: ['Dreieck', 'Quadrat', 'Stern'], correctAnswer: 'Dreieck', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Was kommt als Nächstes?', emojiLine: '🌙 ⭐ ⭐ 🌙 ⭐ ⭐ ❓', answers: ['Mond', 'Stern', 'Sonne'], correctAnswer: 'Mond', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Was kommt als Nächstes?', emojiLine: '🐶 🐱 🐭 🐶 🐱 ❓', answers: ['Hund', 'Maus', 'Hase'], correctAnswer: 'Maus', difficulty: PuzzleDifficulty.tricky),
   Puzzle(question: 'Welche Zahl fehlt?', emojiLine: '1  2  1  2  1  ❓', answers: ['1', '2', '3'], correctAnswer: '2', difficulty: PuzzleDifficulty.tricky),
 ];
 
