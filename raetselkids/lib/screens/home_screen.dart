@@ -137,38 +137,76 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(color: const Color(0xFFFFE082), borderRadius: BorderRadius.circular(22)),
-                  child: Text('⭐ $_totalStars', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-                ),
+        child: Stack(
+          children: [
+            const Positioned(top: 95, left: 28, child: Text('⭐', style: TextStyle(fontSize: 22, color: Color(0x33F9A825)))),
+            const Positioned(top: 210, right: 30, child: Text('🧩', style: TextStyle(fontSize: 28, color: Color(0x227E57C2)))),
+            const Positioned(bottom: 210, left: 24, child: Text('✨', style: TextStyle(fontSize: 24, color: Color(0x3359A98C)))),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFE082),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: const [BoxShadow(color: Color(0x22000000), blurRadius: 8, offset: Offset(0, 3))],
+                      ),
+                      child: Text('⭐ $_totalStars', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                    ),
+                  ),
+                  const Spacer(),
+                  const RaetseliMascot(message: 'Hallo! Ich bin Rätseli. Wollen wir zusammen knobeln?'),
+                  const SizedBox(height: 8),
+                  const Text('🧩', style: TextStyle(fontSize: 52)),
+                  const Text(
+                    'RätselKids',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, color: Color(0xFF2B2B3A)),
+                  ),
+                  const SizedBox(height: 2),
+                  Text('$totalPossible Rätsel warten auf dich!', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 3),
+                  const Text('Leicht · Knifflig · Gemischt', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  const Spacer(),
+                  BigMenuButton(
+                    emoji: '▶️',
+                    label: 'Spielen',
+                    backgroundColor: const Color(0xFFAEE5CB),
+                    height: 88,
+                    fontSize: 26,
+                    emojiSize: 36,
+                    onPressed: _openCategories,
+                  ),
+                  const SizedBox(height: 12),
+                  BigMenuButton(
+                    emoji: '🏆',
+                    label: 'Meine Erfolge',
+                    backgroundColor: const Color(0xFFFFE39A),
+                    height: 70,
+                    fontSize: 21,
+                    emojiSize: 29,
+                    onPressed: _showAchievements,
+                  ),
+                  const SizedBox(height: 10),
+                  BigMenuButton(
+                    emoji: '⚙️',
+                    label: 'Elternbereich',
+                    backgroundColor: const Color(0xFFD8D4FF),
+                    height: 70,
+                    fontSize: 21,
+                    emojiSize: 29,
+                    onPressed: _openParentsArea,
+                  ),
+                  const Spacer(),
+                  const Text('Für kleine Knobelfans ab 5 Jahren', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                ],
               ),
-              const Spacer(),
-              const RaetseliMascot(message: 'Hallo! Ich bin Rätseli. Wollen wir zusammen knobeln?'),
-              const SizedBox(height: 14),
-              const Text('🧩', style: TextStyle(fontSize: 62)),
-              const Text('RätselKids', textAlign: TextAlign.center, style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, color: Color(0xFF2B2B3A))),
-              const SizedBox(height: 6),
-              Text('$totalPossible Rätsel warten auf dich!', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              const Text('Leicht · Knifflig · Gemischt', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const Spacer(),
-              BigMenuButton(emoji: '▶️', label: 'Spielen', backgroundColor: const Color(0xFFB8E7D0), onPressed: _openCategories),
-              const SizedBox(height: 12),
-              BigMenuButton(emoji: '🏆', label: 'Meine Erfolge', backgroundColor: const Color(0xFFFFE39A), onPressed: _showAchievements),
-              const SizedBox(height: 12),
-              BigMenuButton(emoji: '⚙️', label: 'Elternbereich', backgroundColor: const Color(0xFFD8D4FF), onPressed: _openParentsArea),
-              const Spacer(),
-              const Text('Für kleine Knobelfans ab 5 Jahren', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
