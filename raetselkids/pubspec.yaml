@@ -1,7 +1,7 @@
 name: raetselkids
 description: Eine kindgerechte Raetsel-App fuer Kinder ab 5 Jahren.
 publish_to: 'none'
-version: 0.6.0+7
+version: 0.6.0+8
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
