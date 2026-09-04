@@ -97,6 +97,24 @@ class CurveSegment extends PathSegment {
   CurveSegment({required this.start, required this.end, required this.role});
 }
 
+class BezierSegment extends PathSegment {
+  @override
+  final PatternPoint start;
+  final PatternPoint control1;
+  final PatternPoint control2;
+  @override
+  final PatternPoint end;
+  final String role;
+
+  BezierSegment({
+    required this.start,
+    required this.control1,
+    required this.control2,
+    required this.end,
+    required this.role,
+  });
+}
+
 class PatternPath {
   final List<PathSegment> segments;
   const PatternPath(this.segments);
