@@ -48,6 +48,22 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     await _speechService.speak('${puzzle.question}. $answers');
   }
 
+  Future<void> _playCorrectFeedback() async {
+    if (!await _settingsService.isSoundEnabled()) return;
+    HapticFeedback.mediumImpact();
+    await SystemSound.play(SystemSoundType.click);
+    await Future<void>.delayed(const Duration(milliseconds: 90));
+    await SystemSound.play(SystemSoundType.click);
+    await Future<void>.delayed(const Duration(milliseconds: 90));
+    await SystemSound.play(SystemSoundType.click);
+  }
+
+  Future<void> _playWrongFeedback() async {
+    if (!await _settingsService.isSoundEnabled()) return;
+    HapticFeedback.selectionClick();
+    await SystemSound.play(SystemSoundType.alert);
+  }
+
   Future<void> checkAnswer(String answer) async {
     if (answered) return;
     final correct = answer == currentPuzzle.correctAnswer;
@@ -57,14 +73,11 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
       if (correct) stars++;
     });
     if (correct) {
-      if (await _settingsService.isSoundEnabled()) {
-        HapticFeedback.mediumImpact();
-        SystemSound.play(SystemSoundType.click);
-      }
-      await _speechService.speak('Super gemacht! Das ist richtig.');
+      await _playCorrectFeedback();
+      await _speechService.speak('Juhu! Super gemacht! Das ist richtig!');
     } else {
-      if (await _settingsService.isSoundEnabled()) HapticFeedback.selectionClick();
-      await _speechService.speak('Fast! Schau noch einmal genau hin. Die richtige Antwort ist markiert.');
+      await _playWrongFeedback();
+      await _speechService.speak('Ups! Fast geschafft. Schau noch einmal genau hin. Die richtige Antwort ist markiert.');
     }
   }
 
