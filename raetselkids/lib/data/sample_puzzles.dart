@@ -7,9 +7,9 @@ const numberPuzzles = <Puzzle>[
   Puzzle(question: 'Wie viele Autos siehst du?', emojiLine: '🚗  🚗  🚗  🚗', answers: ['2', '3', '4'], correctAnswer: '4'),
   Puzzle(question: 'Welche Zahl kommt nach der 4?', emojiLine: '1  2  3  4  ❓', answers: ['3', '5', '6'], correctAnswer: '5'),
   Puzzle(question: 'Wie viele Sterne siehst du?', emojiLine: '⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐', answers: ['6', '7', '8'], correctAnswer: '7', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welche Zahl ist größer?', emojiLine: '6       9', answers: ['6', '9', 'Beide'], correctAnswer: '9', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Zwei Äpfel kommen zu drei Äpfeln. Wie viele sind es?', emojiLine: '🍎🍎  +  🍎🍎🍎', answers: ['4', '5', '6'], correctAnswer: '5', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Ein Ball rollt weg. Wie viele bleiben?', emojiLine: '⚽ ⚽ ⚽  ➜  ⚽ weg', answers: ['1', '2', '3'], correctAnswer: '2', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welche Zahl ist größer: 6 oder 9?', emojiLine: '6       9', answers: ['6', '9', 'Beide'], correctAnswer: '9', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Du hast zwei Äpfel. Drei kommen dazu. Wie viele sind es zusammen?', emojiLine: '🍎🍎  +  🍎🍎🍎  =  ❓', answers: ['4', '5', '6'], correctAnswer: '5', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Drei Bälle sind da. Einer rollt weg. Wie viele bleiben?', emojiLine: '⚽ ⚽ ⚽   −   ⚽   =   ❓', answers: ['1', '2', '3'], correctAnswer: '2', difficulty: PuzzleDifficulty.tricky),
   Puzzle(question: 'Welche Zahl fehlt?', emojiLine: '2  3  4  ❓  6', answers: ['4', '5', '7'], correctAnswer: '5', difficulty: PuzzleDifficulty.tricky),
 ];
 
