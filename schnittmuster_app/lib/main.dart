@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'pattern_models.dart';
 import 'skirt_pattern_calculator.dart';
@@ -45,16 +47,35 @@ class PatternPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InteractiveViewer(
-      minScale: 0.5,
-      maxScale: 5,
-      boundaryMargin: const EdgeInsets.all(100),
-      child: CustomPaint(
-        size: const Size(700, 700),
-        painter: PatternPreviewPainter(front: front, back: back),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth.isFinite ? constraints.maxWidth : 700.0;
+        final height = constraints.maxHeight.isFinite ? constraints.maxHeight : 700.0;
+
+        return InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 5,
+          boundaryMargin: const EdgeInsets.all(100),
+          child: CustomPaint(
+            size: Size(width, height),
+            painter: PatternPreviewPainter(front: front, back: back),
+          ),
+        );
+      },
     );
   }
+}
+
+class _Bounds {
+  final double minX;
+  final double minY;
+  final double maxX;
+  final double maxY;
+
+  const _Bounds(this.minX, this.minY, this.maxX, this.maxY);
+
+  double get width => maxX - minX;
+  double get height => maxY - minY;
 }
 
 class PatternPreviewPainter extends CustomPainter {
@@ -63,13 +84,71 @@ class PatternPreviewPainter extends CustomPainter {
 
   PatternPreviewPainter({required this.front, required this.back});
 
-  static const scale = 8.0;
+  _Bounds _bounds(PatternPiece piece) {
+    final points = <PatternPoint>[
+      ...piece.points.values,
+      for (final dart in piece.darts) ...[
+        dart.leg1,
+        dart.leg2,
+        dart.apex,
+      ],
+    ];
 
-  Offset _p(PatternPoint p, Offset origin) =>
-      Offset(origin.dx + p.x * scale, origin.dy + p.y * scale);
+    var minX = points.first.x;
+    var minY = points.first.y;
+    var maxX = points.first.x;
+    var maxY = points.first.y;
+
+    for (final point in points.skip(1)) {
+      minX = math.min(minX, point.x);
+      minY = math.min(minY, point.y);
+      maxX = math.max(maxX, point.x);
+      maxY = math.max(maxY, point.y);
+    }
+
+    return _Bounds(minX, minY, maxX, maxY);
+  }
+
+  Offset _p(
+    PatternPoint point,
+    _Bounds bounds,
+    Offset origin,
+    double scale,
+  ) {
+    return Offset(
+      origin.dx + (point.x - bounds.minX) * scale,
+      origin.dy + (point.y - bounds.minY) * scale,
+    );
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
+    const padding = 24.0;
+    const gap = 28.0;
+
+    final backBounds = _bounds(back);
+    final frontBounds = _bounds(front);
+
+    final totalPatternWidth = backBounds.width + frontBounds.width;
+    final tallestPattern = math.max(backBounds.height, frontBounds.height);
+
+    final availableWidth = math.max(1.0, size.width - padding * 2 - gap);
+    final availableHeight = math.max(1.0, size.height - padding * 2);
+
+    final scaleX = availableWidth / totalPatternWidth;
+    final scaleY = availableHeight / tallestPattern;
+    final scale = math.min(scaleX, scaleY);
+
+    final usedWidth = totalPatternWidth * scale + gap;
+    final startX = math.max(padding, (size.width - usedWidth) / 2);
+    final startY = padding;
+
+    final backOrigin = Offset(startX, startY);
+    final frontOrigin = Offset(
+      startX + backBounds.width * scale + gap,
+      startY,
+    );
+
     final outlinePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
@@ -78,36 +157,71 @@ class PatternPreviewPainter extends CustomPainter {
       ..strokeWidth = 0.8;
     final markerPaint = Paint()..style = PaintingStyle.fill;
 
-    _drawPiece(canvas, back, const Offset(40, 40), outlinePaint, debugPaint, markerPaint);
-    _drawPiece(canvas, front, const Offset(250, 40), outlinePaint, debugPaint, markerPaint);
+    _drawPiece(
+      canvas,
+      back,
+      backBounds,
+      backOrigin,
+      scale,
+      outlinePaint,
+      debugPaint,
+      markerPaint,
+    );
+
+    _drawPiece(
+      canvas,
+      front,
+      frontBounds,
+      frontOrigin,
+      scale,
+      outlinePaint,
+      debugPaint,
+      markerPaint,
+    );
   }
 
-  void _drawPiece(Canvas canvas, PatternPiece piece, Offset origin, Paint outlinePaint,
-      Paint debugPaint, Paint markerPaint) {
+  void _drawPiece(
+    Canvas canvas,
+    PatternPiece piece,
+    _Bounds bounds,
+    Offset origin,
+    double scale,
+    Paint outlinePaint,
+    Paint debugPaint,
+    Paint markerPaint,
+  ) {
     if (piece.outline.segments.isEmpty) return;
 
-    final path = Path();
-    path.moveTo(_p(piece.outline.segments.first.start, origin).dx,
-        _p(piece.outline.segments.first.start, origin).dy);
+    final first = _p(piece.outline.segments.first.start, bounds, origin, scale);
+    final path = Path()..moveTo(first.dx, first.dy);
 
     for (final segment in piece.outline.segments) {
-      final end = _p(segment.end, origin);
-      // Curves are deliberately straight placeholders in this first debug build.
+      final end = _p(segment.end, bounds, origin, scale);
+      // Curves are deliberately straight placeholders in this debug build.
       path.lineTo(end.dx, end.dy);
     }
     canvas.drawPath(path, outlinePaint);
 
     for (final dart in piece.darts) {
-      canvas.drawLine(_p(dart.center, origin), _p(dart.apex, origin), debugPaint);
+      canvas.drawLine(
+        _p(dart.center, bounds, origin, scale),
+        _p(dart.apex, bounds, origin, scale),
+        debugPaint,
+      );
     }
 
     for (final entry in piece.points.entries) {
-      final pos = _p(entry.value, origin);
+      final pos = _p(entry.value, bounds, origin, scale);
       canvas.drawCircle(pos, 2.5, markerPaint);
+
       final tp = TextPainter(
-        text: TextSpan(text: entry.key, style: const TextStyle(fontSize: 10, color: Colors.black)),
+        text: TextSpan(
+          text: entry.key,
+          style: const TextStyle(fontSize: 10, color: Colors.black),
+        ),
         textDirection: TextDirection.ltr,
       )..layout();
+
       tp.paint(canvas, pos + const Offset(4, -12));
     }
   }
