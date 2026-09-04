@@ -1,0 +1,41 @@
+name: Build RätselKids debug APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "raetselkids/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install stable Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Set up Android project
+        working-directory: raetselkids
+        run: bash tool/setup_android.sh
+
+      - name: Build debug APK
+        working-directory: raetselkids
+        run: bash tool/build_debug_apk.sh
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: raetselkids-debug-apk
+          path: raetselkids/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
