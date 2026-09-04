@@ -3,6 +3,7 @@ import '../data/sample_puzzles.dart';
 import '../services/progress_service.dart';
 import '../widgets/big_menu_button.dart';
 import '../widgets/raetseli_mascot.dart';
+import 'achievements_screen.dart';
 import 'category_screen.dart';
 import 'parents_screen.dart';
 
@@ -35,53 +36,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _showAchievements() async {
-    final values = <String, int>{};
-    for (final id in allCategoryIds) {
-      values[id] = await _progressService.getBestStars(id);
-    }
-    if (!mounted) return;
-
-    final allPerfect = values.values.every((value) => value >= 10);
-    final badges = <String>[
-      if (_totalStars >= 10) '⭐ Sternenstarter',
-      if (_totalStars >= 50) '🌟 Sternensammler',
-      if (_totalStars >= 100) '✨ Rätseli-Freund',
-      if ((values['numbers'] ?? 0) >= 10) '🔢 Zahlenprofi',
-      if ((values['animals'] ?? 0) >= 10) '🐾 Tierdetektiv',
-      if ((values['colors'] ?? 0) >= 10) '🎨 Farbenmeister',
-      if ((values['missing'] ?? 0) >= 10) '🔍 Musterknacker',
-      if ((values['shapes'] ?? 0) >= 10) '🔷 Formenfinder',
-      if ((values['opposites'] ?? 0) >= 10) '↔️ Gegensatz-Genie',
-      if ((values['letters'] ?? 0) >= 10) '🔤 Buchstabenstar',
-      if (allPerfect) '🏆 Rätselkönig',
-    ];
-
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Meine Erfolge 🏆'),
-        content: SizedBox(
-          width: 320,
-          child: badges.isEmpty
-              ? const Text('Noch kein Abzeichen – spiele eine Rätselwelt und sammle Sterne!', style: TextStyle(fontSize: 18))
-              : SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('⭐ $_totalStars Sterne insgesamt', style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
-                      const SizedBox(height: 14),
-                      ...badges.map((badge) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Text(badge, style: const TextStyle(fontSize: 18)),
-                          )),
-                    ],
-                  ),
-                ),
-        ),
-        actions: [FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Prima!'))],
-      ),
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AchievementsScreen()),
     );
+    await _loadStars();
   }
 
   Future<void> _openParentsArea() async {
