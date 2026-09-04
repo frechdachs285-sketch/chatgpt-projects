@@ -190,8 +190,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       emoji: world.emoji,
                       title: world.title,
                       subtitle: unlocked
-                          ? '${world.worldName}: perfekte 10 Sterne – geschafft!'
-                          : '${world.worldName}: $value/10 Sterne · noch ${10 - value} fehlen.',
+                          ? '${world.worldName}: 10 von 10 Sternen – geschafft!'
+                          : '${world.worldName}: $value von 10 Sternen · noch ${10 - value} fehlen.',
                       unlocked: unlocked,
                     );
                   }),
@@ -200,7 +200,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   _badgeCard(
                     emoji: '🏆',
                     title: 'Rätselkönig',
-                    subtitle: allPerfect ? 'Alle 7 Welten perfekt gemeistert!' : '$unlockedWorlds/7 Welten perfekt – sammle alle Abzeichen.',
+                    subtitle: allPerfect ? 'Alle 7 Welten perfekt gemeistert!' : '$unlockedWorlds von 7 Welten perfekt – sammle alle Abzeichen.',
                     unlocked: allPerfect,
                     special: true,
                   ),
