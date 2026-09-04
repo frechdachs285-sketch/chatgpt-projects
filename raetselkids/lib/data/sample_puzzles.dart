@@ -57,7 +57,7 @@ const shapePuzzles = <Puzzle>[
   Puzzle(question: 'Welche Form hat drei Ecken?', emojiLine: '🔺', answers: ['Dreieck', 'Kreis', 'Quadrat'], correctAnswer: 'Dreieck'),
   Puzzle(question: 'Welche Form hat vier gleich lange Seiten?', emojiLine: '🟦', answers: ['Quadrat', 'Kreis', 'Dreieck'], correctAnswer: 'Quadrat'),
   Puzzle(question: 'Welche Form sieht aus wie ein Ei?', emojiLine: '🥚', answers: ['Oval', 'Stern', 'Quadrat'], correctAnswer: 'Oval'),
-  Puzzle(question: 'Welche Form hat ein Fenster meistens?', emojiLine: '🪟', answers: ['Rechteck', 'Kreis', 'Dreieck'], correctAnswer: 'Rechteck'),
+  Puzzle(question: 'Welche Form hat dieses Fenster?', emojiLine: '🪟', answers: ['Rechteck', 'Kreis', 'Dreieck'], correctAnswer: 'Rechteck'),
   Puzzle(question: 'Welche Form hat keine Ecken?', emojiLine: '⭕', answers: ['Kreis', 'Rechteck', 'Dreieck'], correctAnswer: 'Kreis', difficulty: PuzzleDifficulty.tricky),
   Puzzle(question: 'Welche Form hat mehr Ecken?', emojiLine: '🔺   🟦', answers: ['Dreieck', 'Quadrat', 'Gleich viele'], correctAnswer: 'Quadrat', difficulty: PuzzleDifficulty.tricky),
   Puzzle(question: 'Welche Form passt in die Reihe?', emojiLine: '🔵 🔺 🔵 🔺 ❓', answers: ['Kreis', 'Quadrat', 'Stern'], correctAnswer: 'Kreis', difficulty: PuzzleDifficulty.tricky),
