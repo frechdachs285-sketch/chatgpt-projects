@@ -8,8 +8,6 @@ void main() {
     const end = PatternPoint(0, 10);
 
     // Neutrale Testkurve: keine Rockkonstruktion.
-    // Die Kontrollpunkte sind so gewaehlt, dass die Endtangente vertikal ist
-    // und die maximale Abweichung von der Geraden exakt 0,5 betraegt.
     const curve = CubicBezierCurve(
       start: start,
       control1: PatternPoint(1.125, 10 / 3),
@@ -48,5 +46,45 @@ void main() {
 
     expect(result.isValid, isFalse);
     expect(result.errors, contains('Endtangente ist nicht vertikal.'));
+  });
+
+  test('Rock v1 Rueckenteil-Seitenkurve erfuellt die Digitalregel', () {
+    const start = PatternPoint(23.25, -1.25); // P10
+    const end = PatternPoint(26.5, 21); // P7
+
+    final curve = const SideSeamCurveBuilder().build(
+      start: start,
+      end: end,
+      maxDeviation: 0.5,
+    );
+
+    final result = const SideSeamCurveValidator().validate(
+      curve: curve,
+      expectedStart: start,
+      expectedEnd: end,
+      expectedMaxDeviation: 0.5,
+    );
+
+    expect(result.isValid, isTrue, reason: result.errors.join(' | '));
+  });
+
+  test('Rock v1 Vorderteil-Seitenkurve erfuellt die Digitalregel', () {
+    const start = PatternPoint(30.25, -1.25); // P16
+    const end = PatternPoint(26.5, 21); // P7
+
+    final curve = const SideSeamCurveBuilder().build(
+      start: start,
+      end: end,
+      maxDeviation: 0.5,
+    );
+
+    final result = const SideSeamCurveValidator().validate(
+      curve: curve,
+      expectedStart: start,
+      expectedEnd: end,
+      expectedMaxDeviation: 0.5,
+    );
+
+    expect(result.isValid, isTrue, reason: result.errors.join(' | '));
   });
 }
