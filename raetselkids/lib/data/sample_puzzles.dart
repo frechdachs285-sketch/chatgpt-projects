@@ -28,14 +28,14 @@ const animalPuzzles = <Puzzle>[
 
 const colorPuzzles = <Puzzle>[
   Puzzle(question: 'Welche Farbe hat eine Erdbeere meistens?', emojiLine: '🍓', answers: ['Rot', 'Blau', 'Grün'], correctAnswer: 'Rot'),
-  Puzzle(question: 'Welche Farbe hat die Sonne in Kinderbildern oft?', emojiLine: '☀️', answers: ['Gelb', 'Lila', 'Schwarz'], correctAnswer: 'Gelb'),
+  Puzzle(question: 'Welche Farbe hat die Sonne in Kinderbildern meistens?', emojiLine: '☀️', answers: ['Gelb', 'Lila', 'Schwarz'], correctAnswer: 'Gelb'),
   Puzzle(question: 'Welche Farbe hat Gras meistens?', emojiLine: '🌱', answers: ['Grün', 'Rosa', 'Orange'], correctAnswer: 'Grün'),
-  Puzzle(question: 'Welche Farbe hat eine Orange?', emojiLine: '🍊', answers: ['Orange', 'Blau', 'Grau'], correctAnswer: 'Orange'),
+  Puzzle(question: 'Welche Farbe hat eine Orange meistens?', emojiLine: '🍊', answers: ['Orange', 'Blau', 'Grau'], correctAnswer: 'Orange'),
   Puzzle(question: 'Welche Farbe hat Schnee meistens?', emojiLine: '❄️', answers: ['Weiß', 'Braun', 'Rot'], correctAnswer: 'Weiß'),
-  Puzzle(question: 'Welche Farbe entsteht aus Blau und Gelb?', emojiLine: '🔵 + 🟡 = ❓', answers: ['Grün', 'Rot', 'Lila'], correctAnswer: 'Grün', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welche Farbe passt zum Himmel an einem klaren Tag?', emojiLine: '☁️  ☀️', answers: ['Blau', 'Braun', 'Schwarz'], correctAnswer: 'Blau', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welche Farbe entsteht aus Rot und Gelb?', emojiLine: '🔴 + 🟡 = ❓', answers: ['Orange', 'Grün', 'Blau'], correctAnswer: 'Orange', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welche Farbe ist am dunkelsten?', emojiLine: '⬜  🩶  ⬛', answers: ['Weiß', 'Grau', 'Schwarz'], correctAnswer: 'Schwarz', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welche Farbe entsteht, wenn man Blau und Gelb mischt?', emojiLine: '🔵 + 🟡 = ❓', answers: ['Grün', 'Rot', 'Lila'], correctAnswer: 'Grün', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welche Farbe hat der Himmel an einem klaren Tag meistens?', emojiLine: '🌤️', answers: ['Blau', 'Braun', 'Schwarz'], correctAnswer: 'Blau', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welche Farbe entsteht, wenn man Rot und Gelb mischt?', emojiLine: '🔴 + 🟡 = ❓', answers: ['Orange', 'Grün', 'Blau'], correctAnswer: 'Orange', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welche von diesen Farben ist am dunkelsten?', emojiLine: '⬜  🩶  ⬛', answers: ['Weiß', 'Grau', 'Schwarz'], correctAnswer: 'Schwarz', difficulty: PuzzleDifficulty.tricky),
   Puzzle(question: 'Welche Farbe haben reife Bananen meistens?', emojiLine: '🍌', answers: ['Gelb', 'Blau', 'Rosa'], correctAnswer: 'Gelb', difficulty: PuzzleDifficulty.tricky),
 ];
 
