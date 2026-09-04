@@ -8,6 +8,7 @@ class BigMenuButton extends StatelessWidget {
   final double height;
   final double fontSize;
   final double emojiSize;
+  final bool compact;
 
   const BigMenuButton({
     super.key,
@@ -18,6 +19,7 @@ class BigMenuButton extends StatelessWidget {
     this.height = 82,
     this.fontSize = 24,
     this.emojiSize = 34,
+    this.compact = false,
   });
 
   @override
@@ -32,23 +34,28 @@ class BigMenuButton extends StatelessWidget {
         style: FilledButton.styleFrom(
           backgroundColor: color,
           foregroundColor: const Color(0xFF29293A),
-          elevation: 1,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(26),
-          ),
-          textStyle: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.w900,
-          ),
+          elevation: compact ? 0 : 2,
+          padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 18),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(compact ? 24 : 28)),
+          textStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w900),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(emoji, style: TextStyle(fontSize: emojiSize)),
-            const SizedBox(width: 14),
-            Flexible(child: Text(label, textAlign: TextAlign.center)),
-          ],
-        ),
+        child: compact
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(emoji, style: TextStyle(fontSize: emojiSize)),
+                  const SizedBox(height: 3),
+                  Text(label, textAlign: TextAlign.center, maxLines: 1),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(emoji, style: TextStyle(fontSize: emojiSize)),
+                  const SizedBox(width: 14),
+                  Flexible(child: Text(label, textAlign: TextAlign.center)),
+                ],
+              ),
       ),
     );
   }
