@@ -4,10 +4,12 @@ import 'pattern_models.dart';
 
 class WaistDartClosureResult {
   final PatternPoint closedSidePoint;
+  final List<PatternPoint> closedDartMouths;
   final List<double> closureAngles;
 
   const WaistDartClosureResult({
     required this.closedSidePoint,
+    required this.closedDartMouths,
     required this.closureAngles,
   });
 }
@@ -33,6 +35,7 @@ class WaistDartClosure {
         )
         .toList();
 
+    final mouths = <PatternPoint>[];
     final angles = <double>[];
 
     for (var i = 0; i < workingDarts.length; i++) {
@@ -43,6 +46,10 @@ class WaistDartClosure {
       if ((leg1Length - leg2Length).abs() > 0.000001) {
         throw ArgumentError('Abnaeher-Schenkel muessen gleich lang sein.');
       }
+
+      // Die innere Schenkelseite bleibt beim Schliessen fest. Genau dieser
+      // Punkt ist die Taillen-Muendung des geschlossenen Abnaehers.
+      mouths.add(dart.leg1);
 
       final angleToClose = _angle(dart.leg1 - dart.apex) -
           _angle(dart.leg2 - dart.apex);
@@ -69,6 +76,7 @@ class WaistDartClosure {
 
     return WaistDartClosureResult(
       closedSidePoint: workingSidePoint,
+      closedDartMouths: mouths,
       closureAngles: angles,
     );
   }
