@@ -57,10 +57,12 @@ class _IntroScreenState extends State<IntroScreen> {
       await _speak();
       return;
     }
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('intro_seen', true);
-    if (!mounted) return;
     await _speech.stop();
+    if (!mounted) return;
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
@@ -85,7 +87,13 @@ class _IntroScreenState extends State<IntroScreen> {
             children: [
               Align(
                 alignment: Alignment.centerRight,
-                child: Text('${_page + 1} / ${_pages.length}', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF77737F))),
+                child: Text(
+                  '${_page + 1} / ${_pages.length}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF77737F),
+                  ),
+                ),
               ),
               const Spacer(),
               RaetseliMascot(
@@ -97,9 +105,26 @@ class _IntroScreenState extends State<IntroScreen> {
               const SizedBox(height: 28),
               Text(page.emoji, style: const TextStyle(fontSize: 72)),
               const SizedBox(height: 12),
-              Text(page.title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: Color(0xFF302E48))),
+              Text(
+                page.title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF302E48),
+                ),
+              ),
               const SizedBox(height: 14),
-              Text(page.text, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, height: 1.35, fontWeight: FontWeight.w700, color: Color(0xFF514F61))),
+              Text(
+                page.text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 18,
+                  height: 1.35,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF514F61),
+                ),
+              ),
               const Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -110,7 +135,9 @@ class _IntroScreenState extends State<IntroScreen> {
                     height: 10,
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     decoration: BoxDecoration(
-                      color: index == _page ? const Color(0xFF6E68A8) : const Color(0xFFD8D4FF),
+                      color: index == _page
+                          ? const Color(0xFF6E68A8)
+                          : const Color(0xFFD8D4FF),
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
@@ -122,8 +149,17 @@ class _IntroScreenState extends State<IntroScreen> {
                 height: 64,
                 child: FilledButton(
                   onPressed: _next,
-                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF91DEBC), foregroundColor: const Color(0xFF302E48)),
-                  child: Text(last ? '🚀 Los geht’s!' : 'Weiter ➜', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF91DEBC),
+                    foregroundColor: const Color(0xFF302E48),
+                  ),
+                  child: Text(
+                    last ? '🚀 Los geht’s!' : 'Weiter ➜',
+                    style: const TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -139,5 +175,11 @@ class _IntroPage {
   final String title;
   final String text;
   final String speech;
-  const _IntroPage({required this.emoji, required this.title, required this.text, required this.speech});
+
+  const _IntroPage({
+    required this.emoji,
+    required this.title,
+    required this.text,
+    required this.speech,
+  });
 }
