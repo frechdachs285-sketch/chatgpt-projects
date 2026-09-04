@@ -79,16 +79,16 @@ const oppositePuzzles = <Puzzle>[
 ];
 
 const letterPuzzles = <Puzzle>[
-  Puzzle(question: 'Mit welchem Buchstaben beginnt Apfel?', emojiLine: '🍎', answers: ['A', 'E', 'O'], correctAnswer: 'A'),
-  Puzzle(question: 'Mit welchem Buchstaben beginnt Maus?', emojiLine: '🐭', answers: ['M', 'N', 'W'], correctAnswer: 'M'),
-  Puzzle(question: 'Mit welchem Buchstaben beginnt Sonne?', emojiLine: '☀️', answers: ['S', 'F', 'Z'], correctAnswer: 'S'),
-  Puzzle(question: 'Mit welchem Buchstaben beginnt Ball?', emojiLine: '⚽', answers: ['B', 'P', 'D'], correctAnswer: 'B'),
-  Puzzle(question: 'Mit welchem Buchstaben beginnt Hund?', emojiLine: '🐶', answers: ['H', 'K', 'R'], correctAnswer: 'H'),
-  Puzzle(question: 'Welches Wort beginnt mit K?', emojiLine: '🐱  🐶  🐭', answers: ['Katze', 'Hund', 'Maus'], correctAnswer: 'Katze', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welcher Buchstabe fehlt?', emojiLine: 'A  B  ❓  D', answers: ['C', 'E', 'F'], correctAnswer: 'C', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welches Wort beginnt mit F?', emojiLine: '🐟  🐱  🦆', answers: ['Fisch', 'Katze', 'Ente'], correctAnswer: 'Fisch', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Mit welchem Buchstaben beginnt Eis?', emojiLine: '🍦', answers: ['E', 'I', 'A'], correctAnswer: 'E', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welcher Buchstabe kommt nach D?', emojiLine: 'A  B  C  D  ❓', answers: ['E', 'F', 'G'], correctAnswer: 'E', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Mit welchem Buchstaben beginnt das Wort Apfel?', emojiLine: '🍎  Apfel', answers: ['A', 'E', 'O'], correctAnswer: 'A'),
+  Puzzle(question: 'Mit welchem Buchstaben beginnt das Wort Maus?', emojiLine: '🐭  Maus', answers: ['M', 'N', 'W'], correctAnswer: 'M'),
+  Puzzle(question: 'Mit welchem Buchstaben beginnt das Wort Sonne?', emojiLine: '☀️  Sonne', answers: ['S', 'F', 'Z'], correctAnswer: 'S'),
+  Puzzle(question: 'Mit welchem Buchstaben beginnt das Wort Ball?', emojiLine: '⚽  Ball', answers: ['B', 'P', 'D'], correctAnswer: 'B'),
+  Puzzle(question: 'Mit welchem Buchstaben beginnt das Wort Hund?', emojiLine: '🐶  Hund', answers: ['H', 'K', 'R'], correctAnswer: 'H'),
+  Puzzle(question: 'Welches Wort beginnt mit dem Buchstaben K?', emojiLine: '🐱   🐶   🐭', answers: ['Katze', 'Hund', 'Maus'], correctAnswer: 'Katze', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welcher Buchstabe fehlt in der Reihe?', emojiLine: 'A  B  ❓  D', answers: ['C', 'E', 'F'], correctAnswer: 'C', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welches Wort beginnt mit dem Buchstaben F?', emojiLine: '🐟   🐱   🦆', answers: ['Fisch', 'Katze', 'Ente'], correctAnswer: 'Fisch', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Mit welchem Buchstaben beginnt das Wort Eis?', emojiLine: '🍦  Eis', answers: ['E', 'I', 'A'], correctAnswer: 'E', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welcher Buchstabe kommt in der Buchstabenreihe nach D?', emojiLine: 'A  B  C  D  ❓', answers: ['E', 'F', 'G'], correctAnswer: 'E', difficulty: PuzzleDifficulty.tricky),
 ];
 
 const allCategoryIds = <String>[
