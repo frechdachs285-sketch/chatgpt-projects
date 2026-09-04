@@ -13,14 +13,7 @@ class PuzzleScreen extends StatefulWidget {
   final List<Puzzle> puzzles;
   final int maxCategoryStars;
 
-  const PuzzleScreen({
-    super.key,
-    required this.categoryId,
-    required this.title,
-    required this.categoryEmoji,
-    required this.puzzles,
-    required this.maxCategoryStars,
-  });
+  const PuzzleScreen({super.key, required this.categoryId, required this.title, required this.categoryEmoji, required this.puzzles, required this.maxCategoryStars});
 
   @override
   State<PuzzleScreen> createState() => _PuzzleScreenState();
@@ -30,7 +23,6 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   final ProgressService _progressService = ProgressService();
   final SpeechService _speechService = SpeechService();
   final SettingsService _settingsService = SettingsService();
-
   int currentIndex = 0;
   int stars = 0;
   bool answered = false;
@@ -51,19 +43,19 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   }
 
   Future<void> _speakQuestion() async {
-    await _speechService.speak(currentPuzzle.question);
+    final puzzle = currentPuzzle;
+    final answers = puzzle.answers.asMap().entries.map((entry) => 'Antwort ${entry.key + 1}: ${entry.value}.').join(' ');
+    await _speechService.speak('${puzzle.question}. $answers');
   }
 
   Future<void> checkAnswer(String answer) async {
     if (answered) return;
-
     final correct = answer == currentPuzzle.correctAnswer;
     setState(() {
       selectedAnswer = answer;
       answered = true;
       if (correct) stars++;
     });
-
     if (correct) {
       if (await _settingsService.isSoundEnabled()) {
         HapticFeedback.mediumImpact();
@@ -71,12 +63,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
       }
       await _speechService.speak('Super gemacht! Das ist richtig.');
     } else {
-      if (await _settingsService.isSoundEnabled()) {
-        HapticFeedback.selectionClick();
-      }
-      await _speechService.speak(
-        'Fast! Schau noch einmal genau hin. Die richtige Antwort ist markiert.',
-      );
+      if (await _settingsService.isSoundEnabled()) HapticFeedback.selectionClick();
+      await _speechService.speak('Fast! Schau noch einmal genau hin. Die richtige Antwort ist markiert.');
     }
   }
 
@@ -85,7 +73,6 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
       await _finishRound();
       return;
     }
-
     setState(() {
       currentIndex++;
       answered = false;
@@ -96,54 +83,27 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
   Future<void> _finishRound() async {
     await _progressService.addStars(stars);
-    await _progressService.saveCompletedCount(
-      widget.categoryId,
-      widget.puzzles.length,
-    );
+    await _progressService.saveCompletedCount(widget.categoryId, widget.puzzles.length);
     final normalizedStars = ((stars / widget.puzzles.length) * widget.maxCategoryStars).round();
     final newBest = await _progressService.saveBestStars(widget.categoryId, normalizedStars);
-
-    await _speechService.speak(
-      'Geschafft! Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.',
-    );
-
+    await _speechService.speak('Geschafft! Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.');
     if (!mounted) return;
-
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('Geschafft! 🎉'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🤩', style: TextStyle(fontSize: 62)),
-            const SizedBox(height: 10),
-            const Text(
-              'Rätseli freut sich mit dir!',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              newBest
-                  ? 'Neue Bestleistung! ⭐ $stars von ${widget.puzzles.length}'
-                  : 'Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-            ),
-          ],
-        ),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text('🤩', style: TextStyle(fontSize: 62)),
+          const SizedBox(height: 10),
+          const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          Text(newBest ? 'Neue Bestleistung! ⭐ $stars von ${widget.puzzles.length}' : 'Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.', textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+        ]),
         actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Juhu!'),
-          ),
-        ],
+        actions: [FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Juhu!'))],
       ),
     );
-
     if (!mounted) return;
     Navigator.pop(context);
   }
@@ -153,165 +113,87 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     final puzzle = currentPuzzle;
     final isCorrect = selectedAnswer == puzzle.correctAnswer;
     final mascotText = !answered
-        ? 'Ich lese dir die Aufgabe vor. Tippe auf 🔊, wenn du sie noch einmal hören möchtest.'
-        : isCorrect
-            ? 'Jaaa! Genau richtig! ⭐'
-            : 'Fast! Die richtige Antwort ist jetzt markiert 🙂';
+        ? 'Ich lese dir die Aufgabe und die Antworten 1, 2 und 3 vor. Tippe auf 🔊 zum Wiederholen.'
+        : isCorrect ? 'Jaaa! Genau richtig! ⭐' : 'Fast! Die richtige Antwort ist jetzt markiert 🙂';
 
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.categoryEmoji} ${widget.title}'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFE082),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '⭐ $stars',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-                ),
-              ),
-            ),
-          ),
-        ],
+        actions: [Padding(padding: const EdgeInsets.only(right: 16), child: Center(child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(color: const Color(0xFFFFE082), borderRadius: BorderRadius.circular(20)),
+          child: Text('⭐ $stars', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+        )))],
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 22),
-          child: Column(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: LinearProgressIndicator(
-                  value: (currentIndex + 1) / widget.puzzles.length,
-                  minHeight: 12,
-                  backgroundColor: const Color(0xFFECEAF8),
-                ),
+          child: Column(children: [
+            ClipRRect(borderRadius: BorderRadius.circular(20), child: LinearProgressIndicator(value: (currentIndex + 1) / widget.puzzles.length, minHeight: 12, backgroundColor: const Color(0xFFECEAF8))),
+            const SizedBox(height: 8),
+            Text('Rätsel ${currentIndex + 1} von ${widget.puzzles.length}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            RaetseliMascot(message: mascotText, celebrate: answered && isCorrect, onSpeak: _speakQuestion),
+            const SizedBox(height: 14),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 350),
+              transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: ScaleTransition(scale: animation, child: child)),
+              child: Container(
+                key: ValueKey(currentIndex), width: double.infinity, padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(28), boxShadow: const [BoxShadow(blurRadius: 18, offset: Offset(0, 6), color: Color(0x14000000))]),
+                child: Text(puzzle.question, textAlign: TextAlign.center, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF2B2B3A))),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Rätsel ${currentIndex + 1} von ${widget.puzzles.length}',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 12),
-              RaetseliMascot(
-                message: mascotText,
-                celebrate: answered && isCorrect,
-                onSpeak: _speakQuestion,
-              ),
-              const SizedBox(height: 14),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 350),
-                transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: animation,
-                  child: ScaleTransition(scale: animation, child: child),
-                ),
-                child: Container(
-                  key: ValueKey(currentIndex),
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: const [
-                      BoxShadow(
-                        blurRadius: 18,
-                        offset: Offset(0, 6),
-                        color: Color(0x14000000),
+            ),
+            const Spacer(),
+            AnimatedScale(
+              scale: answered && isCorrect ? 1.12 : 1.0, duration: const Duration(milliseconds: 300), curve: Curves.easeOutBack,
+              child: FittedBox(fit: BoxFit.scaleDown, child: Text(puzzle.emojiLine, textAlign: TextAlign.center, style: const TextStyle(fontSize: 58))),
+            ),
+            const Spacer(),
+            ...puzzle.answers.asMap().entries.map((entry) {
+              final number = entry.key + 1;
+              final answer = entry.value;
+              final chosen = selectedAnswer == answer;
+              final answerIsCorrect = answer == puzzle.correctAnswer;
+              Color? background;
+              if (answered && chosen) {
+                background = answerIsCorrect ? const Color(0xFFBDECCF) : const Color(0xFFFFD4D4);
+              } else if (answered && answerIsCorrect) {
+                background = const Color(0xFFDDF5E6);
+              }
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: SizedBox(
+                  width: double.infinity, height: 60,
+                  child: FilledButton.tonal(
+                    onPressed: answered ? null : () => checkAnswer(answer),
+                    style: FilledButton.styleFrom(backgroundColor: background, padding: const EdgeInsets.symmetric(horizontal: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
+                    child: Row(children: [
+                      Container(
+                        width: 38, height: 38, alignment: Alignment.center,
+                        decoration: BoxDecoration(color: const Color(0xFFD8D4FF), shape: BoxShape.circle),
+                        child: Text('$number', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF4D478C))),
                       ),
-                    ],
+                      const SizedBox(width: 12),
+                      Expanded(child: Text(answer, textAlign: TextAlign.center, style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w900))),
+                      const SizedBox(width: 50),
+                    ]),
                   ),
-                  child: Text(
-                    puzzle.question,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF2B2B3A),
-                    ),
-                  ),
+                ),
+              );
+            }),
+            if (answered) ...[
+              const SizedBox(height: 3),
+              SizedBox(
+                width: double.infinity, height: 56,
+                child: FilledButton(
+                  onPressed: nextPuzzle,
+                  style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
+                  child: Text(currentIndex == widget.puzzles.length - 1 ? 'Fertig 🎉' : 'Weiter ➜', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
                 ),
               ),
-              const Spacer(),
-              AnimatedScale(
-                scale: answered && isCorrect ? 1.12 : 1.0,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutBack,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    puzzle.emojiLine,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 58),
-                  ),
-                ),
-              ),
-              const Spacer(),
-              ...puzzle.answers.map((answer) {
-                final chosen = selectedAnswer == answer;
-                final answerIsCorrect = answer == puzzle.correctAnswer;
-                Color? background;
-
-                if (answered && chosen) {
-                  background = answerIsCorrect
-                      ? const Color(0xFFBDECCF)
-                      : const Color(0xFFFFD4D4);
-                } else if (answered && answerIsCorrect) {
-                  background = const Color(0xFFDDF5E6);
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: FilledButton.tonal(
-                      onPressed: answered ? null : () => checkAnswer(answer),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: background,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                      ),
-                      child: Text(
-                        answer,
-                        style: const TextStyle(
-                          fontSize: 23,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-              if (answered) ...[
-                const SizedBox(height: 3),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: FilledButton(
-                    onPressed: nextPuzzle,
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                    ),
-                    child: Text(
-                      currentIndex == widget.puzzles.length - 1
-                          ? 'Fertig 🎉'
-                          : 'Weiter ➜',
-                      style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
-                    ),
-                  ),
-                ),
-              ],
             ],
-          ),
+          ]),
         ),
       ),
     );
