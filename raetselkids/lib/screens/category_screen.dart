@@ -113,6 +113,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
     if (mode == null || !mounted) return;
     final round = _prepareRound(puzzles, mode);
 
+    if (round.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Für diese Stufe sind gerade keine Rätsel verfügbar.'),
+        ),
+      );
+      return;
+    }
+
     await Navigator.push(
       context,
       MaterialPageRoute(
