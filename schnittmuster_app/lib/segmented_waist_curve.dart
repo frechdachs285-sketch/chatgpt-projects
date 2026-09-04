@@ -80,8 +80,8 @@ class SegmentedWaistCurveSolver {
       for (var i = 0; i < anchors.length - 1; i++) {
         final curve = CubicBezierCurve(
           start: anchors[i],
-          control1: anchors[i] + derivatives[i] / 3,
-          control2: anchors[i + 1] - derivatives[i + 1] / 3,
+          control1: anchors[i] + derivatives[i] * (1 / 3),
+          control2: anchors[i + 1] - derivatives[i + 1] * (1 / 3),
           end: anchors[i + 1],
         );
         segments.add(curve);
@@ -118,7 +118,7 @@ class SegmentedWaistCurveSolver {
     }
 
     for (var i = 0; i < 70; i++) {
-      final mid = (low + high) / 2;
+      final mid = (low + high) * 0.5;
       final result = buildFor(mid);
       if (result.totalLength > targetLength) {
         low = mid;
@@ -127,7 +127,7 @@ class SegmentedWaistCurveSolver {
       }
     }
 
-    final result = buildFor((low + high) / 2);
+    final result = buildFor((low + high) * 0.5);
     if ((result.totalLength - targetLength).abs() > tolerance * 10) {
       throw StateError('Ziel-Laenge der Taillenkurve wurde nicht ausreichend genau erreicht.');
     }
@@ -148,15 +148,21 @@ class SegmentedWaistCurveSolver {
     );
 
     final firstChord = anchors[1] - anchors[0];
-    derivatives[0] = PatternPoint(firstChord.x.sign * firstChord.distanceTo(const PatternPoint(0, 0)), 0);
+    derivatives[0] = PatternPoint(
+      firstChord.x.sign * firstChord.distanceTo(const PatternPoint(0, 0)),
+      0,
+    );
 
     for (var i = 1; i < anchors.length - 1; i++) {
-      derivatives[i] = (anchors[i + 1] - anchors[i - 1]) / 2;
+      derivatives[i] = (anchors[i + 1] - anchors[i - 1]) * 0.5;
     }
 
     final lastChord = anchors.last - anchors[anchors.length - 2];
     final lastMagnitude = lastChord.distanceTo(const PatternPoint(0, 0));
-    final perpendicular = PatternPoint(-rotatedSideTangent.y, rotatedSideTangent.x);
+    final perpendicular = PatternPoint(
+      -rotatedSideTangent.y,
+      rotatedSideTangent.x,
+    );
     final normalizedPerpendicular = _normalizedToward(perpendicular, lastChord);
     derivatives[anchors.length - 1] = normalizedPerpendicular * lastMagnitude;
 
@@ -181,6 +187,6 @@ class SegmentedWaistCurveSolver {
     if (length == 0) {
       throw ArgumentError('Tangentenvektor darf nicht 0 sein.');
     }
-    return candidate / length;
+    return candidate * (1 / length);
   }
 }
