@@ -27,13 +27,19 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   int stars = 0;
   bool answered = false;
   String? selectedAnswer;
+  late List<String> _currentAnswers;
 
   Puzzle get currentPuzzle => widget.puzzles[currentIndex];
 
   @override
   void initState() {
     super.initState();
+    _prepareAnswers();
     WidgetsBinding.instance.addPostFrameCallback((_) => _speakQuestion());
+  }
+
+  void _prepareAnswers() {
+    _currentAnswers = List<String>.from(currentPuzzle.answers)..shuffle();
   }
 
   @override
@@ -44,7 +50,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
   Future<void> _speakQuestion() async {
     final puzzle = currentPuzzle;
-    final answers = puzzle.answers.asMap().entries.map((entry) => 'Antwort ${entry.key + 1}: ${entry.value}.').join(' ');
+    final answers = _currentAnswers.asMap().entries.map((entry) => 'Antwort ${entry.key + 1}: ${entry.value}.').join(' ');
     await _speechService.speak('${puzzle.question}. $answers');
   }
 
@@ -90,6 +96,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
       currentIndex++;
       answered = false;
       selectedAnswer = null;
+      _prepareAnswers();
     });
     await _speakQuestion();
   }
@@ -163,7 +170,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
               child: FittedBox(fit: BoxFit.scaleDown, child: Text(puzzle.emojiLine, textAlign: TextAlign.center, style: const TextStyle(fontSize: 58))),
             ),
             const Spacer(),
-            ...puzzle.answers.asMap().entries.map((entry) {
+            ..._currentAnswers.asMap().entries.map((entry) {
               final number = entry.key + 1;
               final answer = entry.value;
               final chosen = selectedAnswer == answer;
