@@ -155,6 +155,9 @@ class PatternPreviewPainter extends CustomPainter {
     final debugPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8;
+    final helperPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6;
     final markerPaint = Paint()..style = PaintingStyle.fill;
 
     _drawPiece(
@@ -165,6 +168,7 @@ class PatternPreviewPainter extends CustomPainter {
       scale,
       outlinePaint,
       debugPaint,
+      helperPaint,
       markerPaint,
     );
 
@@ -176,8 +180,51 @@ class PatternPreviewPainter extends CustomPainter {
       scale,
       outlinePaint,
       debugPaint,
+      helperPaint,
       markerPaint,
     );
+  }
+
+  void _drawHelperLine(
+    Canvas canvas,
+    PatternPoint start,
+    PatternPoint end,
+    _Bounds bounds,
+    Offset origin,
+    double scale,
+    Paint paint,
+  ) {
+    canvas.drawLine(
+      _p(start, bounds, origin, scale),
+      _p(end, bounds, origin, scale),
+      paint,
+    );
+  }
+
+  void _drawConstructionLines(
+    Canvas canvas,
+    PatternPiece piece,
+    _Bounds bounds,
+    Offset origin,
+    double scale,
+    Paint helperPaint,
+  ) {
+    final p = piece.points;
+
+    if (piece.id == 'skirt_back') {
+      _drawHelperLine(canvas, p['P1']!, p['P9']!, bounds, origin, scale, helperPaint);
+      _drawHelperLine(canvas, p['P5']!, p['P7']!, bounds, origin, scale, helperPaint);
+      _drawHelperLine(canvas, p['P7']!, p['P8']!, bounds, origin, scale, helperPaint);
+      _drawHelperLine(canvas, p['P11']!, p['P13']!, bounds, origin, scale, helperPaint);
+      _drawHelperLine(canvas, p['P12']!, p['P14']!, bounds, origin, scale, helperPaint);
+    }
+
+    if (piece.id == 'skirt_front') {
+      _drawHelperLine(canvas, p['P15']!, p['P2']!, bounds, origin, scale, helperPaint);
+      _drawHelperLine(canvas, p['P7']!, p['P6']!, bounds, origin, scale, helperPaint);
+      _drawHelperLine(canvas, p['P7']!, p['P8']!, bounds, origin, scale, helperPaint);
+      _drawHelperLine(canvas, p['P17']!, p['P18']!, bounds, origin, scale, helperPaint);
+    }
   }
 
   void _drawPiece(
@@ -188,9 +235,19 @@ class PatternPreviewPainter extends CustomPainter {
     double scale,
     Paint outlinePaint,
     Paint debugPaint,
+    Paint helperPaint,
     Paint markerPaint,
   ) {
     if (piece.outline.segments.isEmpty) return;
+
+    _drawConstructionLines(
+      canvas,
+      piece,
+      bounds,
+      origin,
+      scale,
+      helperPaint,
+    );
 
     final first = _p(piece.outline.segments.first.start, bounds, origin, scale);
     final path = Path()..moveTo(first.dx, first.dy);
