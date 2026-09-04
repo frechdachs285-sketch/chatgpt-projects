@@ -60,9 +60,9 @@ const shapePuzzles = <Puzzle>[
   Puzzle(question: 'Welche Form hat ein Fenster meistens?', emojiLine: '🪟', answers: ['Rechteck', 'Kreis', 'Dreieck'], correctAnswer: 'Rechteck'),
   Puzzle(question: 'Welche Form hat keine Ecken?', emojiLine: '⭕', answers: ['Kreis', 'Rechteck', 'Dreieck'], correctAnswer: 'Kreis', difficulty: PuzzleDifficulty.tricky),
   Puzzle(question: 'Welche Form hat mehr Ecken?', emojiLine: '🔺   🟦', answers: ['Dreieck', 'Quadrat', 'Gleich viele'], correctAnswer: 'Quadrat', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welche Form passt in die Reihe?', emojiLine: '🔵 🔺 🔵 🔺 ❓', answers: ['🔵', '🟩', '⭐'], correctAnswer: '🔵', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welche Form passt in die Reihe?', emojiLine: '🔵 🔺 🔵 🔺 ❓', answers: ['Kreis', 'Quadrat', 'Stern'], correctAnswer: 'Kreis', difficulty: PuzzleDifficulty.tricky),
   Puzzle(question: 'Wie viele Ecken hat ein Quadrat?', emojiLine: '🟦', answers: ['3', '4', '5'], correctAnswer: '4', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Welche Form ähnelt einem Fenster?', emojiLine: '🪟', answers: ['Rechteck', 'Kreis', 'Dreieck'], correctAnswer: 'Rechteck', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Welche Form hat ein Stück Pizza ungefähr?', emojiLine: '🍕', answers: ['Dreieck', 'Kreis', 'Quadrat'], correctAnswer: 'Dreieck', difficulty: PuzzleDifficulty.tricky),
 ];
 
 const oppositePuzzles = <Puzzle>[
