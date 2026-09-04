@@ -70,11 +70,11 @@ const oppositePuzzles = <Puzzle>[
   Puzzle(question: 'Was ist das Gegenteil von heiß?', emojiLine: '🔥  ↔  ❄️', answers: ['Kalt', 'Hell', 'Weich'], correctAnswer: 'Kalt'),
   Puzzle(question: 'Was ist das Gegenteil von oben?', emojiLine: '⬆️  ↔  ⬇️', answers: ['Unten', 'Links', 'Vorne'], correctAnswer: 'Unten'),
   Puzzle(question: 'Was ist das Gegenteil von hell?', emojiLine: '☀️  ↔  🌙', answers: ['Dunkel', 'Warm', 'Schnell'], correctAnswer: 'Dunkel'),
-  Puzzle(question: 'Was ist das Gegenteil von voll?', emojiLine: '🥛 voll  ↔  🥛 leer', answers: ['Leer', 'Groß', 'Kalt'], correctAnswer: 'Leer'),
+  Puzzle(question: 'Was ist das Gegenteil von voll?', emojiLine: '🧺🍎🍎🍎  ↔  🧺', answers: ['Leer', 'Groß', 'Kalt'], correctAnswer: 'Leer'),
   Puzzle(question: 'Was ist das Gegenteil von schnell?', emojiLine: '🏎️  ↔  🐌', answers: ['Langsam', 'Leise', 'Klein'], correctAnswer: 'Langsam', difficulty: PuzzleDifficulty.tricky),
   Puzzle(question: 'Was ist das Gegenteil von laut?', emojiLine: '📢  ↔  🤫', answers: ['Leise', 'Hart', 'Dunkel'], correctAnswer: 'Leise', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Was ist das Gegenteil von offen?', emojiLine: '🚪 offen  ↔  🚪 zu', answers: ['Geschlossen', 'Leer', 'Kurz'], correctAnswer: 'Geschlossen', difficulty: PuzzleDifficulty.tricky),
-  Puzzle(question: 'Was ist das Gegenteil von nass?', emojiLine: '💧  ↔  ☀️', answers: ['Trocken', 'Kalt', 'Rund'], correctAnswer: 'Trocken', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Was ist das Gegenteil von offen?', emojiLine: '📖  ↔  📕', answers: ['Geschlossen', 'Leer', 'Kurz'], correctAnswer: 'Geschlossen', difficulty: PuzzleDifficulty.tricky),
+  Puzzle(question: 'Was ist das Gegenteil von nass?', emojiLine: '🌧️  ↔  ☀️', answers: ['Trocken', 'Kalt', 'Rund'], correctAnswer: 'Trocken', difficulty: PuzzleDifficulty.tricky),
   Puzzle(question: 'Was ist das Gegenteil von schwer?', emojiLine: '🏋️  ↔  🪶', answers: ['Leicht', 'Lang', 'Dunkel'], correctAnswer: 'Leicht', difficulty: PuzzleDifficulty.tricky),
 ];
 
