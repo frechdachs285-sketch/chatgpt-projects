@@ -138,8 +138,8 @@ class PatternPdfExporter {
                 ),
                 pw.SizedBox(height: mm(1.5)),
                 pw.Text(
-                  'Klebebereich: 10 mm Ueberlappung - Passkreuze deckungsgleich ausrichten.',
-                  style: const pw.TextStyle(fontSize: 7.5),
+                  'Montage: rechte/untere SCHNEIDELINIE abschneiden; linke/obere KLEBEFLAECHE darunterlegen; Passkreuze ausrichten.',
+                  style: const pw.TextStyle(fontSize: 7.2),
                 ),
                 pw.SizedBox(height: mm(1.5)),
                 pw.Container(
@@ -214,20 +214,32 @@ class PatternPdfExporter {
     }
 
     if (hasLeftNeighbor) {
-      cross(tileX + inset, tileY + 35);
-      cross(tileX + inset, tileY + _tileHeightMm - 35);
+      final x = tileX + inset;
+      b.writeln('<line x1="$x" y1="$tileY" x2="$x" y2="${tileY + _tileHeightMm}" stroke="black" stroke-width="0.25" stroke-dasharray="2,2"/>');
+      b.writeln('<text x="${x + 2}" y="${tileY + 18}" font-family="Helvetica" font-size="3.2" fill="black">KLEBEFLAECHE</text>');
+      cross(x, tileY + 35);
+      cross(x, tileY + _tileHeightMm - 35);
     }
     if (hasRightNeighbor) {
-      cross(tileX + _tileWidthMm - inset, tileY + 35);
-      cross(tileX + _tileWidthMm - inset, tileY + _tileHeightMm - 35);
+      final x = tileX + _tileWidthMm - inset;
+      b.writeln('<line x1="$x" y1="$tileY" x2="$x" y2="${tileY + _tileHeightMm}" stroke="black" stroke-width="0.55" stroke-dasharray="5,2"/>');
+      b.writeln('<text x="${x - 2}" y="${tileY + 18}" font-family="Helvetica" font-size="3.2" text-anchor="end" fill="black">SCHNEIDELINIE</text>');
+      cross(x, tileY + 35);
+      cross(x, tileY + _tileHeightMm - 35);
     }
     if (hasTopNeighbor) {
-      cross(tileX + 45, tileY + inset);
-      cross(tileX + _tileWidthMm - 45, tileY + inset);
+      final y = tileY + inset;
+      b.writeln('<line x1="$tileX" y1="$y" x2="${tileX + _tileWidthMm}" y2="$y" stroke="black" stroke-width="0.25" stroke-dasharray="2,2"/>');
+      b.writeln('<text x="${tileX + 8}" y="${y + 4}" font-family="Helvetica" font-size="3.2" fill="black">KLEBEFLAECHE</text>');
+      cross(tileX + 45, y);
+      cross(tileX + _tileWidthMm - 45, y);
     }
     if (hasBottomNeighbor) {
-      cross(tileX + 45, tileY + _tileHeightMm - inset);
-      cross(tileX + _tileWidthMm - 45, tileY + _tileHeightMm - inset);
+      final y = tileY + _tileHeightMm - inset;
+      b.writeln('<line x1="$tileX" y1="$y" x2="${tileX + _tileWidthMm}" y2="$y" stroke="black" stroke-width="0.55" stroke-dasharray="5,2"/>');
+      b.writeln('<text x="${tileX + 8}" y="${y - 2}" font-family="Helvetica" font-size="3.2" fill="black">SCHNEIDELINIE</text>');
+      cross(tileX + 45, y);
+      cross(tileX + _tileWidthMm - 45, y);
     }
 
     b.writeln('<line x1="${centerX - 2}" y1="$tileY" x2="${centerX + 2}" y2="$tileY" stroke="black" stroke-width="0.25"/>');
