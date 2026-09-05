@@ -75,7 +75,7 @@ class SkirtPatternCalculator {
 
   PatternLabel _pieceLabel({required double centerX, required double sideX, required double skirtLength, required String text}) {
     final x = (centerX + sideX) / 2;
-    final y = skirtLength * 0.55;
+    final y = skirtLength * 0.82;
     return PatternLabel(position: PatternPoint(x, y), text: text);
   }
 
