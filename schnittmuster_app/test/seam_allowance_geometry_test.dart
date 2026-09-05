@@ -100,28 +100,29 @@ void main() {
   });
 
   test('1,5 cm Seitenzugabe trifft 3,0 cm Saumzugabe exakt', () {
-    // Directed clockwise around a simple skirt corner: side goes down,
-    // hem goes left. Left-side offsets therefore point outside.
-    final side = SeamAllowanceGeometry.offsetLine(
-      LineSegment(const PatternPoint(10, 0), const PatternPoint(10, 60)),
-      1.5,
+    // Positive offsets lie to the left of each directed edge.
+    // Side is directed upward so left is outward (+x).
+    // Hem is directed right so left is outward (+y).
+    final sideOriginal = LineSegment(
+      const PatternPoint(10, 60),
+      const PatternPoint(10, 0),
     );
-    final hem = SeamAllowanceGeometry.offsetLine(
-      LineSegment(const PatternPoint(10, 60), const PatternPoint(0, 60)),
-      3.0,
+    final hemOriginal = LineSegment(
+      const PatternPoint(0, 60),
+      const PatternPoint(10, 60),
     );
+    final side = SeamAllowanceGeometry.offsetLine(sideOriginal, 1.5);
+    final hem = SeamAllowanceGeometry.offsetLine(hemOriginal, 3.0);
 
     final corner = SeamAllowanceGeometry.joinOffsetEdges(
-      [side.start, side.end],
-      [hem.start, hem.end],
+      [side.end, side.start],
+      [hem.end, hem.start],
     );
 
     expect(corner.x, closeTo(11.5, 0.000001));
     expect(corner.y, closeTo(63.0, 0.000001));
-    expect(SeamAllowanceGeometry.parallelDistance(
-      LineSegment(const PatternPoint(10, 0), const PatternPoint(10, 60)), side), closeTo(1.5, 0.000001));
-    expect(SeamAllowanceGeometry.parallelDistance(
-      LineSegment(const PatternPoint(10, 60), const PatternPoint(0, 60)), hem), closeTo(3.0, 0.000001));
+    expect(SeamAllowanceGeometry.parallelDistance(sideOriginal, side), closeTo(1.5, 0.000001));
+    expect(SeamAllowanceGeometry.parallelDistance(hemOriginal, hem), closeTo(3.0, 0.000001));
   });
 
   test('0 cm Stoffbruch bleibt exakt auf vorderer Mitte', () {
@@ -135,17 +136,18 @@ void main() {
   });
 
   test('3,0 cm Saum endet durch Schnitt exakt am 0-cm-Stoffbruch', () {
-    final hem = SeamAllowanceGeometry.offsetLine(
-      LineSegment(const PatternPoint(10, 60), const PatternPoint(0, 60)),
-      3.0,
+    final hemOriginal = LineSegment(
+      const PatternPoint(0, 60),
+      const PatternPoint(10, 60),
     );
+    final hem = SeamAllowanceGeometry.offsetLine(hemOriginal, 3.0);
     final fold = SeamAllowanceGeometry.offsetLine(
       LineSegment(const PatternPoint(0, 60), const PatternPoint(0, 0)),
       0.0,
     );
 
     final corner = SeamAllowanceGeometry.joinOffsetEdges(
-      [hem.start, hem.end],
+      [hem.end, hem.start],
       [fold.start, fold.end],
     );
 
