@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
 import 'pattern_models.dart';
+import 'pdf_export.dart';
 import 'skirt_pattern_calculator.dart';
 
 void main() => runApp(const SchnittmusterApp());
@@ -27,6 +29,14 @@ class SkirtDebugPage extends StatefulWidget {
 class _SkirtDebugPageState extends State<SkirtDebugPage> {
   bool _seamAllowanceEnabled = true;
 
+  Future<void> _openCalibrationPdf() async {
+    final bytes = await PatternPdfExporter().buildCalibrationPage();
+    await Printing.layoutPdf(
+      name: 'Schnittmuster_Drucktest_1zu1.pdf',
+      onLayout: (_) async => bytes,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final result = SkirtPatternCalculator().calculate(
@@ -44,6 +54,17 @@ class _SkirtDebugPageState extends State<SkirtDebugPage> {
                   subtitle: Text(_seamAllowanceEnabled ? 'Ein' : 'Aus'),
                   value: _seamAllowanceEnabled,
                   onChanged: (value) => setState(() => _seamAllowanceEnabled = value),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _openCalibrationPdf,
+                      icon: const Icon(Icons.picture_as_pdf),
+                      label: const Text('PDF-Drucktest 1:1'),
+                    ),
+                  ),
                 ),
                 Expanded(child: PatternPreview(front: result.front!, back: result.back!)),
               ],
