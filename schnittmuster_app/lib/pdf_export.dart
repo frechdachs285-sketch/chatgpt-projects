@@ -69,27 +69,16 @@ class PatternPdfExporter {
               style: const pw.TextStyle(fontSize: 10),
             ),
             pw.SizedBox(height: mm(10)),
-            pw.Text(
-              'Kontrollquadrat 100 x 100 mm',
-              style: const pw.TextStyle(fontSize: 10),
-            ),
+            pw.Text('Kontrollquadrat 100 x 100 mm', style: const pw.TextStyle(fontSize: 10)),
             pw.SizedBox(height: mm(3)),
             pw.Container(
               width: mm(100),
               height: mm(100),
               decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.8)),
-              child: pw.Center(
-                child: pw.Text(
-                  '100 mm x 100 mm',
-                  style: const pw.TextStyle(fontSize: 11),
-                ),
-              ),
+              child: pw.Center(child: pw.Text('100 mm x 100 mm', style: const pw.TextStyle(fontSize: 11))),
             ),
             pw.SizedBox(height: mm(12)),
-            pw.Text(
-              'Kontrolllinie 200 mm',
-              style: const pw.TextStyle(fontSize: 10),
-            ),
+            pw.Text('Kontrolllinie 200 mm', style: const pw.TextStyle(fontSize: 10)),
             pw.SizedBox(height: mm(3)),
             pw.Container(width: mm(200), height: 1, color: PdfColors.black),
             pw.SizedBox(height: mm(2)),
@@ -147,12 +136,7 @@ class PatternPdfExporter {
       for (var c = 0; c < cols; c++) {
         final x = c * stepX;
         final y = r * stepY;
-        final tile = _PatternBounds(
-          x,
-          y,
-          x + _tileWidthMm,
-          y + _tileHeightMm,
-        );
+        final tile = _PatternBounds(x, y, x + _tileWidthMm, y + _tileHeightMm);
         if (_overlaps(tile, backBox) || _overlaps(tile, frontBox)) {
           kept.add('$c:$r');
         }
@@ -170,6 +154,8 @@ class PatternPdfExporter {
         doc.addPage(
           _tilePage(
             tileName: tileName,
+            tileX: tileX,
+            tileY: tileY,
             back: back,
             front: front,
             backOffsetX: backOX - tileX,
@@ -188,6 +174,8 @@ class PatternPdfExporter {
 
   pw.Page _tilePage({
     required String tileName,
+    required double tileX,
+    required double tileY,
     required PatternPiece back,
     required PatternPiece front,
     required double backOffsetX,
@@ -208,30 +196,26 @@ class PatternPdfExporter {
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Text(
-                'Rock v1 - A4 1:1',
-                style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
-              ),
-              pw.Text(
-                'Seite $tileName',
-                style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
-              ),
+              pw.Text('Rock v1 - A4 1:1', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+              pw.Text('Seite $tileName', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
             ],
           ),
           pw.SizedBox(height: mm(1.5)),
           pw.Container(
             width: double.infinity,
-            padding: pw.EdgeInsets.symmetric(
-              horizontal: mm(2.5),
-              vertical: mm(1.5),
-            ),
+            padding: pw.EdgeInsets.symmetric(horizontal: mm(2.5), vertical: mm(1.5)),
             decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.45)),
             child: pw.Text(
-              'MONTAGE: 1) rechte/untere SCHNEIDELINIE abschneiden  2) linke/obere KLEBEFLAECHE darunterlegen  3) PASSKREUZE exakt ausrichten.',
-              style: pw.TextStyle(fontSize: 8.4, fontWeight: pw.FontWeight.bold),
+              'DIAGNOSE: tile=(${tileX.toStringAsFixed(1)}, ${tileY.toStringAsFixed(1)}) mm | back=(${backOffsetX.toStringAsFixed(1)}, ${backOffsetY.toStringAsFixed(1)}) | front=(${frontOffsetX.toStringAsFixed(1)}, ${frontOffsetY.toStringAsFixed(1)})',
+              style: pw.TextStyle(fontSize: 7.8, fontWeight: pw.FontWeight.bold),
             ),
           ),
-          pw.SizedBox(height: mm(2)),
+          pw.SizedBox(height: mm(1)),
+          pw.Text(
+            'TEST: Im Zeichenfeld muss oben links ein 30 x 30 mm Quadrat mit Kreuz sichtbar sein.',
+            style: const pw.TextStyle(fontSize: 8),
+          ),
+          pw.SizedBox(height: mm(1)),
           pw.Container(
             width: mm(_tileWidthMm),
             height: mm(_tileHeightMm),
@@ -244,20 +228,9 @@ class PatternPdfExporter {
                 canvas.clipPath();
                 canvas.setStrokeColor(PdfColors.black);
 
-                _paintPiece(
-                  canvas,
-                  size,
-                  back,
-                  backOffsetX,
-                  backOffsetY,
-                );
-                _paintPiece(
-                  canvas,
-                  size,
-                  front,
-                  frontOffsetX,
-                  frontOffsetY,
-                );
+                _paintDiagnosticMarker(canvas, size);
+                _paintPiece(canvas, size, back, backOffsetX, backOffsetY);
+                _paintPiece(canvas, size, front, frontOffsetX, frontOffsetY);
                 _paintRegistrationMarks(
                   canvas,
                   size,
@@ -274,6 +247,21 @@ class PatternPdfExporter {
         ],
       ),
     );
+  }
+
+  void _paintDiagnosticMarker(PdfGraphics canvas, PdfPoint size) {
+    final x = mm(10);
+    final top = size.y - mm(10);
+    final w = mm(30);
+    final h = mm(30);
+    final bottom = top - h;
+
+    canvas.setLineDashPattern();
+    canvas.setLineWidth(mm(0.8));
+    canvas.drawRect(x, bottom, w, h);
+    canvas.strokePath();
+    canvas.drawLine(x, bottom, x + w, top);
+    canvas.drawLine(x + w, bottom, x, top);
   }
 
   void _paintPiece(
@@ -358,10 +346,7 @@ class PatternPdfExporter {
           _py(segment.end, oy, size),
         );
       } else {
-        canvas.lineTo(
-          _px(segment.end, ox),
-          _py(segment.end, oy, size),
-        );
+        canvas.lineTo(_px(segment.end, ox), _py(segment.end, oy, size));
       }
     }
 
