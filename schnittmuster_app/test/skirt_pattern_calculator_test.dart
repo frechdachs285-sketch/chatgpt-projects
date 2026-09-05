@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:schnittmuster_app/pattern_geometry.dart';
 import 'package:schnittmuster_app/pattern_models.dart';
 import 'package:schnittmuster_app/skirt_pattern_calculator.dart';
 
@@ -22,9 +23,92 @@ void main() {
     expect(front.points['P16']!.x, closeTo(30.25, 0.0001));
     expect(front.points['P16']!.y, closeTo(-1.25, 0.0001));
 
-    expect(back.points['P11']!.distanceTo(back.points['P13']!), closeTo(14.0, 0.0001));
-    expect(back.points['P12']!.distanceTo(back.points['P14']!), closeTo(12.5, 0.0001));
-    expect(front.points['P17']!.distanceTo(front.points['P18']!), closeTo(10.0, 0.0001));
+    expect(
+      back.points['P11']!.distanceTo(back.points['P13']!),
+      closeTo(14.0, 0.0001),
+    );
+    expect(
+      back.points['P12']!.distanceTo(back.points['P14']!),
+      closeTo(12.5, 0.0001),
+    );
+    expect(
+      front.points['P17']!.distanceTo(front.points['P18']!),
+      closeTo(10.0, 0.0001),
+    );
+  });
+
+  test('Produktionskontur nutzt echte Taillen-Beziers und ist lueckenlos', () {
+    final result = SkirtPatternCalculator().calculate(
+      const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60),
+      const ConstructionValues(),
+    );
+
+    expect(result.isValid, isTrue);
+    final back = result.back!;
+    final front = result.front!;
+
+    final backWaist = back.outline.segments
+        .whereType<BezierSegment>()
+        .where((segment) => segment.role == 'waist')
+        .toList();
+    final frontWaist = front.outline.segments
+        .whereType<BezierSegment>()
+        .where((segment) => segment.role == 'waist')
+        .toList();
+    final backSide = back.outline.segments
+        .whereType<BezierSegment>()
+        .singleWhere((segment) => segment.role == 'sideSeam');
+    final frontSide = front.outline.segments
+        .whereType<BezierSegment>()
+        .singleWhere((segment) => segment.role == 'sideSeam');
+
+    expect(backWaist.length, 3);
+    expect(frontWaist.length, 2);
+
+    expect(backWaist[0].start.distanceTo(back.points['P1']!), lessThan(0.000001));
+    expect(backWaist[0].end.distanceTo(back.darts[0].leg1), lessThan(0.000001));
+    expect(backWaist[1].start.distanceTo(back.darts[0].leg2), lessThan(0.000001));
+    expect(backWaist[1].end.distanceTo(back.darts[1].leg1), lessThan(0.000001));
+    expect(backWaist[2].start.distanceTo(back.darts[1].leg2), lessThan(0.000001));
+    expect(backWaist[2].end.distanceTo(backSide.start), lessThan(0.000001));
+
+    expect(frontWaist[0].start.distanceTo(front.points['P2']!), lessThan(0.000001));
+    expect(frontWaist[0].end.distanceTo(front.darts[0].leg1), lessThan(0.000001));
+    expect(frontWaist[1].start.distanceTo(front.darts[0].leg2), lessThan(0.000001));
+    expect(frontWaist[1].end.distanceTo(frontSide.start), lessThan(0.000001));
+  });
+
+  test('Produktions-Taillenbogenlaenge ergibt exakt 38,5 cm halben Umfang', () {
+    final result = SkirtPatternCalculator().calculate(
+      const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60),
+      const ConstructionValues(),
+    );
+
+    expect(result.isValid, isTrue);
+    final back = result.back!;
+    final front = result.front!;
+
+    double waistLength(PatternPiece piece) {
+      return piece.outline.segments
+          .whereType<BezierSegment>()
+          .where((segment) => segment.role == 'waist')
+          .fold<double>(0, (sum, segment) {
+        final curve = CubicBezierCurve(
+          start: segment.start,
+          control1: segment.control1,
+          control2: segment.control2,
+          end: segment.end,
+        );
+        return sum + curve.arcLength();
+      });
+    }
+
+    final backLength = waistLength(back);
+    final frontLength = waistLength(front);
+
+    expect(backLength, closeTo(19.25, 0.00001));
+    expect(frontLength, closeTo(19.25, 0.00001));
+    expect(backLength + frontLength, closeTo(38.5, 0.00001));
   });
 
   test('Ungueltige Masse werden abgewiesen', () {
