@@ -44,10 +44,7 @@ class PatternPdfExporter {
             children: [
               pw.Text(
                 'Schnittmuster-App - Drucktest 1:1',
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                ),
+                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
               ),
               pw.SizedBox(height: mm(6)),
               pw.Text(
@@ -60,21 +57,13 @@ class PatternPdfExporter {
               pw.Container(
                 width: mm(100),
                 height: mm(100),
-                decoration: pw.BoxDecoration(
-                  border: pw.Border.all(width: 0.8),
-                ),
-                child: pw.Center(
-                  child: pw.Text('100 mm x 100 mm', style: const pw.TextStyle(fontSize: 11)),
-                ),
+                decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.8)),
+                child: pw.Center(child: pw.Text('100 mm x 100 mm', style: const pw.TextStyle(fontSize: 11))),
               ),
               pw.SizedBox(height: mm(12)),
               pw.Text('Kontrolllinie 200 mm', style: const pw.TextStyle(fontSize: 10)),
               pw.SizedBox(height: mm(3)),
-              pw.Container(
-                width: mm(200),
-                height: 1,
-                color: PdfColors.black,
-              ),
+              pw.Container(width: mm(200), height: 1, color: PdfColors.black),
               pw.SizedBox(height: mm(2)),
               pw.Text('200 mm', style: const pw.TextStyle(fontSize: 9)),
             ],
@@ -127,6 +116,10 @@ class PatternPdfExporter {
           frontOffsetY: frontOffsetY,
           tileX: tileX,
           tileY: tileY,
+          hasLeftNeighbor: col > 0,
+          hasRightNeighbor: col < columns - 1,
+          hasTopNeighbor: row > 0,
+          hasBottomNeighbor: row < rows - 1,
         );
 
         doc.addPage(
@@ -143,7 +136,12 @@ class PatternPdfExporter {
                     pw.Text('Seite $tileName', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
                   ],
                 ),
-                pw.SizedBox(height: mm(3)),
+                pw.SizedBox(height: mm(1.5)),
+                pw.Text(
+                  'Klebebereich: 10 mm Ueberlappung - Passkreuze deckungsgleich ausrichten.',
+                  style: const pw.TextStyle(fontSize: 7.5),
+                ),
+                pw.SizedBox(height: mm(1.5)),
                 pw.Container(
                   width: mm(_tileWidthMm),
                   height: mm(_tileHeightMm),
@@ -172,14 +170,70 @@ class PatternPdfExporter {
     required double frontOffsetY,
     required double tileX,
     required double tileY,
+    required bool hasLeftNeighbor,
+    required bool hasRightNeighbor,
+    required bool hasTopNeighbor,
+    required bool hasBottomNeighbor,
   }) {
     final b = StringBuffer();
     b.writeln('<svg xmlns="http://www.w3.org/2000/svg" viewBox="$tileX $tileY $_tileWidthMm $_tileHeightMm">');
     b.writeln('<rect x="$tileX" y="$tileY" width="$_tileWidthMm" height="$_tileHeightMm" fill="white"/>');
     _writePieceSvg(b, back, backOffsetX, backOffsetY);
     _writePieceSvg(b, front, frontOffsetX, frontOffsetY);
+    _writeRegistrationMarks(
+      b,
+      tileX: tileX,
+      tileY: tileY,
+      hasLeftNeighbor: hasLeftNeighbor,
+      hasRightNeighbor: hasRightNeighbor,
+      hasTopNeighbor: hasTopNeighbor,
+      hasBottomNeighbor: hasBottomNeighbor,
+    );
     b.writeln('</svg>');
     return b.toString();
+  }
+
+  void _writeRegistrationMarks(
+    StringBuffer b, {
+    required double tileX,
+    required double tileY,
+    required bool hasLeftNeighbor,
+    required bool hasRightNeighbor,
+    required bool hasTopNeighbor,
+    required bool hasBottomNeighbor,
+  }) {
+    const inset = _tileOverlapMm / 2;
+    const arm = 4.0;
+    final centerX = tileX + _tileWidthMm / 2;
+    final centerY = tileY + _tileHeightMm / 2;
+
+    void cross(double x, double y) {
+      b.writeln('<circle cx="$x" cy="$y" r="1.2" fill="none" stroke="black" stroke-width="0.3"/>');
+      b.writeln('<line x1="${x - arm}" y1="$y" x2="${x + arm}" y2="$y" stroke="black" stroke-width="0.3"/>');
+      b.writeln('<line x1="$x" y1="${y - arm}" x2="$x" y2="${y + arm}" stroke="black" stroke-width="0.3"/>');
+    }
+
+    if (hasLeftNeighbor) {
+      cross(tileX + inset, tileY + 35);
+      cross(tileX + inset, tileY + _tileHeightMm - 35);
+    }
+    if (hasRightNeighbor) {
+      cross(tileX + _tileWidthMm - inset, tileY + 35);
+      cross(tileX + _tileWidthMm - inset, tileY + _tileHeightMm - 35);
+    }
+    if (hasTopNeighbor) {
+      cross(tileX + 45, tileY + inset);
+      cross(tileX + _tileWidthMm - 45, tileY + inset);
+    }
+    if (hasBottomNeighbor) {
+      cross(tileX + 45, tileY + _tileHeightMm - inset);
+      cross(tileX + _tileWidthMm - 45, tileY + _tileHeightMm - inset);
+    }
+
+    b.writeln('<line x1="${centerX - 2}" y1="$tileY" x2="${centerX + 2}" y2="$tileY" stroke="black" stroke-width="0.25"/>');
+    b.writeln('<line x1="${centerX - 2}" y1="${tileY + _tileHeightMm}" x2="${centerX + 2}" y2="${tileY + _tileHeightMm}" stroke="black" stroke-width="0.25"/>');
+    b.writeln('<line x1="$tileX" y1="${centerY - 2}" x2="$tileX" y2="${centerY + 2}" stroke="black" stroke-width="0.25"/>');
+    b.writeln('<line x1="${tileX + _tileWidthMm}" y1="${centerY - 2}" x2="${tileX + _tileWidthMm}" y2="${centerY + 2}" stroke="black" stroke-width="0.25"/>');
   }
 
   void _writePieceSvg(StringBuffer b, PatternPiece piece, double offsetX, double offsetY) {
@@ -210,7 +264,7 @@ class PatternPdfExporter {
     for (final label in piece.labels) {
       final x = _x(label.position, offsetX);
       final y = _y(label.position, offsetY);
-      final text = _escape(label.text.replaceAll('Rueckenteil', 'Rueckenteil'));
+      final text = _escape(label.text);
       b.writeln('<text x="$x" y="$y" font-family="Helvetica" font-size="4.5" text-anchor="middle" fill="black">$text</text>');
     }
   }
