@@ -29,47 +29,130 @@ class SkirtDebugPage extends StatefulWidget {
 class _SkirtDebugPageState extends State<SkirtDebugPage> {
   bool _seamAllowanceEnabled = true;
 
-  Future<void> _openCalibrationPdf() async {
-    final bytes = await PatternPdfExporter().buildCalibrationPage();
+  final _waistController = TextEditingController(text: '76');
+  final _hipController = TextEditingController(text: '100');
+  final _hipDepthController = TextEditingController(text: '21');
+  final _skirtLengthController = TextEditingController(text: '60');
+
+  @override
+  void dispose() {
+    _waistController.dispose();
+    _hipController.dispose();
+    _hipDepthController.dispose();
+    _skirtLengthController.dispose();
+    super.dispose();
+  }
+
+  double? _readNumber(TextEditingController controller) {
+    final value = controller.text.trim().replaceAll(',', '.');
+    final parsed = double.tryParse(value);
+    if (parsed == null || parsed <= 0) return null;
+    return parsed;
+  }
+
+  Measurements? get _measurements {
+    final waist = _readNumber(_waistController);
+    final hip = _readNumber(_hipController);
+    final hipDepth = _readNumber(_hipDepthController);
+    final skirtLength = _readNumber(_skirtLengthController);
+    if (waist == null || hip == null || hipDepth == null || skirtLength == null) {
+      return null;
+    }
+    return Measurements(
+      waist: waist,
+      hip: hip,
+      hipDepth: hipDepth,
+      skirtLength: skirtLength,
+    );
+  }
+
+  Future<void> _openPatternPdf() async {
+    final measurements = _measurements;
+    if (measurements == null) return;
+
+    final bytes = await PatternPdfExporter().buildPatternPdf(
+      measurements: measurements,
+      seamAllowance: SeamAllowanceSettings(enabled: _seamAllowanceEnabled),
+    );
     await Printing.layoutPdf(
-      name: 'Schnittmuster_Drucktest_1zu1.pdf',
+      name: 'Rock_Schnittmuster_1zu1.pdf',
       onLayout: (_) async => bytes,
+    );
+  }
+
+  Widget _measurementField(String label, TextEditingController controller) {
+    return TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        labelText: label,
+        suffixText: 'cm',
+        border: const OutlineInputBorder(),
+        isDense: true,
+      ),
+      onChanged: (_) => setState(() {}),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final result = SkirtPatternCalculator().calculate(
-      const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60),
-      const ConstructionValues(),
-      seamAllowance: SeamAllowanceSettings(enabled: _seamAllowanceEnabled),
-    );
+    final measurements = _measurements;
+    final result = measurements == null
+        ? null
+        : SkirtPatternCalculator().calculate(
+            measurements,
+            const ConstructionValues(),
+            seamAllowance: SeamAllowanceSettings(enabled: _seamAllowanceEnabled),
+          );
+
     return Scaffold(
       appBar: AppBar(title: const Text('Rock v1 - Debug')),
-      body: result.isValid
-          ? Column(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 2.7,
               children: [
-                SwitchListTile(
-                  title: const Text('Nahtzugabe'),
-                  subtitle: Text(_seamAllowanceEnabled ? 'Ein' : 'Aus'),
-                  value: _seamAllowanceEnabled,
-                  onChanged: (value) => setState(() => _seamAllowanceEnabled = value),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _openCalibrationPdf,
-                      icon: const Icon(Icons.picture_as_pdf),
-                      label: const Text('PDF-Drucktest 1:1'),
-                    ),
-                  ),
-                ),
-                Expanded(child: PatternPreview(front: result.front!, back: result.back!)),
+                _measurementField('Taille', _waistController),
+                _measurementField('Hüfte', _hipController),
+                _measurementField('Hüfttiefe', _hipDepthController),
+                _measurementField('Rocklänge', _skirtLengthController),
               ],
-            )
-          : Center(child: Text(result.errors.join('\n'))),
+            ),
+          ),
+          SwitchListTile(
+            title: const Text('Nahtzugabe'),
+            subtitle: Text(_seamAllowanceEnabled ? 'Ein' : 'Aus'),
+            value: _seamAllowanceEnabled,
+            onChanged: (value) => setState(() => _seamAllowanceEnabled = value),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: measurements != null && result != null && result.isValid ? _openPatternPdf : null,
+                icon: const Icon(Icons.picture_as_pdf),
+                label: const Text('Schnittmuster-PDF 1:1'),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: measurements == null
+                ? const Center(child: Text('Bitte alle vier Maße als positive Zahl eingeben.'))
+                : result == null || !result.isValid
+                    ? Center(child: Text(result?.errors.join('\n') ?? 'Ungültige Maße'))
+                    : PatternPreview(front: result.front!, back: result.back!),
+          ),
+        ],
+      ),
     );
   }
 }
