@@ -247,7 +247,8 @@ class PatternPdfExporter {
     required bool hasBottomNeighbor,
   }) {
     final b = StringBuffer();
-    b.writeln('<svg xmlns="http://www.w3.org/2000/svg" viewBox="$tileX $tileY $_tileWidthMm $_tileHeightMm">');
+    b.writeln('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $_tileWidthMm $_tileHeightMm">');
+    b.writeln('<g transform="translate(${-tileX} ${-tileY})">');
     b.writeln('<rect x="$tileX" y="$tileY" width="$_tileWidthMm" height="$_tileHeightMm" fill="white"/>');
     _writePieceSvg(b, back, backOffsetX, backOffsetY);
     _writePieceSvg(b, front, frontOffsetX, frontOffsetY);
@@ -260,6 +261,7 @@ class PatternPdfExporter {
       hasTopNeighbor: hasTopNeighbor,
       hasBottomNeighbor: hasBottomNeighbor,
     );
+    b.writeln('</g>');
     b.writeln('</svg>');
     return b.toString();
   }
