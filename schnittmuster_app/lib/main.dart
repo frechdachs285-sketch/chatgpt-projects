@@ -15,402 +15,117 @@ class SchnittmusterApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'Schnittmuster App',
         theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo),
-        home: const SkirtDebugPage(),
+        home: const SkirtPage(),
       );
 }
 
-class SkirtDebugPage extends StatefulWidget {
-  const SkirtDebugPage({super.key});
-
+class SkirtPage extends StatefulWidget {
+  const SkirtPage({super.key});
   @override
-  State<SkirtDebugPage> createState() => _SkirtDebugPageState();
+  State<SkirtPage> createState() => _SkirtPageState();
 }
 
-class _SkirtDebugPageState extends State<SkirtDebugPage> {
+class _SkirtPageState extends State<SkirtPage> {
   bool _seamAllowanceEnabled = true;
-
   final _waistController = TextEditingController(text: '76');
   final _hipController = TextEditingController(text: '100');
   final _hipDepthController = TextEditingController(text: '21');
   final _skirtLengthController = TextEditingController(text: '60');
-
-  Measurements _appliedMeasurements = const Measurements(
-    waist: 76,
-    hip: 100,
-    hipDepth: 21,
-    skirtLength: 60,
-  );
+  Measurements _appliedMeasurements = const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60);
   PatternResult? _result;
   String? _inputMessage;
   bool _inputsDirty = false;
 
   @override
-  void initState() {
-    super.initState();
-    _recalculate(_appliedMeasurements);
-  }
-
+  void initState() { super.initState(); _recalculate(_appliedMeasurements); }
   @override
-  void dispose() {
-    _waistController.dispose();
-    _hipController.dispose();
-    _hipDepthController.dispose();
-    _skirtLengthController.dispose();
-    super.dispose();
-  }
+  void dispose() { _waistController.dispose(); _hipController.dispose(); _hipDepthController.dispose(); _skirtLengthController.dispose(); super.dispose(); }
 
   double? _readNumber(TextEditingController controller) {
-    final value = controller.text.trim().replaceAll(',', '.');
-    final parsed = double.tryParse(value);
-    if (parsed == null || parsed <= 0) return null;
-    return parsed;
+    final parsed = double.tryParse(controller.text.trim().replaceAll(',', '.'));
+    return parsed == null || parsed <= 0 ? null : parsed;
   }
 
   Measurements? get _enteredMeasurements {
-    final waist = _readNumber(_waistController);
-    final hip = _readNumber(_hipController);
-    final hipDepth = _readNumber(_hipDepthController);
-    final skirtLength = _readNumber(_skirtLengthController);
-    if (waist == null || hip == null || hipDepth == null || skirtLength == null) {
-      return null;
-    }
-    return Measurements(
-      waist: waist,
-      hip: hip,
-      hipDepth: hipDepth,
-      skirtLength: skirtLength,
-    );
+    final waist=_readNumber(_waistController), hip=_readNumber(_hipController), hipDepth=_readNumber(_hipDepthController), skirtLength=_readNumber(_skirtLengthController);
+    if(waist==null||hip==null||hipDepth==null||skirtLength==null)return null;
+    return Measurements(waist:waist,hip:hip,hipDepth:hipDepth,skirtLength:skirtLength);
   }
 
   void _recalculate(Measurements measurements) {
-    try {
-      final next = SkirtPatternCalculator().calculate(
-        measurements,
-        const ConstructionValues(),
-        seamAllowance: SeamAllowanceSettings(enabled: _seamAllowanceEnabled),
-      );
-      setState(() {
-        _result = next;
-        if (next.isValid) {
-          _appliedMeasurements = measurements;
-          _inputMessage = null;
-          _inputsDirty = false;
-        } else {
-          _inputMessage = next.errors.join('\n');
-        }
-      });
-    } catch (error) {
-      setState(() {
-        _inputMessage = 'Mit diesen Maßen konnte noch kein gültiger Rock berechnet werden. Bitte die Eingaben prüfen.';
-      });
-    }
+    final next=SkirtPatternCalculator().calculate(measurements,const ConstructionValues(),seamAllowance:SeamAllowanceSettings(enabled:_seamAllowanceEnabled));
+    setState(() { _result=next; if(next.isValid){_appliedMeasurements=measurements;_inputMessage=null;_inputsDirty=false;}else{_inputMessage=next.errors.join('\n');} });
   }
 
   void _applyMeasurements() {
-    FocusScope.of(context).unfocus();
-    final measurements = _enteredMeasurements;
-    if (measurements == null) {
-      setState(() {
-        _inputMessage = 'Bitte alle vier Maße als positive Zahl eingeben.';
-      });
-      return;
-    }
+    FocusScope.of(context).unfocus(); final measurements=_enteredMeasurements;
+    if(measurements==null){setState(()=>_inputMessage='Bitte alle vier Maße als positive Zahl eingeben.');return;}
     _recalculate(measurements);
   }
 
   Future<void> _openPatternPdf() async {
-    final result = _result;
-    if (result == null || !result.isValid) return;
-
+    final result=_result;if(result==null||!result.isValid)return;
     try {
-      final bytes = await PatternPdfExporter().buildPatternPdf(
-        measurements: _appliedMeasurements,
-        seamAllowance: SeamAllowanceSettings(enabled: _seamAllowanceEnabled),
-      );
-      await Printing.layoutPdf(
-        name: 'Rock_Schnittmuster_1zu1.pdf',
-        onLayout: (_) async => bytes,
-      );
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PDF konnte für diese Maße nicht erstellt werden. Bitte Maße prüfen.')),
-      );
+      final bytes=await PatternPdfExporter().buildPatternPdf(measurements:_appliedMeasurements,seamAllowance:SeamAllowanceSettings(enabled:_seamAllowanceEnabled));
+      await Printing.layoutPdf(name:'Rock_Schnittmuster_1zu1.pdf',onLayout:(_)async=>bytes);
+    } catch (_) {
+      if(!mounted)return; ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('PDF konnte für diese Maße nicht erstellt werden. Bitte Maße prüfen.')));
     }
   }
 
-  Widget _measurementField(String label, TextEditingController controller) {
-    return TextField(
-      controller: controller,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      textInputAction: TextInputAction.next,
-      decoration: InputDecoration(
-        labelText: label,
-        suffixText: 'cm',
-        border: const OutlineInputBorder(),
-        isDense: true,
-      ),
-      onChanged: (_) {
-        if (!_inputsDirty) {
-          setState(() => _inputsDirty = true);
-        }
-      },
-      onSubmitted: (_) => _applyMeasurements(),
-    );
-  }
+  Widget _measurementField(String label,TextEditingController controller)=>TextField(
+    controller:controller,keyboardType:const TextInputType.numberWithOptions(decimal:true),textInputAction:TextInputAction.next,
+    decoration:InputDecoration(labelText:label,suffixText:'cm',border:const OutlineInputBorder(),isDense:true),
+    onChanged:(_){if(!_inputsDirty)setState(()=>_inputsDirty=true);},onSubmitted:(_)=>_applyMeasurements());
 
   @override
   Widget build(BuildContext context) {
-    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-    final result = _result;
-
+    final keyboardOpen=MediaQuery.viewInsetsOf(context).bottom>0,result=_result;
     return Scaffold(
-      appBar: AppBar(title: const Text('Rock v1 - Debug')),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 2.7,
-                children: [
-                  _measurementField('Taille', _waistController),
-                  _measurementField('Hüfte', _hipController),
-                  _measurementField('Hüfttiefe', _hipDepthController),
-                  _measurementField('Rocklänge', _skirtLengthController),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _applyMeasurements,
-                  icon: const Icon(Icons.check),
-                  label: Text(_inputsDirty ? 'Maße anwenden' : 'Maße sind angewendet'),
-                ),
-              ),
-            ),
-            SwitchListTile(
-              title: const Text('Nahtzugabe'),
-              subtitle: Text(_seamAllowanceEnabled ? 'Ein' : 'Aus'),
-              value: _seamAllowanceEnabled,
-              onChanged: (value) {
-                setState(() => _seamAllowanceEnabled = value);
-                _recalculate(_appliedMeasurements);
-              },
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: result != null && result.isValid ? _openPatternPdf : null,
-                  icon: const Icon(Icons.picture_as_pdf),
-                  label: const Text('Schnittmuster-PDF 1:1'),
-                ),
-              ),
-            ),
-            if (_inputMessage != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Text(
-                  _inputMessage!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            const SizedBox(height: 6),
-            Expanded(
-              child: keyboardOpen
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text(
-                          'Tastatur ist geöffnet. Maße fertig eingeben und anschließend „Maße anwenden“ tippen.',
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    )
-                  : result == null || !result.isValid
-                      ? const Center(child: Text('Bitte gültige Maße anwenden.'))
-                      : PatternPreview(front: result.front!, back: result.back!),
-            ),
-          ],
-        ),
-      ),
+      appBar:AppBar(title:const Text('Rock-Schnittmuster')),
+      body:SafeArea(child:Column(children:[
+        Padding(padding:const EdgeInsets.fromLTRB(16,8,16,4),child:GridView.count(crossAxisCount:2,shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisSpacing:10,mainAxisSpacing:10,childAspectRatio:2.7,children:[
+          _measurementField('Taille',_waistController),_measurementField('Hüfte',_hipController),_measurementField('Hüfttiefe',_hipDepthController),_measurementField('Rocklänge',_skirtLengthController)])),
+        Padding(padding:const EdgeInsets.symmetric(horizontal:16,vertical:4),child:SizedBox(width:double.infinity,child:OutlinedButton.icon(onPressed:_applyMeasurements,icon:const Icon(Icons.check),label:Text(_inputsDirty?'Maße anwenden':'Maße sind angewendet')))),
+        SwitchListTile(title:const Text('Nahtzugabe'),subtitle:Text(_seamAllowanceEnabled?'Ein':'Aus'),value:_seamAllowanceEnabled,onChanged:(value){setState(()=>_seamAllowanceEnabled=value);_recalculate(_appliedMeasurements);}),
+        Padding(padding:const EdgeInsets.symmetric(horizontal:16),child:SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:result!=null&&result.isValid?_openPatternPdf:null,icon:const Icon(Icons.picture_as_pdf),label:const Text('Schnittmuster-PDF 1:1')))),
+        if(_inputMessage!=null)Padding(padding:const EdgeInsets.fromLTRB(16,8,16,0),child:Text(_inputMessage!,style:TextStyle(color:Theme.of(context).colorScheme.error),textAlign:TextAlign.center)),
+        const SizedBox(height:6),
+        Expanded(child:keyboardOpen?const Center(child:Padding(padding:EdgeInsets.all(24),child:Text('Maße fertig eingeben und anschließend „Maße anwenden“ tippen.',textAlign:TextAlign.center))):result==null||!result.isValid?const Center(child:Text('Bitte gültige Maße anwenden.')):PatternPreview(front:result.front!,back:result.back!)),
+      ])),
     );
   }
 }
 
 class PatternPreview extends StatelessWidget {
-  final PatternPiece front;
-  final PatternPiece back;
-  const PatternPreview({super.key, required this.front, required this.back});
+  final PatternPiece front,back;
+  const PatternPreview({super.key,required this.front,required this.back});
   @override
-  Widget build(BuildContext context) => LayoutBuilder(builder: (context, constraints) {
-        final width = constraints.maxWidth.isFinite ? constraints.maxWidth : 700.0;
-        final height = constraints.maxHeight.isFinite ? constraints.maxHeight : 700.0;
-        return InteractiveViewer(
-          minScale: 0.5,
-          maxScale: 5,
-          boundaryMargin: const EdgeInsets.all(100),
-          child: CustomPaint(size: Size(width, height), painter: PatternPreviewPainter(front: front, back: back)),
-        );
-      });
+  Widget build(BuildContext context)=>LayoutBuilder(builder:(context,constraints){
+    final width=constraints.maxWidth.isFinite?constraints.maxWidth:700.0,height=constraints.maxHeight.isFinite?constraints.maxHeight:700.0;
+    return InteractiveViewer(minScale:0.5,maxScale:5,boundaryMargin:const EdgeInsets.all(100),child:CustomPaint(size:Size(width,height),painter:PatternPreviewPainter(front:front,back:back)));
+  });
 }
 
-class _Bounds {
-  final double minX, minY, maxX, maxY;
-  const _Bounds(this.minX, this.minY, this.maxX, this.maxY);
-  double get width => maxX - minX;
-  double get height => maxY - minY;
-}
+class _Bounds { final double minX,minY,maxX,maxY; const _Bounds(this.minX,this.minY,this.maxX,this.maxY); double get width=>maxX-minX; double get height=>maxY-minY; }
 
 class PatternPreviewPainter extends CustomPainter {
-  final PatternPiece front, back;
-  PatternPreviewPainter({required this.front, required this.back});
-
-  _Bounds _bounds(PatternPiece piece) {
-    final points = <PatternPoint>[
-      ...piece.points.values,
-      for (final dart in piece.darts) ...[dart.leg1, dart.leg2, dart.apex],
-      for (final segment in piece.outline.segments) if (segment is BezierSegment) ...[segment.control1, segment.control2],
-      if (piece.cuttingOutline != null)
-        for (final segment in piece.cuttingOutline!.segments) ...[
-          segment.start,
-          segment.end,
-          if (segment is BezierSegment) ...[segment.control1, segment.control2],
-        ],
-      if (piece.grainline != null) ...[piece.grainline!.start, piece.grainline!.end],
-      for (final notch in piece.notches) notch.position,
-      for (final label in piece.labels) label.position,
-    ];
-    var minX = points.first.x, minY = points.first.y, maxX = points.first.x, maxY = points.first.y;
-    for (final point in points.skip(1)) {
-      minX = math.min(minX, point.x); minY = math.min(minY, point.y);
-      maxX = math.max(maxX, point.x); maxY = math.max(maxY, point.y);
-    }
-    return _Bounds(minX, minY, maxX, maxY);
+  final PatternPiece front,back; PatternPreviewPainter({required this.front,required this.back});
+  _Bounds _bounds(PatternPiece piece){
+    final points=<PatternPoint>[...piece.points.values,for(final dart in piece.darts)...[dart.leg1,dart.leg2,dart.apex],for(final segment in piece.outline.segments)if(segment is BezierSegment)...[segment.control1,segment.control2],if(piece.cuttingOutline!=null)for(final segment in piece.cuttingOutline!.segments)...[segment.start,segment.end,if(segment is BezierSegment)...[segment.control1,segment.control2]],if(piece.grainline!=null)...[piece.grainline!.start,piece.grainline!.end],for(final notch in piece.notches)notch.position,for(final label in piece.labels)label.position];
+    var minX=points.first.x,minY=points.first.y,maxX=points.first.x,maxY=points.first.y;for(final point in points.skip(1)){minX=math.min(minX,point.x);minY=math.min(minY,point.y);maxX=math.max(maxX,point.x);maxY=math.max(maxY,point.y);}return _Bounds(minX,minY,maxX,maxY);
   }
-
-  Offset _p(PatternPoint point, _Bounds bounds, Offset origin, double scale) => Offset(
-        origin.dx + (point.x - bounds.minX) * scale,
-        origin.dy + (point.y - bounds.minY) * scale,
-      );
-
+  Offset _p(PatternPoint point,_Bounds bounds,Offset origin,double scale)=>Offset(origin.dx+(point.x-bounds.minX)*scale,origin.dy+(point.y-bounds.minY)*scale);
   @override
-  void paint(Canvas canvas, Size size) {
-    const padding = 24.0, gap = 28.0;
-    final backBounds = _bounds(back), frontBounds = _bounds(front);
-    final totalPatternWidth = backBounds.width + frontBounds.width;
-    final tallestPattern = math.max(backBounds.height, frontBounds.height);
-    final availableWidth = math.max(1.0, size.width - padding * 2 - gap);
-    final availableHeight = math.max(1.0, size.height - padding * 2);
-    final scale = math.min(availableWidth / totalPatternWidth, availableHeight / tallestPattern);
-    final usedWidth = totalPatternWidth * scale + gap;
-    final startX = math.max(padding, (size.width - usedWidth) / 2), startY = padding;
-    final backOrigin = Offset(startX, startY);
-    final frontOrigin = Offset(startX + backBounds.width * scale + gap, startY);
-    final cuttingPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 2.2;
-    final outlinePaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.2;
-    final debugPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 0.8;
-    final helperPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 0.6;
-    final markerPaint = Paint()..style = PaintingStyle.fill;
-    final grainlinePaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.2;
-    final notchPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.5;
-    _drawPiece(canvas, back, backBounds, backOrigin, scale, cuttingPaint, outlinePaint, debugPaint, helperPaint, markerPaint, grainlinePaint, notchPaint);
-    _drawPiece(canvas, front, frontBounds, frontOrigin, scale, cuttingPaint, outlinePaint, debugPaint, helperPaint, markerPaint, grainlinePaint, notchPaint);
+  void paint(Canvas canvas,Size size){
+    const padding=24.0,gap=28.0;final bb=_bounds(back),fb=_bounds(front);final total=bb.width+fb.width,tall=math.max(bb.height,fb.height);final aw=math.max(1.0,size.width-padding*2-gap),ah=math.max(1.0,size.height-padding*2);final scale=math.min(aw/total,ah/tall);final used=total*scale+gap,startX=math.max(padding,(size.width-used)/2),startY=padding;final bo=Offset(startX,startY),fo=Offset(startX+bb.width*scale+gap,startY);
+    final cutting=Paint()..style=PaintingStyle.stroke..strokeWidth=2.2,outline=Paint()..style=PaintingStyle.stroke..strokeWidth=1.2,grain=Paint()..style=PaintingStyle.stroke..strokeWidth=1.2,notch=Paint()..style=PaintingStyle.stroke..strokeWidth=1.5,dart=Paint()..style=PaintingStyle.stroke..strokeWidth=1.0;
+    _drawPiece(canvas,back,bb,bo,scale,cutting,outline,grain,notch,dart);_drawPiece(canvas,front,fb,fo,scale,cutting,outline,grain,notch,dart);
   }
-
-  void _drawPatternPath(Canvas canvas, PatternPath patternPath, _Bounds bounds, Offset origin, double scale, Paint paint) {
-    if (patternPath.segments.isEmpty) return;
-    final first = _p(patternPath.segments.first.start, bounds, origin, scale);
-    final path = Path()..moveTo(first.dx, first.dy);
-    for (final segment in patternPath.segments) {
-      if (segment is BezierSegment) {
-        final c1 = _p(segment.control1, bounds, origin, scale);
-        final c2 = _p(segment.control2, bounds, origin, scale);
-        final end = _p(segment.end, bounds, origin, scale);
-        path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
-      } else {
-        final end = _p(segment.end, bounds, origin, scale);
-        path.lineTo(end.dx, end.dy);
-      }
-    }
-    canvas.drawPath(path, paint);
-  }
-
-  void _drawHelperLine(Canvas canvas, PatternPoint start, PatternPoint end, _Bounds bounds, Offset origin, double scale, Paint paint) =>
-      canvas.drawLine(_p(start, bounds, origin, scale), _p(end, bounds, origin, scale), paint);
-
-  void _drawConstructionLines(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint paint) {
-    final p = piece.points;
-    if (piece.id == 'skirt_back') {
-      _drawHelperLine(canvas,p['P1']!,p['P9']!,bounds,origin,scale,paint); _drawHelperLine(canvas,p['P5']!,p['P7']!,bounds,origin,scale,paint);
-      _drawHelperLine(canvas,p['P7']!,p['P8']!,bounds,origin,scale,paint); _drawHelperLine(canvas,p['P11']!,p['P13']!,bounds,origin,scale,paint); _drawHelperLine(canvas,p['P12']!,p['P14']!,bounds,origin,scale,paint);
-    } else {
-      _drawHelperLine(canvas,p['P15']!,p['P2']!,bounds,origin,scale,paint); _drawHelperLine(canvas,p['P7']!,p['P6']!,bounds,origin,scale,paint);
-      _drawHelperLine(canvas,p['P7']!,p['P8']!,bounds,origin,scale,paint); _drawHelperLine(canvas,p['P17']!,p['P18']!,bounds,origin,scale,paint);
-    }
-  }
-
-  void _drawGrainline(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint paint) {
-    final g = piece.grainline; if (g == null) return;
-    final start = _p(g.start,bounds,origin,scale), end = _p(g.end,bounds,origin,scale);
-    canvas.drawLine(start,end,paint);
-    const length=7.0,width=4.0;
-    void arrow(Offset tip,double direction) {
-      final baseY=tip.dy+direction*length;
-      canvas.drawPath(Path()..moveTo(tip.dx,tip.dy)..lineTo(tip.dx-width,baseY)..moveTo(tip.dx,tip.dy)..lineTo(tip.dx+width,baseY),paint);
-    }
-    arrow(start,1); arrow(end,-1);
-  }
-
-  void _drawNotches(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint paint) {
-    const depth=7.0,halfWidth=4.0;
-    for(final notch in piece.notches){
-      final tip=_p(notch.position,bounds,origin,scale); final outward=piece.id=='skirt_back'?1.0:-1.0; final baseX=tip.dx+outward*depth;
-      canvas.drawPath(Path()..moveTo(tip.dx,tip.dy)..lineTo(baseX,tip.dy-halfWidth)..moveTo(tip.dx,tip.dy)..lineTo(baseX,tip.dy+halfWidth),paint);
-    }
-  }
-
-  void _drawLabels(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale) {
-    for (final label in piece.labels) {
-      final pos = _p(label.position, bounds, origin, scale);
-      final visibleText = label.text.replaceAll('Rueckenteil', 'Rückenteil');
-      final tp = TextPainter(
-        text: TextSpan(text: visibleText, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black)),
-        textDirection: TextDirection.ltr,
-        textAlign: TextAlign.center,
-      )..layout();
-      tp.paint(canvas, Offset(pos.dx - tp.width / 2, pos.dy - tp.height / 2));
-    }
-  }
-
-  void _drawPiece(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint cuttingPaint, Paint outlinePaint, Paint debugPaint, Paint helperPaint, Paint markerPaint, Paint grainlinePaint, Paint notchPaint) {
-    if(piece.outline.segments.isEmpty)return;
-    _drawConstructionLines(canvas,piece,bounds,origin,scale,helperPaint);
-    if (piece.cuttingOutline != null) {
-      _drawPatternPath(canvas, piece.cuttingOutline!, bounds, origin, scale, cuttingPaint);
-    }
-    _drawPatternPath(canvas, piece.outline, bounds, origin, scale, outlinePaint);
-    _drawGrainline(canvas,piece,bounds,origin,scale,grainlinePaint); _drawNotches(canvas,piece,bounds,origin,scale,notchPaint); _drawLabels(canvas,piece,bounds,origin,scale);
-    for(final dart in piece.darts) {
-      canvas.drawLine(_p(dart.center,bounds,origin,scale),_p(dart.apex,bounds,origin,scale),debugPaint);
-    }
-    for(final entry in piece.points.entries){
-      final pos=_p(entry.value,bounds,origin,scale);canvas.drawCircle(pos,2.5,markerPaint);
-      final tp=TextPainter(text:TextSpan(text:entry.key,style:const TextStyle(fontSize:10,color:Colors.black)),textDirection:TextDirection.ltr)..layout();tp.paint(canvas,pos+const Offset(4,-12));
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant PatternPreviewPainter oldDelegate)=>true;
+  void _drawPath(Canvas canvas,PatternPath pp,_Bounds b,Offset o,double s,Paint paint){if(pp.segments.isEmpty)return;final first=_p(pp.segments.first.start,b,o,s);final path=Path()..moveTo(first.dx,first.dy);for(final seg in pp.segments){if(seg is BezierSegment){final c1=_p(seg.control1,b,o,s),c2=_p(seg.control2,b,o,s),e=_p(seg.end,b,o,s);path.cubicTo(c1.dx,c1.dy,c2.dx,c2.dy,e.dx,e.dy);}else{final e=_p(seg.end,b,o,s);path.lineTo(e.dx,e.dy);}}canvas.drawPath(path,paint);}
+  void _drawGrain(Canvas canvas,PatternPiece piece,_Bounds b,Offset o,double s,Paint paint){final g=piece.grainline;if(g==null)return;final a=_p(g.start,b,o,s),z=_p(g.end,b,o,s);canvas.drawLine(a,z,paint);const l=7.0,w=4.0;void arrow(Offset tip,double d){final by=tip.dy+d*l;canvas.drawPath(Path()..moveTo(tip.dx,tip.dy)..lineTo(tip.dx-w,by)..moveTo(tip.dx,tip.dy)..lineTo(tip.dx+w,by),paint);}arrow(a,1);arrow(z,-1);}
+  void _drawNotches(Canvas canvas,PatternPiece piece,_Bounds b,Offset o,double s,Paint paint){const depth=7.0,half=4.0;for(final n in piece.notches){final tip=_p(n.position,b,o,s),out=piece.id=='skirt_back'?1.0:-1.0,bx=tip.dx+out*depth;canvas.drawPath(Path()..moveTo(tip.dx,tip.dy)..lineTo(bx,tip.dy-half)..moveTo(tip.dx,tip.dy)..lineTo(bx,tip.dy+half),paint);}}
+  void _drawLabels(Canvas canvas,PatternPiece piece,_Bounds b,Offset o,double s){for(final label in piece.labels){final pos=_p(label.position,b,o,s),text=label.text.replaceAll('Rueckenteil','Rückenteil');final tp=TextPainter(text:TextSpan(text:text,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w600,color:Colors.black)),textDirection:TextDirection.ltr,textAlign:TextAlign.center)..layout();tp.paint(canvas,Offset(pos.dx-tp.width/2,pos.dy-tp.height/2));}}
+  void _drawPiece(Canvas canvas,PatternPiece piece,_Bounds b,Offset o,double s,Paint cutting,Paint outline,Paint grain,Paint notch,Paint dart){if(piece.outline.segments.isEmpty)return;if(piece.cuttingOutline!=null)_drawPath(canvas,piece.cuttingOutline!,b,o,s,cutting);_drawPath(canvas,piece.outline,b,o,s,outline);for(final d in piece.darts){canvas.drawLine(_p(d.leg1,b,o,s),_p(d.apex,b,o,s),dart);canvas.drawLine(_p(d.apex,b,o,s),_p(d.leg2,b,o,s),dart);}_drawGrain(canvas,piece,b,o,s,grain);_drawNotches(canvas,piece,b,o,s,notch);_drawLabels(canvas,piece,b,o,s);}
+  @override bool shouldRepaint(covariant PatternPreviewPainter oldDelegate)=>true;
 }
