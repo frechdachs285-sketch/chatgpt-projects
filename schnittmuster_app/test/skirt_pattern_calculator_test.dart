@@ -72,6 +72,41 @@ void main() {
     expect(front.points['P17']!.distanceTo(front.points['P18']!), closeTo(10.0, 0.0001));
   });
 
+  test('Nahtzugabe kann ein- und ausgeschaltet werden ohne Grundschnitt zu veraendern', () {
+    const measurements = Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60);
+    const construction = ConstructionValues();
+    final calculator = SkirtPatternCalculator();
+
+    final enabled = calculator.calculate(
+      measurements,
+      construction,
+      seamAllowance: const SeamAllowanceSettings(enabled: true),
+    );
+    final disabled = calculator.calculate(
+      measurements,
+      construction,
+      seamAllowance: const SeamAllowanceSettings(enabled: false),
+    );
+
+    expect(enabled.isValid, isTrue);
+    expect(disabled.isValid, isTrue);
+    expect(enabled.back!.cuttingOutline, isNotNull);
+    expect(enabled.front!.cuttingOutline, isNotNull);
+    expect(disabled.back!.cuttingOutline, isNull);
+    expect(disabled.front!.cuttingOutline, isNull);
+
+    expect(disabled.back!.outline.segments.length, enabled.back!.outline.segments.length);
+    expect(disabled.front!.outline.segments.length, enabled.front!.outline.segments.length);
+    expect(waistLength(disabled.back!), closeTo(waistLength(enabled.back!), 1e-9));
+    expect(waistLength(disabled.front!), closeTo(waistLength(enabled.front!), 1e-9));
+    for (final key in enabled.back!.points.keys) {
+      expect(disabled.back!.points[key]!.distanceTo(enabled.back!.points[key]!), lessThan(1e-9));
+    }
+    for (final key in enabled.front!.points.keys) {
+      expect(disabled.front!.points[key]!.distanceTo(enabled.front!.points[key]!), lessThan(1e-9));
+    }
+  });
+
   test('Abweichende Taillenzugabe wird durchgaengig verwendet', () {
     const measurements = Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60);
     const construction = ConstructionValues(waistEase: 2.0);
