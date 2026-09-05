@@ -73,6 +73,34 @@ class Dart {
   });
 }
 
+class Grainline {
+  final PatternPoint start;
+  final PatternPoint end;
+
+  const Grainline({required this.start, required this.end});
+}
+
+enum NotchType { single, double }
+
+class PatternNotch {
+  final PatternPoint position;
+  final NotchType type;
+  final String role;
+
+  const PatternNotch({
+    required this.position,
+    this.type = NotchType.single,
+    required this.role,
+  });
+}
+
+class PatternLabel {
+  final PatternPoint position;
+  final String text;
+
+  const PatternLabel({required this.position, required this.text});
+}
+
 sealed class PathSegment {
   PatternPoint get start;
   PatternPoint get end;
@@ -126,6 +154,9 @@ class PatternPiece {
   final Map<String, PatternPoint> points;
   final PatternPath outline;
   final List<Dart> darts;
+  final Grainline? grainline;
+  final List<PatternNotch> notches;
+  final List<PatternLabel> labels;
 
   const PatternPiece({
     required this.id,
@@ -133,6 +164,9 @@ class PatternPiece {
     required this.points,
     required this.outline,
     this.darts = const [],
+    this.grainline,
+    this.notches = const [],
+    this.labels = const [],
   });
 }
 
