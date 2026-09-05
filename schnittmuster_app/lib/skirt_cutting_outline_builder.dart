@@ -17,16 +17,16 @@ class SkirtCuttingOutlineBuilder {
     required PatternPoint centerHemPoint,
     required PatternPoint centerWaistPoint,
     required SeamAllowanceSettings settings,
-    int curveSamples = 200,
+    double curveMaxDeviation = 0.01,
   }) {
     if (!settings.enabled) {
       throw ArgumentError('Nahtzugabe ist deaktiviert.');
     }
-    if (curveSamples < 2) {
+    if (!curveMaxDeviation.isFinite || curveMaxDeviation <= 0) {
       throw ArgumentError.value(
-        curveSamples,
-        'curveSamples',
-        'muss mindestens 2 sein',
+        curveMaxDeviation,
+        'curveMaxDeviation',
+        'muss endlich und groesser als 0 sein',
       );
     }
 
@@ -35,14 +35,14 @@ class SkirtCuttingOutlineBuilder {
       closedWaist: closedWaist,
       dartsFromCenterToSide: dartsFromCenterToSide,
       distance: settings.waist,
-      samples: curveSamples,
+      maxDeviation: curveMaxDeviation,
     );
 
     final sideCurvePoints = _offsetCurve(
       sideCurve,
       settings.side,
       leftSide: !isBack,
-      samples: curveSamples,
+      maxDeviation: curveMaxDeviation,
     );
     final lowerSidePoints = _offsetLine(
       LineSegment(hipPoint, sideHemPoint),
@@ -77,7 +77,7 @@ class SkirtCuttingOutlineBuilder {
     required SegmentedWaistCurveResult closedWaist,
     required List<Dart> dartsFromCenterToSide,
     required double distance,
-    required int samples,
+    required double maxDeviation,
   }) {
     final closedOffsetSegments = [
       for (final curve in closedWaist.segments)
@@ -85,7 +85,7 @@ class SkirtCuttingOutlineBuilder {
           curve,
           distance,
           leftSide: !isBack,
-          samples: samples,
+          maxDeviation: maxDeviation,
         ),
     ];
 
@@ -111,13 +111,13 @@ class SkirtCuttingOutlineBuilder {
     CubicBezierCurve curve,
     double distance, {
     required bool leftSide,
-    required int samples,
+    required double maxDeviation,
   }) {
     if (leftSide) {
-      return SeamAllowanceGeometry.offsetBezierSamples(
+      return SeamAllowanceGeometry.offsetBezierAdaptive(
         curve,
         distance,
-        samples: samples,
+        maxDeviation: maxDeviation,
       );
     }
 
@@ -127,10 +127,10 @@ class SkirtCuttingOutlineBuilder {
       control2: curve.control1,
       end: curve.start,
     );
-    return SeamAllowanceGeometry.offsetBezierSamples(
+    return SeamAllowanceGeometry.offsetBezierAdaptive(
       reversed,
       distance,
-      samples: samples,
+      maxDeviation: maxDeviation,
     ).reversed.toList();
   }
 
