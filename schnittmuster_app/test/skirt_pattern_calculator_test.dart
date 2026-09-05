@@ -19,6 +19,24 @@ void main() {
     });
   }
 
+  void expectClosedCuttingOutline(PatternPiece piece) {
+    final path = piece.cuttingOutline;
+    expect(path, isNotNull);
+    expect(path!.segments, isNotEmpty);
+    final lines = path.segments.whereType<LineSegment>().toList();
+    expect(lines.length, path.segments.length);
+    expect(lines.first.start.distanceTo(lines.last.end), lessThan(0.000001));
+    for (var i = 1; i < lines.length; i++) {
+      expect(lines[i - 1].end.distanceTo(lines[i].start), lessThan(0.000001));
+    }
+    for (final line in lines) {
+      expect(line.start.x.isFinite, isTrue);
+      expect(line.start.y.isFinite, isTrue);
+      expect(line.end.x.isFinite, isTrue);
+      expect(line.end.y.isFinite, isTrue);
+    }
+  }
+
   void expectProductionGeometry(Measurements measurements, ConstructionValues construction) {
     final result = SkirtPatternCalculator().calculate(measurements, construction);
     expect(result.isValid, isTrue);
@@ -182,6 +200,45 @@ void main() {
     ];
     for (final measurements in cases) {
       expectProductionGeometry(measurements, construction);
+    }
+  });
+
+  test('Adaptive Schneidelinien bleiben bei mehreren Koerpermassen geschlossen und endlich', () {
+    const construction = ConstructionValues();
+    const cases = [
+      Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60),
+      Measurements(waist: 68, hip: 94, hipDepth: 20, skirtLength: 55),
+      Measurements(waist: 84, hip: 108, hipDepth: 22, skirtLength: 65),
+      Measurements(waist: 92, hip: 116, hipDepth: 24, skirtLength: 72),
+    ];
+
+    for (final measurements in cases) {
+      final result = SkirtPatternCalculator().calculate(measurements, construction);
+      expect(result.isValid, isTrue);
+      expectClosedCuttingOutline(result.back!);
+      expectClosedCuttingOutline(result.front!);
+
+      final frontLines = result.front!.cuttingOutline!.segments.whereType<LineSegment>().toList();
+      final foldX = (measurements.hip + construction.hipEase) / 2;
+      final foldSegments = frontLines.where(
+        (line) =>
+            (line.start.x - foldX).abs() < 0.000001 &&
+            (line.end.x - foldX).abs() < 0.000001,
+      );
+      expect(foldSegments, isNotEmpty);
+
+      final hemY = measurements.skirtLength + const SeamAllowanceSettings().hem;
+      final backHemPoints = <PatternPoint>[
+        for (final line in result.back!.cuttingOutline!.segments.whereType<LineSegment>()) ...[
+          line.start,
+          line.end,
+        ],
+      ].where((point) => (point.y - hemY).abs() < 0.000001);
+      final frontHemPoints = <PatternPoint>[
+        for (final line in frontLines) ...[line.start, line.end],
+      ].where((point) => (point.y - hemY).abs() < 0.000001);
+      expect(backHemPoints.length, greaterThanOrEqualTo(2));
+      expect(frontHemPoints.length, greaterThanOrEqualTo(2));
     }
   });
 
