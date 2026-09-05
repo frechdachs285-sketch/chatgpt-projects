@@ -9,92 +9,47 @@ void main() {
       const PatternPoint(0, 0),
       const PatternPoint(10, 0),
     );
-
     final offset = SeamAllowanceGeometry.offsetLine(original, 1.5);
-
     expect(offset.start.x, closeTo(0, 0.000001));
     expect(offset.end.x, closeTo(10, 0.000001));
     expect(offset.start.y, closeTo(1.5, 0.000001));
     expect(offset.end.y, closeTo(1.5, 0.000001));
-    expect(
-      SeamAllowanceGeometry.parallelDistance(original, offset),
-      closeTo(1.5, 0.000001),
-    );
+    expect(SeamAllowanceGeometry.parallelDistance(original, offset), closeTo(1.5, 0.000001));
   });
 
   test('Vertikale Linie wird exakt parallel versetzt', () {
-    final original = LineSegment(
-      const PatternPoint(2, 3),
-      const PatternPoint(2, 13),
-    );
-
+    final original = LineSegment(const PatternPoint(2, 3), const PatternPoint(2, 13));
     final offset = SeamAllowanceGeometry.offsetLine(original, 3.0);
-
     expect(offset.start.x, closeTo(-1.0, 0.000001));
     expect(offset.end.x, closeTo(-1.0, 0.000001));
     expect(offset.start.y, closeTo(3, 0.000001));
     expect(offset.end.y, closeTo(13, 0.000001));
-    expect(
-      SeamAllowanceGeometry.parallelDistance(original, offset),
-      closeTo(3.0, 0.000001),
-    );
+    expect(SeamAllowanceGeometry.parallelDistance(original, offset), closeTo(3.0, 0.000001));
   });
 
   test('Diagonale Linie behaelt Richtung und exakten Abstand', () {
-    final original = LineSegment(
-      const PatternPoint(0, 0),
-      const PatternPoint(3, 4),
-    );
-
+    final original = LineSegment(const PatternPoint(0, 0), const PatternPoint(3, 4));
     final offset = SeamAllowanceGeometry.offsetLine(original, 2.0);
-
-    final originalDx = original.end.x - original.start.x;
-    final originalDy = original.end.y - original.start.y;
-    final offsetDx = offset.end.x - offset.start.x;
-    final offsetDy = offset.end.y - offset.start.y;
-
-    expect(offsetDx, closeTo(originalDx, 0.000001));
-    expect(offsetDy, closeTo(originalDy, 0.000001));
-    expect(
-      SeamAllowanceGeometry.parallelDistance(original, offset),
-      closeTo(2.0, 0.000001),
-    );
+    expect(offset.end.x - offset.start.x, closeTo(3, 0.000001));
+    expect(offset.end.y - offset.start.y, closeTo(4, 0.000001));
+    expect(SeamAllowanceGeometry.parallelDistance(original, offset), closeTo(2.0, 0.000001));
   });
 
   test('Null-Zugabe laesst die Linie unveraendert', () {
-    final original = LineSegment(
-      const PatternPoint(1, 2),
-      const PatternPoint(7, 9),
-    );
-
+    final original = LineSegment(const PatternPoint(1, 2), const PatternPoint(7, 9));
     final offset = SeamAllowanceGeometry.offsetLine(original, 0.0);
-
     expect(offset.start.distanceTo(original.start), lessThan(0.000001));
     expect(offset.end.distanceTo(original.end), lessThan(0.000001));
   });
 
   test('Negative Zugabe wird abgewiesen', () {
-    final original = LineSegment(
-      const PatternPoint(0, 0),
-      const PatternPoint(10, 0),
-    );
-
-    expect(
-      () => SeamAllowanceGeometry.offsetLine(original, -1.0),
-      throwsArgumentError,
-    );
+    final original = LineSegment(const PatternPoint(0, 0), const PatternPoint(10, 0));
+    expect(() => SeamAllowanceGeometry.offsetLine(original, -1.0), throwsArgumentError);
   });
 
   test('Null-Linie wird abgewiesen', () {
-    final original = LineSegment(
-      const PatternPoint(4, 4),
-      const PatternPoint(4, 4),
-    );
-
-    expect(
-      () => SeamAllowanceGeometry.offsetLine(original, 1.5),
-      throwsArgumentError,
-    );
+    final original = LineSegment(const PatternPoint(4, 4), const PatternPoint(4, 4));
+    expect(() => SeamAllowanceGeometry.offsetLine(original, 1.5), throwsArgumentError);
   });
 
   test('Bezier-Stuetzpunkte liegen exakt 1,5 cm auf der Normalen', () {
@@ -106,28 +61,16 @@ void main() {
     );
     const samples = 200;
     const distance = 1.5;
-
-    final offset = SeamAllowanceGeometry.offsetBezierSamples(
-      curve,
-      distance,
-      samples: samples,
-    );
-
+    final offset = SeamAllowanceGeometry.offsetBezierSamples(curve, distance, samples: samples);
     expect(offset.length, samples + 1);
-
     for (var i = 0; i <= samples; i++) {
       final t = i / samples;
-      expect(
-        SeamAllowanceGeometry.sampleOffsetDistance(curve, offset[i], t),
-        closeTo(distance, 0.000001),
-        reason: 'Abstand bei t=$t',
-      );
-
+      expect(SeamAllowanceGeometry.sampleOffsetDistance(curve, offset[i], t), closeTo(distance, 0.000001));
       final base = curve.pointAt(t);
       final tangent = curve.derivativeAt(t);
       final offsetVector = offset[i] - base;
       final dot = tangent.x * offsetVector.x + tangent.y * offsetVector.y;
-      expect(dot, closeTo(0, 0.000001), reason: 'Normale bei t=$t');
+      expect(dot, closeTo(0, 0.000001));
     }
   });
 
@@ -139,18 +82,9 @@ void main() {
       end: PatternPoint(6, 4),
     );
     const samples = 40;
-
-    final offset = SeamAllowanceGeometry.offsetBezierSamples(
-      curve,
-      0,
-      samples: samples,
-    );
-
+    final offset = SeamAllowanceGeometry.offsetBezierSamples(curve, 0, samples: samples);
     for (var i = 0; i <= samples; i++) {
-      expect(
-        offset[i].distanceTo(curve.pointAt(i / samples)),
-        lessThan(0.000001),
-      );
+      expect(offset[i].distanceTo(curve.pointAt(i / samples)), lessThan(0.000001));
     }
   });
 
@@ -161,14 +95,71 @@ void main() {
       control2: PatternPoint(4, 4),
       end: PatternPoint(6, 4),
     );
+    expect(() => SeamAllowanceGeometry.offsetBezierSamples(curve, -1, samples: 20), throwsArgumentError);
+    expect(() => SeamAllowanceGeometry.offsetBezierSamples(curve, 1.5, samples: 0), throwsArgumentError);
+  });
 
-    expect(
-      () => SeamAllowanceGeometry.offsetBezierSamples(curve, -1, samples: 20),
-      throwsArgumentError,
+  test('1,5 cm Seitenzugabe trifft 3,0 cm Saumzugabe exakt', () {
+    // Directed clockwise around a simple skirt corner: side goes down,
+    // hem goes left. Left-side offsets therefore point outside.
+    final side = SeamAllowanceGeometry.offsetLine(
+      LineSegment(const PatternPoint(10, 0), const PatternPoint(10, 60)),
+      1.5,
     );
+    final hem = SeamAllowanceGeometry.offsetLine(
+      LineSegment(const PatternPoint(10, 60), const PatternPoint(0, 60)),
+      3.0,
+    );
+
+    final corner = SeamAllowanceGeometry.joinOffsetEdges(
+      [side.start, side.end],
+      [hem.start, hem.end],
+    );
+
+    expect(corner.x, closeTo(11.5, 0.000001));
+    expect(corner.y, closeTo(63.0, 0.000001));
+    expect(SeamAllowanceGeometry.parallelDistance(
+      LineSegment(const PatternPoint(10, 0), const PatternPoint(10, 60)), side), closeTo(1.5, 0.000001));
+    expect(SeamAllowanceGeometry.parallelDistance(
+      LineSegment(const PatternPoint(10, 60), const PatternPoint(0, 60)), hem), closeTo(3.0, 0.000001));
+  });
+
+  test('0 cm Stoffbruch bleibt exakt auf vorderer Mitte', () {
+    final fold = LineSegment(const PatternPoint(0, 60), const PatternPoint(0, 0));
+    final offsetFold = SeamAllowanceGeometry.offsetLine(fold, 0.0);
+
+    expect(offsetFold.start.x, closeTo(0, 0.000001));
+    expect(offsetFold.end.x, closeTo(0, 0.000001));
+    expect(offsetFold.start.distanceTo(fold.start), lessThan(0.000001));
+    expect(offsetFold.end.distanceTo(fold.end), lessThan(0.000001));
+  });
+
+  test('3,0 cm Saum endet durch Schnitt exakt am 0-cm-Stoffbruch', () {
+    final hem = SeamAllowanceGeometry.offsetLine(
+      LineSegment(const PatternPoint(10, 60), const PatternPoint(0, 60)),
+      3.0,
+    );
+    final fold = SeamAllowanceGeometry.offsetLine(
+      LineSegment(const PatternPoint(0, 60), const PatternPoint(0, 0)),
+      0.0,
+    );
+
+    final corner = SeamAllowanceGeometry.joinOffsetEdges(
+      [hem.start, hem.end],
+      [fold.start, fold.end],
+    );
+
+    expect(corner.x, closeTo(0, 0.000001));
+    expect(corner.y, closeTo(63.0, 0.000001));
+  });
+
+  test('Parallele Offset-Kanten erzeugen keinen erfundenen Eckpunkt', () {
     expect(
-      () => SeamAllowanceGeometry.offsetBezierSamples(curve, 1.5, samples: 0),
-      throwsArgumentError,
+      () => SeamAllowanceGeometry.joinOffsetEdges(
+        [const PatternPoint(0, 1), const PatternPoint(10, 1)],
+        [const PatternPoint(0, 2), const PatternPoint(10, 2)],
+      ),
+      throwsStateError,
     );
   });
 }
