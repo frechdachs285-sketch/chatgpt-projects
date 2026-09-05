@@ -322,7 +322,7 @@ class PatternPdfExporter {
     if (length < 0.01) return null;
     final angle = math.atan2(dy, dx);
 
-    final overlap = math.min(0.30, length / 4);
+    final overlap = math.min(1.20, length / 2);
     final ux = dx / length;
     final uy = dy / length;
     final startX = clipped.x1 - ux * overlap;
