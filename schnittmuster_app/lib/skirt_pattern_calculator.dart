@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'pattern_geometry.dart';
 import 'pattern_models.dart';
 import 'segmented_waist_curve.dart';
+import 'skirt_cutting_outline_builder.dart';
 import 'waist_curve_unfolder.dart';
 
 class MeasurementsValidator {
@@ -39,6 +40,31 @@ class SkirtPatternCalculator {
     final backSideCurve = curveBuilder.build(start: closedBackWaist.correctedSidePoint, end: p['P7']!);
     final frontSideCurve = curveBuilder.build(start: closedFrontWaist.correctedSidePoint, end: p['P7']!);
 
+    const seamAllowance = SeamAllowanceSettings();
+    const cuttingBuilder = SkirtCuttingOutlineBuilder();
+    final backCuttingOutline = cuttingBuilder.build(
+      isBack: true,
+      closedWaist: closedBackWaist,
+      dartsFromCenterToSide: [backDart1, backDart2],
+      sideCurve: backSideCurve,
+      hipPoint: p['P7']!,
+      sideHemPoint: p['P8']!,
+      centerHemPoint: p['P3']!,
+      centerWaistPoint: p['P1']!,
+      settings: seamAllowance,
+    );
+    final frontCuttingOutline = cuttingBuilder.build(
+      isBack: false,
+      closedWaist: closedFrontWaist,
+      dartsFromCenterToSide: [frontDart],
+      sideCurve: frontSideCurve,
+      hipPoint: p['P7']!,
+      sideHemPoint: p['P8']!,
+      centerHemPoint: p['P4']!,
+      centerWaistPoint: p['P2']!,
+      settings: seamAllowance,
+    );
+
     final back = PatternPiece(
       id: 'skirt_back', name: 'Rock Rueckenteil',
       points: {for (final key in ['P1','P3','P5','P7','P8','P9','P10','P11','P12','P13','P14']) key: p[key]!},
@@ -51,6 +77,7 @@ class SkirtPatternCalculator {
         _bezierSegment(backWaistCurves[1], 'waist'), LineSegment(backDart2.leg1, backDart2.apex), LineSegment(backDart2.apex, backDart2.leg2),
         _bezierSegment(backWaistCurves[2], 'waist'), _bezierSegment(backSideCurve, 'sideSeam'), LineSegment(p['P7']!, p['P8']!), LineSegment(p['P8']!, p['P3']!), LineSegment(p['P3']!, p['P1']!),
       ]),
+      cuttingOutline: backCuttingOutline,
     );
 
     final front = PatternPiece(
@@ -64,6 +91,7 @@ class SkirtPatternCalculator {
         _bezierSegment(frontWaistCurves[0], 'waist'), LineSegment(frontDart.leg1, frontDart.apex), LineSegment(frontDart.apex, frontDart.leg2),
         _bezierSegment(frontWaistCurves[1], 'waist'), _bezierSegment(frontSideCurve, 'sideSeam'), LineSegment(p['P7']!, p['P8']!), LineSegment(p['P8']!, p['P4']!), LineSegment(p['P4']!, p['P2']!),
       ]),
+      cuttingOutline: frontCuttingOutline,
     );
     return PatternResult(front: front, back: back);
   }
