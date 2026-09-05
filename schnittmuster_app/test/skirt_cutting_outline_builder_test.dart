@@ -66,7 +66,7 @@ void main() {
       centerHemPoint: centerHem,
       centerWaistPoint: centerWaist,
       settings: const SeamAllowanceSettings(),
-      curveSamples: 80,
+      curveMaxDeviation: 0.01,
     );
 
     expect(path.segments, isNotEmpty);
@@ -125,7 +125,7 @@ void main() {
       centerHemPoint: centerHem,
       centerWaistPoint: centerWaist,
       settings: const SeamAllowanceSettings(),
-      curveSamples: 80,
+      curveMaxDeviation: 0.01,
     );
 
     final lines = path.segments.whereType<LineSegment>().toList();
