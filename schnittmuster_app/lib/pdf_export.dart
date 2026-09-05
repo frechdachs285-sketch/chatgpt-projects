@@ -115,8 +115,39 @@ class PatternPdfExporter {
     final columns = math.max(1, ((canvasWidthMm - _tileWidthMm) / stepX).ceil() + 1);
     final rows = math.max(1, ((canvasHeightMm - _tileHeightMm) / stepY).ceil() + 1);
 
+    final backCanvasBounds = _PatternBounds(
+      backOffsetX + backBounds.minX * 10,
+      backOffsetY + backBounds.minY * 10,
+      backOffsetX + backBounds.maxX * 10,
+      backOffsetY + backBounds.maxY * 10,
+    );
+    final frontCanvasBounds = _PatternBounds(
+      frontOffsetX + frontBounds.minX * 10,
+      frontOffsetY + frontBounds.minY * 10,
+      frontOffsetX + frontBounds.maxX * 10,
+      frontOffsetY + frontBounds.maxY * 10,
+    );
+
+    final keptTiles = <String>{};
     for (var row = 0; row < rows; row++) {
       for (var col = 0; col < columns; col++) {
+        final tileX = col * stepX;
+        final tileY = row * stepY;
+        if (_tileIntersectsPattern(
+          tileX: tileX,
+          tileY: tileY,
+          backBounds: backCanvasBounds,
+          frontBounds: frontCanvasBounds,
+        )) {
+          keptTiles.add('$col:$row');
+        }
+      }
+    }
+
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < columns; col++) {
+        if (!keptTiles.contains('$col:$row')) continue;
+
         final tileX = col * stepX;
         final tileY = row * stepY;
         final tileName = '${String.fromCharCode(65 + col)}${row + 1}';
@@ -129,10 +160,10 @@ class PatternPdfExporter {
           frontOffsetY: frontOffsetY,
           tileX: tileX,
           tileY: tileY,
-          hasLeftNeighbor: col > 0,
-          hasRightNeighbor: col < columns - 1,
-          hasTopNeighbor: row > 0,
-          hasBottomNeighbor: row < rows - 1,
+          hasLeftNeighbor: keptTiles.contains('${col - 1}:$row'),
+          hasRightNeighbor: keptTiles.contains('${col + 1}:$row'),
+          hasTopNeighbor: keptTiles.contains('$col:${row - 1}'),
+          hasBottomNeighbor: keptTiles.contains('$col:${row + 1}'),
         );
 
         doc.addPage(
@@ -177,6 +208,28 @@ class PatternPdfExporter {
         );
       }
     }
+  }
+
+  bool _tileIntersectsPattern({
+    required double tileX,
+    required double tileY,
+    required _PatternBounds backBounds,
+    required _PatternBounds frontBounds,
+  }) {
+    final tile = _PatternBounds(
+      tileX,
+      tileY,
+      tileX + _tileWidthMm,
+      tileY + _tileHeightMm,
+    );
+    return _rectsOverlap(tile, backBounds) || _rectsOverlap(tile, frontBounds);
+  }
+
+  bool _rectsOverlap(_PatternBounds a, _PatternBounds b) {
+    return a.minX < b.maxX &&
+        a.maxX > b.minX &&
+        a.minY < b.maxY &&
+        a.maxY > b.minY;
   }
 
   String _buildTileSvg({
