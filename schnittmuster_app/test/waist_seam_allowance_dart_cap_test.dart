@@ -43,8 +43,12 @@ double angleOf(PatternPoint vector) => math.atan2(vector.y, vector.x);
 
 double normalizeAngle(double angle) {
   var result = angle;
-  while (result <= -math.pi) result += 2 * math.pi;
-  while (result > math.pi) result -= 2 * math.pi;
+  while (result <= -math.pi) {
+    result += 2 * math.pi;
+  }
+  while (result > math.pi) {
+    result -= 2 * math.pi;
+  }
   return result;
 }
 
