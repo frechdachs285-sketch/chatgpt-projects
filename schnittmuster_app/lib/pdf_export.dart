@@ -154,8 +154,6 @@ class PatternPdfExporter {
         doc.addPage(
           _tilePage(
             tileName: tileName,
-            tileX: tileX,
-            tileY: tileY,
             back: back,
             front: front,
             backOffsetX: backOX - tileX,
@@ -174,8 +172,6 @@ class PatternPdfExporter {
 
   pw.Page _tilePage({
     required String tileName,
-    required double tileX,
-    required double tileY,
     required PatternPiece back,
     required PatternPiece front,
     required double backOffsetX,
@@ -187,6 +183,12 @@ class PatternPdfExporter {
     required bool top,
     required bool bottom,
   }) {
+    final children = <pw.Widget>[
+      ..._pieceWidgets(back, backOffsetX, backOffsetY),
+      ..._pieceWidgets(front, frontOffsetX, frontOffsetY),
+      ..._registrationWidgets(left: left, right: right, top: top, bottom: bottom),
+    ];
+
     return pw.Page(
       pageFormat: PdfPageFormat.a4,
       margin: pw.EdgeInsets.all(mm(_pageMarginMm)),
@@ -206,214 +208,210 @@ class PatternPdfExporter {
             padding: pw.EdgeInsets.symmetric(horizontal: mm(2.5), vertical: mm(1.5)),
             decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.45)),
             child: pw.Text(
-              'DIAGNOSE: tile=(${tileX.toStringAsFixed(1)}, ${tileY.toStringAsFixed(1)}) mm | back=(${backOffsetX.toStringAsFixed(1)}, ${backOffsetY.toStringAsFixed(1)}) | front=(${frontOffsetX.toStringAsFixed(1)}, ${frontOffsetY.toStringAsFixed(1)})',
-              style: pw.TextStyle(fontSize: 7.8, fontWeight: pw.FontWeight.bold),
+              'MONTAGE: 1) rechte/untere SCHNEIDELINIE abschneiden  2) linke/obere KLEBEFLAECHE darunterlegen  3) PASSKREUZE exakt ausrichten.',
+              style: pw.TextStyle(fontSize: 8.4, fontWeight: pw.FontWeight.bold),
             ),
           ),
-          pw.SizedBox(height: mm(1)),
-          pw.Text(
-            'TEST: Im Zeichenfeld muss oben links ein 30 x 30 mm Quadrat mit Kreuz sichtbar sein.',
-            style: const pw.TextStyle(fontSize: 8),
-          ),
-          pw.SizedBox(height: mm(1)),
+          pw.SizedBox(height: mm(2)),
           pw.Container(
             width: mm(_tileWidthMm),
             height: mm(_tileHeightMm),
             decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.25)),
-            child: pw.CustomPaint(
-              size: PdfPoint(mm(_tileWidthMm), mm(_tileHeightMm)),
-              painter: (canvas, size) {
-                canvas.saveContext();
-                canvas.drawRect(0, 0, size.x, size.y);
-                canvas.clipPath();
-                canvas.setStrokeColor(PdfColors.black);
-
-                _paintDiagnosticMarker(canvas, size);
-                _paintPiece(canvas, size, back, backOffsetX, backOffsetY);
-                _paintPiece(canvas, size, front, frontOffsetX, frontOffsetY);
-                _paintRegistrationMarks(
-                  canvas,
-                  size,
-                  left: left,
-                  right: right,
-                  top: top,
-                  bottom: bottom,
-                );
-
-                canvas.restoreContext();
-              },
-            ),
+            child: pw.Stack(children: children),
           ),
         ],
       ),
     );
   }
 
-  void _paintDiagnosticMarker(PdfGraphics canvas, PdfPoint size) {
-    final x = mm(10);
-    final top = size.y - mm(10);
-    final w = mm(30);
-    final h = mm(30);
-    final bottom = top - h;
+  List<pw.Widget> _pieceWidgets(PatternPiece piece, double ox, double oy) {
+    final widgets = <pw.Widget>[];
 
-    canvas.setLineDashPattern();
-    canvas.setLineWidth(mm(0.8));
-    canvas.drawRect(x, bottom, w, h);
-    canvas.strokePath();
-    canvas.drawLine(x, bottom, x + w, top);
-    canvas.drawLine(x + w, bottom, x, top);
-  }
-
-  void _paintPiece(
-    PdfGraphics canvas,
-    PdfPoint size,
-    PatternPiece piece,
-    double ox,
-    double oy,
-  ) {
     if (piece.cuttingOutline != null) {
-      canvas.setLineWidth(mm(0.8));
-      _strokePath(canvas, size, piece.cuttingOutline!, ox, oy);
+      widgets.addAll(_pathWidgets(piece.cuttingOutline!, ox, oy, 0.8));
     }
-
-    canvas.setLineWidth(mm(0.35));
-    _strokePath(canvas, size, piece.outline, ox, oy);
-
-    for (final dart in piece.darts) {
-      canvas.setLineWidth(mm(0.35));
-      canvas.moveTo(_px(dart.leg1, ox), _py(dart.leg1, oy, size));
-      canvas.lineTo(_px(dart.apex, ox), _py(dart.apex, oy, size));
-      canvas.lineTo(_px(dart.leg2, ox), _py(dart.leg2, oy, size));
-      canvas.strokePath();
-    }
+    widgets.addAll(_pathWidgets(piece.outline, ox, oy, 0.35));
 
     final grain = piece.grainline;
     if (grain != null) {
-      canvas.setLineWidth(mm(0.35));
-      final x1 = _px(grain.start, ox);
-      final y1 = _py(grain.start, oy, size);
-      final x2 = _px(grain.end, ox);
-      final y2 = _py(grain.end, oy, size);
-      canvas.drawLine(x1, y1, x2, y2);
-
-      final arrow = mm(4);
-      final half = mm(2.5);
-      canvas.moveTo(x1, y1);
-      canvas.lineTo(x1 - half, y1 - arrow);
-      canvas.moveTo(x1, y1);
-      canvas.lineTo(x1 + half, y1 - arrow);
-      canvas.moveTo(x2, y2);
-      canvas.lineTo(x2 - half, y2 + arrow);
-      canvas.moveTo(x2, y2);
-      canvas.lineTo(x2 + half, y2 + arrow);
-      canvas.strokePath();
+      final a = _local(grain.start, ox, oy);
+      final z = _local(grain.end, ox, oy);
+      final line = _lineWidget(a.x, a.y, z.x, z.y, 0.35);
+      if (line != null) widgets.add(line);
     }
 
     for (final notch in piece.notches) {
-      final x = _px(notch.position, ox);
-      final y = _py(notch.position, oy, size);
+      final p = _local(notch.position, ox, oy);
       final dir = piece.id == 'skirt_back' ? 1.0 : -1.0;
-      final bx = x + mm(dir * 5);
-      canvas.setLineWidth(mm(0.45));
-      canvas.moveTo(x, y);
-      canvas.lineTo(bx, y + mm(2.5));
-      canvas.moveTo(x, y);
-      canvas.lineTo(bx, y - mm(2.5));
-      canvas.strokePath();
+      final a = _lineWidget(p.x, p.y, p.x + dir * 5, p.y - 2.5, 0.45);
+      final b = _lineWidget(p.x, p.y, p.x + dir * 5, p.y + 2.5, 0.45);
+      if (a != null) widgets.add(a);
+      if (b != null) widgets.add(b);
     }
-  }
 
-  void _strokePath(
-    PdfGraphics canvas,
-    PdfPoint size,
-    PatternPath path,
-    double ox,
-    double oy,
-  ) {
-    if (path.segments.isEmpty) return;
-
-    final first = path.segments.first.start;
-    canvas.moveTo(_px(first, ox), _py(first, oy, size));
-
-    for (final segment in path.segments) {
-      if (segment is BezierSegment) {
-        canvas.curveTo(
-          _px(segment.control1, ox),
-          _py(segment.control1, oy, size),
-          _px(segment.control2, ox),
-          _py(segment.control2, oy, size),
-          _px(segment.end, ox),
-          _py(segment.end, oy, size),
+    for (final label in piece.labels) {
+      final p = _local(label.position, ox, oy);
+      if (p.x >= 0 && p.x <= _tileWidthMm && p.y >= 0 && p.y <= _tileHeightMm) {
+        widgets.add(
+          pw.Positioned(
+            left: mm(math.max(0, p.x - 35)),
+            top: mm(math.max(0, p.y - 3)),
+            child: pw.Container(
+              width: mm(70),
+              child: pw.Text(
+                label.text,
+                textAlign: pw.TextAlign.center,
+                style: const pw.TextStyle(fontSize: 9),
+              ),
+            ),
+          ),
         );
-      } else {
-        canvas.lineTo(_px(segment.end, ox), _py(segment.end, oy, size));
       }
     }
 
-    canvas.strokePath();
+    return widgets;
   }
 
-  void _paintRegistrationMarks(
-    PdfGraphics canvas,
-    PdfPoint size, {
+  List<pw.Widget> _pathWidgets(PatternPath path, double ox, double oy, double strokeMm) {
+    final widgets = <pw.Widget>[];
+    for (final segment in path.segments) {
+      if (segment is BezierSegment) {
+        const samples = 28;
+        var prev = segment.start;
+        for (var i = 1; i <= samples; i++) {
+          final t = i / samples;
+          final next = _bezierPoint(segment, t);
+          final a = _local(prev, ox, oy);
+          final b = _local(next, ox, oy);
+          final line = _lineWidget(a.x, a.y, b.x, b.y, strokeMm);
+          if (line != null) widgets.add(line);
+          prev = next;
+        }
+      } else {
+        final a = _local(segment.start, ox, oy);
+        final b = _local(segment.end, ox, oy);
+        final line = _lineWidget(a.x, a.y, b.x, b.y, strokeMm);
+        if (line != null) widgets.add(line);
+      }
+    }
+    return widgets;
+  }
+
+  PatternPoint _bezierPoint(BezierSegment s, double t) {
+    final u = 1 - t;
+    final tt = t * t;
+    final uu = u * u;
+    final uuu = uu * u;
+    final ttt = tt * t;
+    return PatternPoint(
+      uuu * s.start.x + 3 * uu * t * s.control1.x + 3 * u * tt * s.control2.x + ttt * s.end.x,
+      uuu * s.start.y + 3 * uu * t * s.control1.y + 3 * u * tt * s.control2.y + ttt * s.end.y,
+    );
+  }
+
+  _LocalPoint _local(PatternPoint p, double ox, double oy) =>
+      _LocalPoint(ox + p.x * 10, oy + p.y * 10);
+
+  pw.Widget? _lineWidget(double x1, double y1, double x2, double y2, double strokeMm) {
+    final clipped = _clipLine(x1, y1, x2, y2);
+    if (clipped == null) return null;
+
+    final dx = clipped.x2 - clipped.x1;
+    final dy = clipped.y2 - clipped.y1;
+    final length = math.sqrt(dx * dx + dy * dy);
+    if (length < 0.01) return null;
+    final angle = math.atan2(dy, dx);
+
+    return pw.Positioned(
+      left: mm(clipped.x1),
+      top: mm(clipped.y1 - strokeMm / 2),
+      child: pw.Transform.rotate(
+        angle: angle,
+        alignment: pw.Alignment.centerLeft,
+        child: pw.Container(
+          width: mm(length),
+          height: mm(strokeMm),
+          color: PdfColors.black,
+        ),
+      ),
+    );
+  }
+
+  _ClippedLine? _clipLine(double x1, double y1, double x2, double y2) {
+    final dx = x2 - x1;
+    final dy = y2 - y1;
+    var t0 = 0.0;
+    var t1 = 1.0;
+
+    bool clip(double p, double q) {
+      if (p.abs() < 1e-12) return q >= 0;
+      final r = q / p;
+      if (p < 0) {
+        if (r > t1) return false;
+        if (r > t0) t0 = r;
+      } else {
+        if (r < t0) return false;
+        if (r < t1) t1 = r;
+      }
+      return true;
+    }
+
+    if (!clip(-dx, x1)) return null;
+    if (!clip(dx, _tileWidthMm - x1)) return null;
+    if (!clip(-dy, y1)) return null;
+    if (!clip(dy, _tileHeightMm - y1)) return null;
+
+    return _ClippedLine(
+      x1 + t0 * dx,
+      y1 + t0 * dy,
+      x1 + t1 * dx,
+      y1 + t1 * dy,
+    );
+  }
+
+  List<pw.Widget> _registrationWidgets({
     required bool left,
     required bool right,
     required bool top,
     required bool bottom,
   }) {
-    final inset = mm(_tileOverlapMm / 2);
-    final arm = mm(4);
+    final widgets = <pw.Widget>[];
+    const inset = _tileOverlapMm / 2;
 
-    void cross(double x, double y) {
-      canvas.setLineDashPattern();
-      canvas.setLineWidth(mm(0.45));
-      canvas.drawLine(x - arm, y, x + arm, y);
-      canvas.drawLine(x, y - arm, x, y + arm);
+    void addCross(double x, double y) {
+      final h = _lineWidget(x - 4, y, x + 4, y, 0.35);
+      final v = _lineWidget(x, y - 4, x, y + 4, 0.35);
+      if (h != null) widgets.add(h);
+      if (v != null) widgets.add(v);
     }
 
     if (left) {
-      final x = inset;
-      canvas.setLineDashPattern([mm(2), mm(2)]);
-      canvas.setLineWidth(mm(0.25));
-      canvas.drawLine(x, 0, x, size.y);
-      cross(x, size.y - mm(35));
-      cross(x, mm(35));
+      final l = _lineWidget(inset, 0, inset, _tileHeightMm, 0.25);
+      if (l != null) widgets.add(l);
+      addCross(inset, 35);
+      addCross(inset, _tileHeightMm - 35);
     }
-
     if (right) {
-      final x = size.x - inset;
-      canvas.setLineDashPattern([mm(5), mm(2)]);
-      canvas.setLineWidth(mm(0.65));
-      canvas.drawLine(x, 0, x, size.y);
-      cross(x, size.y - mm(35));
-      cross(x, mm(35));
+      final l = _lineWidget(_tileWidthMm - inset, 0, _tileWidthMm - inset, _tileHeightMm, 0.6);
+      if (l != null) widgets.add(l);
+      addCross(_tileWidthMm - inset, 35);
+      addCross(_tileWidthMm - inset, _tileHeightMm - 35);
     }
-
     if (top) {
-      final y = size.y - inset;
-      canvas.setLineDashPattern([mm(2), mm(2)]);
-      canvas.setLineWidth(mm(0.25));
-      canvas.drawLine(0, y, size.x, y);
-      cross(mm(45), y);
-      cross(size.x - mm(45), y);
+      final l = _lineWidget(0, inset, _tileWidthMm, inset, 0.25);
+      if (l != null) widgets.add(l);
+      addCross(45, inset);
+      addCross(_tileWidthMm - 45, inset);
     }
-
     if (bottom) {
-      final y = inset;
-      canvas.setLineDashPattern([mm(5), mm(2)]);
-      canvas.setLineWidth(mm(0.65));
-      canvas.drawLine(0, y, size.x, y);
-      cross(mm(45), y);
-      cross(size.x - mm(45), y);
+      final l = _lineWidget(0, _tileHeightMm - inset, _tileWidthMm, _tileHeightMm - inset, 0.6);
+      if (l != null) widgets.add(l);
+      addCross(45, _tileHeightMm - inset);
+      addCross(_tileWidthMm - 45, _tileHeightMm - inset);
     }
 
-    canvas.setLineDashPattern();
+    return widgets;
   }
-
-  double _px(PatternPoint p, double ox) => mm(ox + p.x * 10);
-
-  double _py(PatternPoint p, double oy, PdfPoint size) =>
-      size.y - mm(oy + p.y * 10);
 
   _PatternBounds _pieceBounds(PatternPiece piece) {
     final pts = <PatternPoint>[
@@ -448,10 +446,7 @@ class PatternPdfExporter {
   }
 
   bool _overlaps(_PatternBounds a, _PatternBounds b) =>
-      a.minX < b.maxX &&
-      a.maxX > b.minX &&
-      a.minY < b.maxY &&
-      a.maxY > b.minY;
+      a.minX < b.maxX && a.maxX > b.minX && a.minY < b.maxY && a.maxY > b.minY;
 }
 
 class _PatternBounds {
@@ -464,4 +459,18 @@ class _PatternBounds {
 
   double get width => maxX - minX;
   double get height => maxY - minY;
+}
+
+class _LocalPoint {
+  final double x;
+  final double y;
+  const _LocalPoint(this.x, this.y);
+}
+
+class _ClippedLine {
+  final double x1;
+  final double y1;
+  final double x2;
+  final double y2;
+  const _ClippedLine(this.x1, this.y1, this.x2, this.y2);
 }
