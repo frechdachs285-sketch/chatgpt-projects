@@ -110,6 +110,11 @@ class SkirtPatternCalculator {
           key: p[key]!,
       },
       darts: [backDart1, backDart2],
+      grainline: _grainline(
+        centerX: p['P1']!.x,
+        sideX: p['P8']!.x,
+        skirtLength: m.skirtLength,
+      ),
       outline: PatternPath([
         _bezierSegment(backWaistCurves[0], 'waist'),
         LineSegment(backDart1.leg1, backDart1.apex),
@@ -143,6 +148,11 @@ class SkirtPatternCalculator {
           key: p[key]!,
       },
       darts: [frontDart],
+      grainline: _grainline(
+        centerX: p['P2']!.x,
+        sideX: p['P8']!.x,
+        skirtLength: m.skirtLength,
+      ),
       outline: PatternPath([
         _bezierSegment(frontWaistCurves[0], 'waist'),
         LineSegment(frontDart.leg1, frontDart.apex),
@@ -156,6 +166,20 @@ class SkirtPatternCalculator {
     );
 
     return PatternResult(front: front, back: back);
+  }
+
+  Grainline _grainline({
+    required double centerX,
+    required double sideX,
+    required double skirtLength,
+  }) {
+    final x = (centerX + sideX) / 2;
+    final top = skirtLength * 0.25;
+    final bottom = skirtLength * 0.75;
+    return Grainline(
+      start: PatternPoint(x, top),
+      end: PatternPoint(x, bottom),
+    );
   }
 
   BezierSegment _bezierSegment(CubicBezierCurve curve, String role) {
