@@ -16,14 +16,22 @@ class PatternPdfExporter {
 
   static double mm(double value) => value * _mmToPt;
 
-  Future<Uint8List> buildCalibrationPage() async {
+  Future<Uint8List> buildCalibrationPage() => buildPatternPdf(
+        measurements: const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60),
+        seamAllowance: const SeamAllowanceSettings(enabled: true),
+      );
+
+  Future<Uint8List> buildPatternPdf({
+    required Measurements measurements,
+    required SeamAllowanceSettings seamAllowance,
+  }) async {
     final doc = pw.Document();
-    _addCalibrationPage(doc);
+    _addCalibrationPage(doc, measurements);
 
     final result = SkirtPatternCalculator().calculate(
-      const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60),
+      measurements,
       const ConstructionValues(),
-      seamAllowance: const SeamAllowanceSettings(enabled: true),
+      seamAllowance: seamAllowance,
     );
 
     if (result.isValid) {
@@ -33,7 +41,7 @@ class PatternPdfExporter {
     return doc.save();
   }
 
-  void _addCalibrationPage(pw.Document doc) {
+  void _addCalibrationPage(pw.Document doc, Measurements measurements) {
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -43,15 +51,20 @@ class PatternPdfExporter {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'Schnittmuster-App - Drucktest 1:1',
+                'Schnittmuster-App - Rock 1:1',
                 style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
               ),
-              pw.SizedBox(height: mm(6)),
+              pw.SizedBox(height: mm(4)),
+              pw.Text(
+                'Masse: Taille ${measurements.waist.toStringAsFixed(1)} cm | Huefte ${measurements.hip.toStringAsFixed(1)} cm | Huefttiefe ${measurements.hipDepth.toStringAsFixed(1)} cm | Rocklaenge ${measurements.skirtLength.toStringAsFixed(1)} cm',
+                style: const pw.TextStyle(fontSize: 9),
+              ),
+              pw.SizedBox(height: mm(3)),
               pw.Text(
                 'Bitte beim Drucken 100 % / Tatsaechliche Groesse waehlen. Keine Seitenanpassung verwenden.',
                 style: const pw.TextStyle(fontSize: 10),
               ),
-              pw.SizedBox(height: mm(12)),
+              pw.SizedBox(height: mm(10)),
               pw.Text('Kontrollquadrat 100 x 100 mm', style: const pw.TextStyle(fontSize: 10)),
               pw.SizedBox(height: mm(3)),
               pw.Container(
