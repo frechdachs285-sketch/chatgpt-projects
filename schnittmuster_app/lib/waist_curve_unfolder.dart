@@ -49,6 +49,52 @@ class WaistCurveUnfolder {
     return result;
   }
 
+  /// Unfolds sampled point lists that were created on the closed waist.
+  ///
+  /// This is used for seam-allowance geometry: the allowance can be calculated
+  /// on the smooth, dart-closed waist first and then transformed back with the
+  /// exact same rigid rotations as the production waist curve.
+  List<List<PatternPoint>> unfoldSampledSegments({
+    required List<List<PatternPoint>> closedSegments,
+    required List<Dart> dartsFromCenterToSide,
+  }) {
+    if (closedSegments.length != dartsFromCenterToSide.length + 1) {
+      throw ArgumentError(
+        'Anzahl der Punktsegmente passt nicht zur Anzahl der Abnaeher.',
+      );
+    }
+    for (final segment in closedSegments) {
+      if (segment.length < 2) {
+        throw ArgumentError(
+          'Jedes Punktsegment muss mindestens zwei Punkte enthalten.',
+        );
+      }
+    }
+
+    final transforms = _closureTransforms(dartsFromCenterToSide);
+    final result = <List<PatternPoint>>[];
+
+    for (var segmentIndex = 0;
+        segmentIndex < closedSegments.length;
+        segmentIndex++) {
+      var points = List<PatternPoint>.from(closedSegments[segmentIndex]);
+
+      for (var transformIndex = segmentIndex - 1;
+          transformIndex >= 0;
+          transformIndex--) {
+        final transform = transforms[transformIndex];
+        points = [
+          for (final point in points)
+            _rotatePoint(point, transform.apex, -transform.angle),
+        ];
+      }
+
+      result.add(points);
+    }
+
+    return result;
+  }
+
   List<_ClosureTransform> _closureTransforms(
     List<Dart> dartsFromCenterToSide,
   ) {
