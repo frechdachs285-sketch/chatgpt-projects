@@ -34,6 +34,22 @@ class _SkirtDebugPageState extends State<SkirtDebugPage> {
   final _hipDepthController = TextEditingController(text: '21');
   final _skirtLengthController = TextEditingController(text: '60');
 
+  Measurements _appliedMeasurements = const Measurements(
+    waist: 76,
+    hip: 100,
+    hipDepth: 21,
+    skirtLength: 60,
+  );
+  PatternResult? _result;
+  String? _inputMessage;
+  bool _inputsDirty = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _recalculate(_appliedMeasurements);
+  }
+
   @override
   void dispose() {
     _waistController.dispose();
@@ -50,7 +66,7 @@ class _SkirtDebugPageState extends State<SkirtDebugPage> {
     return parsed;
   }
 
-  Measurements? get _measurements {
+  Measurements? get _enteredMeasurements {
     final waist = _readNumber(_waistController);
     final hip = _readNumber(_hipController);
     final hipDepth = _readNumber(_hipDepthController);
@@ -66,92 +82,168 @@ class _SkirtDebugPageState extends State<SkirtDebugPage> {
     );
   }
 
-  Future<void> _openPatternPdf() async {
-    final measurements = _measurements;
-    if (measurements == null) return;
+  void _recalculate(Measurements measurements) {
+    try {
+      final next = SkirtPatternCalculator().calculate(
+        measurements,
+        const ConstructionValues(),
+        seamAllowance: SeamAllowanceSettings(enabled: _seamAllowanceEnabled),
+      );
+      setState(() {
+        _result = next;
+        if (next.isValid) {
+          _appliedMeasurements = measurements;
+          _inputMessage = null;
+          _inputsDirty = false;
+        } else {
+          _inputMessage = next.errors.join('\n');
+        }
+      });
+    } catch (error) {
+      setState(() {
+        _inputMessage = 'Mit diesen Maßen konnte noch kein gültiger Rock berechnet werden. Bitte die Eingaben prüfen.';
+      });
+    }
+  }
 
-    final bytes = await PatternPdfExporter().buildPatternPdf(
-      measurements: measurements,
-      seamAllowance: SeamAllowanceSettings(enabled: _seamAllowanceEnabled),
-    );
-    await Printing.layoutPdf(
-      name: 'Rock_Schnittmuster_1zu1.pdf',
-      onLayout: (_) async => bytes,
-    );
+  void _applyMeasurements() {
+    FocusScope.of(context).unfocus();
+    final measurements = _enteredMeasurements;
+    if (measurements == null) {
+      setState(() {
+        _inputMessage = 'Bitte alle vier Maße als positive Zahl eingeben.';
+      });
+      return;
+    }
+    _recalculate(measurements);
+  }
+
+  Future<void> _openPatternPdf() async {
+    final result = _result;
+    if (result == null || !result.isValid) return;
+
+    try {
+      final bytes = await PatternPdfExporter().buildPatternPdf(
+        measurements: _appliedMeasurements,
+        seamAllowance: SeamAllowanceSettings(enabled: _seamAllowanceEnabled),
+      );
+      await Printing.layoutPdf(
+        name: 'Rock_Schnittmuster_1zu1.pdf',
+        onLayout: (_) async => bytes,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('PDF konnte für diese Maße nicht erstellt werden. Bitte Maße prüfen.')),
+      );
+    }
   }
 
   Widget _measurementField(String label, TextEditingController controller) {
     return TextField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      textInputAction: TextInputAction.next,
       decoration: InputDecoration(
         labelText: label,
         suffixText: 'cm',
         border: const OutlineInputBorder(),
         isDense: true,
       ),
-      onChanged: (_) => setState(() {}),
+      onChanged: (_) {
+        if (!_inputsDirty) {
+          setState(() => _inputsDirty = true);
+        }
+      },
+      onSubmitted: (_) => _applyMeasurements(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final measurements = _measurements;
-    final result = measurements == null
-        ? null
-        : SkirtPatternCalculator().calculate(
-            measurements,
-            const ConstructionValues(),
-            seamAllowance: SeamAllowanceSettings(enabled: _seamAllowanceEnabled),
-          );
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final result = _result;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Rock v1 - Debug')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 2.7,
-              children: [
-                _measurementField('Taille', _waistController),
-                _measurementField('Hüfte', _hipController),
-                _measurementField('Hüfttiefe', _hipDepthController),
-                _measurementField('Rocklänge', _skirtLengthController),
-              ],
-            ),
-          ),
-          SwitchListTile(
-            title: const Text('Nahtzugabe'),
-            subtitle: Text(_seamAllowanceEnabled ? 'Ein' : 'Aus'),
-            value: _seamAllowanceEnabled,
-            onChanged: (value) => setState(() => _seamAllowanceEnabled = value),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: measurements != null && result != null && result.isValid ? _openPatternPdf : null,
-                icon: const Icon(Icons.picture_as_pdf),
-                label: const Text('Schnittmuster-PDF 1:1'),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 2.7,
+                children: [
+                  _measurementField('Taille', _waistController),
+                  _measurementField('Hüfte', _hipController),
+                  _measurementField('Hüfttiefe', _hipDepthController),
+                  _measurementField('Rocklänge', _skirtLengthController),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Expanded(
-            child: measurements == null
-                ? const Center(child: Text('Bitte alle vier Maße als positive Zahl eingeben.'))
-                : result == null || !result.isValid
-                    ? Center(child: Text(result?.errors.join('\n') ?? 'Ungültige Maße'))
-                    : PatternPreview(front: result.front!, back: result.back!),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _applyMeasurements,
+                  icon: const Icon(Icons.check),
+                  label: Text(_inputsDirty ? 'Maße anwenden' : 'Maße sind angewendet'),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              title: const Text('Nahtzugabe'),
+              subtitle: Text(_seamAllowanceEnabled ? 'Ein' : 'Aus'),
+              value: _seamAllowanceEnabled,
+              onChanged: (value) {
+                setState(() => _seamAllowanceEnabled = value);
+                _recalculate(_appliedMeasurements);
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: result != null && result.isValid ? _openPatternPdf : null,
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Schnittmuster-PDF 1:1'),
+                ),
+              ),
+            ),
+            if (_inputMessage != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Text(
+                  _inputMessage!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            const SizedBox(height: 6),
+            Expanded(
+              child: keyboardOpen
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text(
+                          'Tastatur ist geöffnet. Maße fertig eingeben und anschließend „Maße anwenden“ tippen.',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    )
+                  : result == null || !result.isValid
+                      ? const Center(child: Text('Bitte gültige Maße anwenden.'))
+                      : PatternPreview(front: result.front!, back: result.back!),
+            ),
+          ],
+        ),
       ),
     );
   }
