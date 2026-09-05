@@ -174,8 +174,12 @@ class SkirtPatternCalculator {
   ) {
     final width = m.hip / 2 + c.hipEase / 2;
     final sideX = m.hip / 4 + c.hipEase / 2;
-    final backWaistX = m.waist / 4 + 4.25;
-    final frontWaistX = width - (m.waist / 4 + 2.25);
+    final quarterWaistWithEase = (m.waist + c.waistEase) / 4;
+    final backWaistX = quarterWaistWithEase +
+        c.backDart1Width +
+        c.backDart2Width;
+    final frontWaistDistance = quarterWaistWithEase + c.frontDartWidth;
+    final frontWaistX = width - frontWaistDistance;
 
     final p = <String, PatternPoint>{
       'P1': const PatternPoint(0, 0),
