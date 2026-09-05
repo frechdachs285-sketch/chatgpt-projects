@@ -95,17 +95,7 @@ class SkirtPatternCalculator {
       name: 'Rock Rueckenteil',
       points: {
         for (final key in [
-          'P1',
-          'P3',
-          'P5',
-          'P7',
-          'P8',
-          'P9',
-          'P10',
-          'P11',
-          'P12',
-          'P13',
-          'P14',
+          'P1', 'P3', 'P5', 'P7', 'P8', 'P9', 'P10', 'P11', 'P12', 'P13', 'P14',
         ])
           key: p[key]!,
       },
@@ -115,6 +105,9 @@ class SkirtPatternCalculator {
         sideX: p['P8']!.x,
         skirtLength: m.skirtLength,
       ),
+      notches: [
+        PatternNotch(position: p['P7']!, role: 'side_hip'),
+      ],
       outline: PatternPath([
         _bezierSegment(backWaistCurves[0], 'waist'),
         LineSegment(backDart1.leg1, backDart1.apex),
@@ -135,15 +128,7 @@ class SkirtPatternCalculator {
       name: 'Rock Vorderteil',
       points: {
         for (final key in [
-          'P2',
-          'P4',
-          'P6',
-          'P7',
-          'P8',
-          'P15',
-          'P16',
-          'P17',
-          'P18',
+          'P2', 'P4', 'P6', 'P7', 'P8', 'P15', 'P16', 'P17', 'P18',
         ])
           key: p[key]!,
       },
@@ -153,6 +138,9 @@ class SkirtPatternCalculator {
         sideX: p['P8']!.x,
         skirtLength: m.skirtLength,
       ),
+      notches: [
+        PatternNotch(position: p['P7']!, role: 'side_hip'),
+      ],
       outline: PatternPath([
         _bezierSegment(frontWaistCurves[0], 'waist'),
         LineSegment(frontDart.leg1, frontDart.apex),
@@ -192,16 +180,11 @@ class SkirtPatternCalculator {
     );
   }
 
-  Map<String, PatternPoint> _calculatePoints(
-    Measurements m,
-    ConstructionValues c,
-  ) {
+  Map<String, PatternPoint> _calculatePoints(Measurements m, ConstructionValues c) {
     final width = m.hip / 2 + c.hipEase / 2;
     final sideX = m.hip / 4 + c.hipEase / 2;
     final quarterWaistWithEase = (m.waist + c.waistEase) / 4;
-    final backWaistX = quarterWaistWithEase +
-        c.backDart1Width +
-        c.backDart2Width;
+    final backWaistX = quarterWaistWithEase + c.backDart1Width + c.backDart2Width;
     final frontWaistDistance = quarterWaistWithEase + c.frontDartWidth;
     final frontWaistX = width - frontWaistDistance;
 
@@ -233,11 +216,7 @@ class SkirtPatternCalculator {
     return p;
   }
 
-  PatternPoint _dartApex(
-    PatternPoint center,
-    PatternPoint waistVector,
-    double length,
-  ) {
+  PatternPoint _dartApex(PatternPoint center, PatternPoint waistVector, double length) {
     final vectorLength = math.sqrt(
       waistVector.x * waistVector.x + waistVector.y * waistVector.y,
     );
