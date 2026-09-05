@@ -11,7 +11,7 @@ class PatternPdfExporter {
   static const _mmToPt = 72.0 / 25.4;
   static const _pageMarginMm = 10.0;
   static const _tileWidthMm = 190.0;
-  static const _tileHeightMm = 259.0;
+  static const _tileHeightMm = 240.0;
   static const _tileOverlapMm = 10.0;
 
   static double mm(double v) => v * _mmToPt;
