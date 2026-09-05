@@ -228,15 +228,15 @@ class PatternPdfExporter {
     final widgets = <pw.Widget>[];
 
     if (piece.cuttingOutline != null) {
-      widgets.addAll(_pathWidgets(piece.cuttingOutline!, ox, oy, 0.8));
+      widgets.addAll(_pathWidgets(piece.cuttingOutline!, ox, oy, 0.72));
     }
-    widgets.addAll(_pathWidgets(piece.outline, ox, oy, 0.35));
+    widgets.addAll(_pathWidgets(piece.outline, ox, oy, 0.30));
 
     final grain = piece.grainline;
     if (grain != null) {
       final a = _local(grain.start, ox, oy);
       final z = _local(grain.end, ox, oy);
-      final line = _lineWidget(a.x, a.y, z.x, z.y, 0.35);
+      final line = _lineWidget(a.x, a.y, z.x, z.y, 0.30);
       if (line != null) widgets.add(line);
     }
 
@@ -276,7 +276,7 @@ class PatternPdfExporter {
     final widgets = <pw.Widget>[];
     for (final segment in path.segments) {
       if (segment is BezierSegment) {
-        const samples = 28;
+        const samples = 48;
         var prev = segment.start;
         for (var i = 1; i <= samples; i++) {
           final t = i / samples;
@@ -322,14 +322,21 @@ class PatternPdfExporter {
     if (length < 0.01) return null;
     final angle = math.atan2(dy, dx);
 
+    final overlap = math.min(0.30, length / 4);
+    final ux = dx / length;
+    final uy = dy / length;
+    final startX = clipped.x1 - ux * overlap;
+    final startY = clipped.y1 - uy * overlap;
+    final drawLength = length + overlap * 2;
+
     return pw.Positioned(
-      left: mm(clipped.x1),
-      top: mm(clipped.y1 - strokeMm / 2),
+      left: mm(startX),
+      top: mm(startY - strokeMm / 2),
       child: pw.Transform.rotate(
         angle: angle,
         alignment: pw.Alignment.centerLeft,
         child: pw.Container(
-          width: mm(length),
+          width: mm(drawLength),
           height: mm(strokeMm),
           color: PdfColors.black,
         ),
@@ -379,10 +386,26 @@ class PatternPdfExporter {
     const inset = _tileOverlapMm / 2;
 
     void addCross(double x, double y) {
-      final h = _lineWidget(x - 4, y, x + 4, y, 0.35);
-      final v = _lineWidget(x, y - 4, x, y + 4, 0.35);
+      final h = _lineWidget(x - 5, y, x + 5, y, 0.55);
+      final v = _lineWidget(x, y - 5, x, y + 5, 0.55);
       if (h != null) widgets.add(h);
       if (v != null) widgets.add(v);
+    }
+
+    void addLabel(String text, double x, double y, double width) {
+      widgets.add(
+        pw.Positioned(
+          left: mm(x),
+          top: mm(y),
+          child: pw.Container(
+            width: mm(width),
+            child: pw.Text(
+              text,
+              style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold),
+            ),
+          ),
+        ),
+      );
     }
 
     if (left) {
@@ -390,24 +413,28 @@ class PatternPdfExporter {
       if (l != null) widgets.add(l);
       addCross(inset, 35);
       addCross(inset, _tileHeightMm - 35);
+      addLabel('KLEBEFLAECHE', inset + 2, 8, 35);
     }
     if (right) {
-      final l = _lineWidget(_tileWidthMm - inset, 0, _tileWidthMm - inset, _tileHeightMm, 0.6);
+      final l = _lineWidget(_tileWidthMm - inset, 0, _tileWidthMm - inset, _tileHeightMm, 0.70);
       if (l != null) widgets.add(l);
       addCross(_tileWidthMm - inset, 35);
       addCross(_tileWidthMm - inset, _tileHeightMm - 35);
+      addLabel('SCHNEIDELINIE', _tileWidthMm - 43, 8, 38);
     }
     if (top) {
       final l = _lineWidget(0, inset, _tileWidthMm, inset, 0.25);
       if (l != null) widgets.add(l);
       addCross(45, inset);
       addCross(_tileWidthMm - 45, inset);
+      addLabel('KLEBEFLAECHE', 8, inset + 2, 35);
     }
     if (bottom) {
-      final l = _lineWidget(0, _tileHeightMm - inset, _tileWidthMm, _tileHeightMm - inset, 0.6);
+      final l = _lineWidget(0, _tileHeightMm - inset, _tileWidthMm, _tileHeightMm - inset, 0.70);
       if (l != null) widgets.add(l);
       addCross(45, _tileHeightMm - inset);
       addCross(_tileWidthMm - 45, _tileHeightMm - inset);
+      addLabel('SCHNEIDELINIE', 8, _tileHeightMm - inset - 8, 38);
     }
 
     return widgets;
