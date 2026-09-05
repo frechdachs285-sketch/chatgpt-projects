@@ -51,7 +51,6 @@ class PatternPreview extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth.isFinite ? constraints.maxWidth : 700.0;
         final height = constraints.maxHeight.isFinite ? constraints.maxHeight : 700.0;
-
         return InteractiveViewer(
           minScale: 0.5,
           maxScale: 5,
@@ -71,9 +70,7 @@ class _Bounds {
   final double minY;
   final double maxX;
   final double maxY;
-
   const _Bounds(this.minX, this.minY, this.maxX, this.maxY);
-
   double get width => maxX - minX;
   double get height => maxY - minY;
 }
@@ -81,7 +78,6 @@ class _Bounds {
 class PatternPreviewPainter extends CustomPainter {
   final PatternPiece front;
   final PatternPiece back;
-
   PatternPreviewPainter({required this.front, required this.back});
 
   _Bounds _bounds(PatternPiece piece) {
@@ -90,33 +86,26 @@ class PatternPreviewPainter extends CustomPainter {
       for (final dart in piece.darts) ...[dart.leg1, dart.leg2, dart.apex],
       for (final segment in piece.outline.segments)
         if (segment is BezierSegment) ...[segment.control1, segment.control2],
-      if (piece.grainline != null) ...[
-        piece.grainline!.start,
-        piece.grainline!.end,
-      ],
+      if (piece.grainline != null) ...[piece.grainline!.start, piece.grainline!.end],
+      for (final notch in piece.notches) notch.position,
     ];
-
     var minX = points.first.x;
     var minY = points.first.y;
     var maxX = points.first.x;
     var maxY = points.first.y;
-
     for (final point in points.skip(1)) {
       minX = math.min(minX, point.x);
       minY = math.min(minY, point.y);
       maxX = math.max(maxX, point.x);
       maxY = math.max(maxY, point.y);
     }
-
     return _Bounds(minX, minY, maxX, maxY);
   }
 
-  Offset _p(PatternPoint point, _Bounds bounds, Offset origin, double scale) {
-    return Offset(
-      origin.dx + (point.x - bounds.minX) * scale,
-      origin.dy + (point.y - bounds.minY) * scale,
-    );
-  }
+  Offset _p(PatternPoint point, _Bounds bounds, Offset origin, double scale) => Offset(
+        origin.dx + (point.x - bounds.minX) * scale,
+        origin.dy + (point.y - bounds.minY) * scale,
+      );
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -139,12 +128,11 @@ class PatternPreviewPainter extends CustomPainter {
     final debugPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 0.8;
     final helperPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 0.6;
     final markerPaint = Paint()..style = PaintingStyle.fill;
-    final grainlinePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+    final grainlinePaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.2;
+    final notchPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.5;
 
-    _drawPiece(canvas, back, backBounds, backOrigin, scale, outlinePaint, debugPaint, helperPaint, markerPaint, grainlinePaint);
-    _drawPiece(canvas, front, frontBounds, frontOrigin, scale, outlinePaint, debugPaint, helperPaint, markerPaint, grainlinePaint);
+    _drawPiece(canvas, back, backBounds, backOrigin, scale, outlinePaint, debugPaint, helperPaint, markerPaint, grainlinePaint, notchPaint);
+    _drawPiece(canvas, front, frontBounds, frontOrigin, scale, outlinePaint, debugPaint, helperPaint, markerPaint, grainlinePaint, notchPaint);
   }
 
   void _drawHelperLine(Canvas canvas, PatternPoint start, PatternPoint end, _Bounds bounds, Offset origin, double scale, Paint paint) {
@@ -171,11 +159,9 @@ class PatternPreviewPainter extends CustomPainter {
   void _drawGrainline(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint paint) {
     final grainline = piece.grainline;
     if (grainline == null) return;
-
     final start = _p(grainline.start, bounds, origin, scale);
     final end = _p(grainline.end, bounds, origin, scale);
     canvas.drawLine(start, end, paint);
-
     const arrowLength = 7.0;
     const arrowWidth = 4.0;
     void drawArrow(Offset tip, double direction) {
@@ -187,15 +173,29 @@ class PatternPreviewPainter extends CustomPainter {
         ..lineTo(tip.dx + arrowWidth, baseY);
       canvas.drawPath(path, paint);
     }
-
     drawArrow(start, 1);
     drawArrow(end, -1);
   }
 
-  void _drawPiece(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint outlinePaint, Paint debugPaint, Paint helperPaint, Paint markerPaint, Paint grainlinePaint) {
+  void _drawNotches(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint paint) {
+    const notchDepth = 7.0;
+    const notchHalfWidth = 4.0;
+    for (final notch in piece.notches) {
+      final tip = _p(notch.position, bounds, origin, scale);
+      final outward = piece.id == 'skirt_back' ? 1.0 : -1.0;
+      final baseX = tip.dx + outward * notchDepth;
+      final path = Path()
+        ..moveTo(tip.dx, tip.dy)
+        ..lineTo(baseX, tip.dy - notchHalfWidth)
+        ..moveTo(tip.dx, tip.dy)
+        ..lineTo(baseX, tip.dy + notchHalfWidth);
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  void _drawPiece(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint outlinePaint, Paint debugPaint, Paint helperPaint, Paint markerPaint, Paint grainlinePaint, Paint notchPaint) {
     if (piece.outline.segments.isEmpty) return;
     _drawConstructionLines(canvas, piece, bounds, origin, scale, helperPaint);
-
     final first = _p(piece.outline.segments.first.start, bounds, origin, scale);
     final path = Path()..moveTo(first.dx, first.dy);
     for (final segment in piece.outline.segments) {
@@ -211,11 +211,11 @@ class PatternPreviewPainter extends CustomPainter {
     }
     canvas.drawPath(path, outlinePaint);
     _drawGrainline(canvas, piece, bounds, origin, scale, grainlinePaint);
+    _drawNotches(canvas, piece, bounds, origin, scale, notchPaint);
 
     for (final dart in piece.darts) {
       canvas.drawLine(_p(dart.center, bounds, origin, scale), _p(dart.apex, bounds, origin, scale), debugPaint);
     }
-
     for (final entry in piece.points.entries) {
       final pos = _p(entry.value, bounds, origin, scale);
       canvas.drawCircle(pos, 2.5, markerPaint);
