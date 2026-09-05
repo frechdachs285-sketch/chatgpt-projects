@@ -21,7 +21,11 @@ class MeasurementsValidator {
 class SkirtPatternCalculator {
   final MeasurementsValidator validator = MeasurementsValidator();
 
-  PatternResult calculate(Measurements m, ConstructionValues c) {
+  PatternResult calculate(
+    Measurements m,
+    ConstructionValues c, {
+    SeamAllowanceSettings seamAllowance = const SeamAllowanceSettings(),
+  }) {
     final errors = validator.validate(m);
     if (errors.isNotEmpty) return PatternResult(errors: errors);
     final p = _calculatePoints(m, c);
@@ -40,30 +44,33 @@ class SkirtPatternCalculator {
     final backSideCurve = curveBuilder.build(start: closedBackWaist.correctedSidePoint, end: p['P7']!);
     final frontSideCurve = curveBuilder.build(start: closedFrontWaist.correctedSidePoint, end: p['P7']!);
 
-    const seamAllowance = SeamAllowanceSettings();
     const cuttingBuilder = SkirtCuttingOutlineBuilder();
-    final backCuttingOutline = cuttingBuilder.build(
-      isBack: true,
-      closedWaist: closedBackWaist,
-      dartsFromCenterToSide: [backDart1, backDart2],
-      sideCurve: backSideCurve,
-      hipPoint: p['P7']!,
-      sideHemPoint: p['P8']!,
-      centerHemPoint: p['P3']!,
-      centerWaistPoint: p['P1']!,
-      settings: seamAllowance,
-    );
-    final frontCuttingOutline = cuttingBuilder.build(
-      isBack: false,
-      closedWaist: closedFrontWaist,
-      dartsFromCenterToSide: [frontDart],
-      sideCurve: frontSideCurve,
-      hipPoint: p['P7']!,
-      sideHemPoint: p['P8']!,
-      centerHemPoint: p['P4']!,
-      centerWaistPoint: p['P2']!,
-      settings: seamAllowance,
-    );
+    final PatternPath? backCuttingOutline = seamAllowance.enabled
+        ? cuttingBuilder.build(
+            isBack: true,
+            closedWaist: closedBackWaist,
+            dartsFromCenterToSide: [backDart1, backDart2],
+            sideCurve: backSideCurve,
+            hipPoint: p['P7']!,
+            sideHemPoint: p['P8']!,
+            centerHemPoint: p['P3']!,
+            centerWaistPoint: p['P1']!,
+            settings: seamAllowance,
+          )
+        : null;
+    final PatternPath? frontCuttingOutline = seamAllowance.enabled
+        ? cuttingBuilder.build(
+            isBack: false,
+            closedWaist: closedFrontWaist,
+            dartsFromCenterToSide: [frontDart],
+            sideCurve: frontSideCurve,
+            hipPoint: p['P7']!,
+            sideHemPoint: p['P8']!,
+            centerHemPoint: p['P4']!,
+            centerWaistPoint: p['P2']!,
+            settings: seamAllowance,
+          )
+        : null;
 
     final back = PatternPiece(
       id: 'skirt_back', name: 'Rock Rueckenteil',
