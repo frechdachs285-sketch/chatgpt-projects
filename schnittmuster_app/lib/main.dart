@@ -67,6 +67,12 @@ class PatternPreviewPainter extends CustomPainter {
       ...piece.points.values,
       for (final dart in piece.darts) ...[dart.leg1, dart.leg2, dart.apex],
       for (final segment in piece.outline.segments) if (segment is BezierSegment) ...[segment.control1, segment.control2],
+      if (piece.cuttingOutline != null)
+        for (final segment in piece.cuttingOutline!.segments) ...[
+          segment.start,
+          segment.end,
+          if (segment is BezierSegment) ...[segment.control1, segment.control2],
+        ],
       if (piece.grainline != null) ...[piece.grainline!.start, piece.grainline!.end],
       for (final notch in piece.notches) notch.position,
       for (final label in piece.labels) label.position,
@@ -97,14 +103,33 @@ class PatternPreviewPainter extends CustomPainter {
     final startX = math.max(padding, (size.width - usedWidth) / 2), startY = padding;
     final backOrigin = Offset(startX, startY);
     final frontOrigin = Offset(startX + backBounds.width * scale + gap, startY);
-    final outlinePaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.5;
+    final cuttingPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 2.2;
+    final outlinePaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.2;
     final debugPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 0.8;
     final helperPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 0.6;
     final markerPaint = Paint()..style = PaintingStyle.fill;
     final grainlinePaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.2;
     final notchPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.5;
-    _drawPiece(canvas, back, backBounds, backOrigin, scale, outlinePaint, debugPaint, helperPaint, markerPaint, grainlinePaint, notchPaint);
-    _drawPiece(canvas, front, frontBounds, frontOrigin, scale, outlinePaint, debugPaint, helperPaint, markerPaint, grainlinePaint, notchPaint);
+    _drawPiece(canvas, back, backBounds, backOrigin, scale, cuttingPaint, outlinePaint, debugPaint, helperPaint, markerPaint, grainlinePaint, notchPaint);
+    _drawPiece(canvas, front, frontBounds, frontOrigin, scale, cuttingPaint, outlinePaint, debugPaint, helperPaint, markerPaint, grainlinePaint, notchPaint);
+  }
+
+  void _drawPatternPath(Canvas canvas, PatternPath patternPath, _Bounds bounds, Offset origin, double scale, Paint paint) {
+    if (patternPath.segments.isEmpty) return;
+    final first = _p(patternPath.segments.first.start, bounds, origin, scale);
+    final path = Path()..moveTo(first.dx, first.dy);
+    for (final segment in patternPath.segments) {
+      if (segment is BezierSegment) {
+        final c1 = _p(segment.control1, bounds, origin, scale);
+        final c2 = _p(segment.control2, bounds, origin, scale);
+        final end = _p(segment.end, bounds, origin, scale);
+        path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
+      } else {
+        final end = _p(segment.end, bounds, origin, scale);
+        path.lineTo(end.dx, end.dy);
+      }
+    }
+    canvas.drawPath(path, paint);
   }
 
   void _drawHelperLine(Canvas canvas, PatternPoint start, PatternPoint end, _Bounds bounds, Offset origin, double scale, Paint paint) =>
@@ -154,14 +179,14 @@ class PatternPreviewPainter extends CustomPainter {
     }
   }
 
-  void _drawPiece(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint outlinePaint, Paint debugPaint, Paint helperPaint, Paint markerPaint, Paint grainlinePaint, Paint notchPaint) {
+  void _drawPiece(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint cuttingPaint, Paint outlinePaint, Paint debugPaint, Paint helperPaint, Paint markerPaint, Paint grainlinePaint, Paint notchPaint) {
     if(piece.outline.segments.isEmpty)return;
     _drawConstructionLines(canvas,piece,bounds,origin,scale,helperPaint);
-    final first=_p(piece.outline.segments.first.start,bounds,origin,scale); final path=Path()..moveTo(first.dx,first.dy);
-    for(final segment in piece.outline.segments){
-      if(segment is BezierSegment){final c1=_p(segment.control1,bounds,origin,scale),c2=_p(segment.control2,bounds,origin,scale),end=_p(segment.end,bounds,origin,scale);path.cubicTo(c1.dx,c1.dy,c2.dx,c2.dy,end.dx,end.dy);}else{final end=_p(segment.end,bounds,origin,scale);path.lineTo(end.dx,end.dy);}
+    if (piece.cuttingOutline != null) {
+      _drawPatternPath(canvas, piece.cuttingOutline!, bounds, origin, scale, cuttingPaint);
     }
-    canvas.drawPath(path,outlinePaint); _drawGrainline(canvas,piece,bounds,origin,scale,grainlinePaint); _drawNotches(canvas,piece,bounds,origin,scale,notchPaint); _drawLabels(canvas,piece,bounds,origin,scale);
+    _drawPatternPath(canvas, piece.outline, bounds, origin, scale, outlinePaint);
+    _drawGrainline(canvas,piece,bounds,origin,scale,grainlinePaint); _drawNotches(canvas,piece,bounds,origin,scale,notchPaint); _drawLabels(canvas,piece,bounds,origin,scale);
     for(final dart in piece.darts) {
       canvas.drawLine(_p(dart.center,bounds,origin,scale),_p(dart.apex,bounds,origin,scale),debugPaint);
     }
