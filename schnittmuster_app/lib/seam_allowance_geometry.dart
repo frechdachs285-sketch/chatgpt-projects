@@ -48,22 +48,93 @@ class SeamAllowanceGeometry {
 
     return List<PatternPoint>.generate(samples + 1, (index) {
       final t = index / samples;
-      final point = curve.pointAt(t);
-      final tangent = curve.derivativeAt(t);
-      final tangentLength = math.sqrt(
-        tangent.x * tangent.x + tangent.y * tangent.y,
+      return _offsetBezierPoint(curve, distance, t);
+    });
+  }
+
+  /// Creates a tolerance-controlled polyline of the exact Bezier offset.
+  ///
+  /// Every generated vertex lies on the exact normal offset. Intervals are
+  /// recursively split until the exact offset midpoint differs from the chord
+  /// midpoint by no more than [maxDeviation]. This removes dependence on an
+  /// arbitrary fixed sample count and gives the PDF/export path a physical
+  /// accuracy target in pattern units (centimetres in Rock v1).
+  static List<PatternPoint> offsetBezierAdaptive(
+    CubicBezierCurve curve,
+    double distance, {
+    double maxDeviation = 0.01,
+    int maxDepth = 20,
+  }) {
+    _validateDistance(distance);
+    if (!maxDeviation.isFinite || maxDeviation <= 0) {
+      throw ArgumentError.value(
+        maxDeviation,
+        'maxDeviation',
+        'must be finite and greater than 0',
       );
-      if (tangentLength == 0) {
-        throw StateError('Cannot offset Bezier at a point with zero tangent.');
+    }
+    if (maxDepth < 1) {
+      throw ArgumentError.value(maxDepth, 'maxDepth', 'must be at least 1');
+    }
+
+    final result = <PatternPoint>[];
+    final start = _offsetBezierPoint(curve, distance, 0);
+    final end = _offsetBezierPoint(curve, distance, 1);
+    result.add(start);
+
+    void subdivide(
+      double t0,
+      PatternPoint p0,
+      double t1,
+      PatternPoint p1,
+      int depth,
+    ) {
+      final tm = (t0 + t1) / 2;
+      final pm = _offsetBezierPoint(curve, distance, tm);
+      final chordMid = PatternPoint(
+        (p0.x + p1.x) / 2,
+        (p0.y + p1.y) / 2,
+      );
+      final deviation = pm.distanceTo(chordMid);
+
+      if (deviation <= maxDeviation) {
+        result.add(p1);
+        return;
+      }
+      if (depth >= maxDepth) {
+        throw StateError(
+          'Adaptive Bezier offset did not reach the requested tolerance.',
+        );
       }
 
-      final nx = -tangent.y / tangentLength;
-      final ny = tangent.x / tangentLength;
-      return PatternPoint(
-        point.x + nx * distance,
-        point.y + ny * distance,
-      );
-    });
+      subdivide(t0, p0, tm, pm, depth + 1);
+      subdivide(tm, pm, t1, p1, depth + 1);
+    }
+
+    subdivide(0, start, 1, end, 0);
+    return result;
+  }
+
+  static PatternPoint _offsetBezierPoint(
+    CubicBezierCurve curve,
+    double distance,
+    double t,
+  ) {
+    final point = curve.pointAt(t);
+    final tangent = curve.derivativeAt(t);
+    final tangentLength = math.sqrt(
+      tangent.x * tangent.x + tangent.y * tangent.y,
+    );
+    if (tangentLength == 0) {
+      throw StateError('Cannot offset Bezier at a point with zero tangent.');
+    }
+
+    final nx = -tangent.y / tangentLength;
+    final ny = tangent.x / tangentLength;
+    return PatternPoint(
+      point.x + nx * distance,
+      point.y + ny * distance,
+    );
   }
 
   /// Joins two already-offset edges by intersecting their terminal directions.
