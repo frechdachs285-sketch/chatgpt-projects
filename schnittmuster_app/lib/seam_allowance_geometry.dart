@@ -66,6 +66,104 @@ class SeamAllowanceGeometry {
     });
   }
 
+  /// Joins two already-offset edges by intersecting their terminal directions.
+  ///
+  /// [first] and [second] must each contain at least two points. The last two
+  /// points of [first] define the outgoing direction of the first edge, and the
+  /// first two points of [second] define the incoming direction of the second
+  /// edge. The returned point is the intersection of those infinite lines.
+  ///
+  /// This is the corner rule we use for two offset edges that must meet in one
+  /// precise miter point. Parallel or near-parallel directions are rejected so
+  /// that no unstable artificial corner is created.
+  static PatternPoint joinOffsetEdges(
+    List<PatternPoint> first,
+    List<PatternPoint> second, {
+    double parallelTolerance = 0.000000001,
+  }) {
+    if (first.length < 2 || second.length < 2) {
+      throw ArgumentError('Each offset edge needs at least two points.');
+    }
+    if (!parallelTolerance.isFinite || parallelTolerance <= 0) {
+      throw ArgumentError.value(
+        parallelTolerance,
+        'parallelTolerance',
+        'must be finite and greater than 0',
+      );
+    }
+
+    final a = first[first.length - 2];
+    final b = first.last;
+    final c = second.first;
+    final d = second[1];
+
+    return lineIntersection(
+      LineSegment(a, b),
+      LineSegment(c, d),
+      parallelTolerance: parallelTolerance,
+    );
+  }
+
+  /// Intersection of two infinite directed lines.
+  static PatternPoint lineIntersection(
+    LineSegment first,
+    LineSegment second, {
+    double parallelTolerance = 0.000000001,
+  }) {
+    final r = first.end - first.start;
+    final s = second.end - second.start;
+    final denominator = _cross(r, s);
+
+    if (denominator.abs() <= parallelTolerance) {
+      throw StateError('Cannot join parallel or near-parallel offset edges.');
+    }
+
+    final qMinusP = second.start - first.start;
+    final t = _cross(qMinusP, s) / denominator;
+    return first.start + r * t;
+  }
+
+  /// Builds one continuous polyline from offset edge point lists.
+  ///
+  /// Adjacent edges are joined at their exact miter intersection. The original
+  /// input lists are not modified.
+  static List<PatternPoint> joinOffsetPolylineEdges(
+    List<List<PatternPoint>> edges,
+  ) {
+    if (edges.isEmpty) {
+      throw ArgumentError('At least one offset edge is required.');
+    }
+    for (final edge in edges) {
+      if (edge.length < 2) {
+        throw ArgumentError('Each offset edge needs at least two points.');
+      }
+    }
+
+    if (edges.length == 1) {
+      return List<PatternPoint>.from(edges.single);
+    }
+
+    final result = <PatternPoint>[];
+    var current = List<PatternPoint>.from(edges.first);
+
+    for (var i = 1; i < edges.length; i++) {
+      final next = List<PatternPoint>.from(edges[i]);
+      final join = joinOffsetEdges(current, next);
+      current[current.length - 1] = join;
+      next[0] = join;
+
+      if (result.isEmpty) {
+        result.addAll(current);
+      } else {
+        result.addAll(current.skip(1));
+      }
+      current = next;
+    }
+
+    result.addAll(current.skip(1));
+    return result;
+  }
+
   /// Exact point-to-point distance at matching Bezier parameter values.
   static double sampleOffsetDistance(
     CubicBezierCurve curve,
@@ -91,6 +189,8 @@ class SeamAllowanceGeometry {
     final vy = offset.start.y - original.start.y;
     return (dx * vy - dy * vx).abs() / length;
   }
+
+  static double _cross(PatternPoint a, PatternPoint b) => a.x * b.y - a.y * b.x;
 
   static void _validateDistance(double distance) {
     if (!distance.isFinite || distance < 0) {
