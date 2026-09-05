@@ -90,6 +90,10 @@ class PatternPreviewPainter extends CustomPainter {
       for (final dart in piece.darts) ...[dart.leg1, dart.leg2, dart.apex],
       for (final segment in piece.outline.segments)
         if (segment is BezierSegment) ...[segment.control1, segment.control2],
+      if (piece.grainline != null) ...[
+        piece.grainline!.start,
+        piece.grainline!.end,
+      ],
     ];
 
     var minX = points.first.x;
@@ -135,9 +139,12 @@ class PatternPreviewPainter extends CustomPainter {
     final debugPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 0.8;
     final helperPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 0.6;
     final markerPaint = Paint()..style = PaintingStyle.fill;
+    final grainlinePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
 
-    _drawPiece(canvas, back, backBounds, backOrigin, scale, outlinePaint, debugPaint, helperPaint, markerPaint);
-    _drawPiece(canvas, front, frontBounds, frontOrigin, scale, outlinePaint, debugPaint, helperPaint, markerPaint);
+    _drawPiece(canvas, back, backBounds, backOrigin, scale, outlinePaint, debugPaint, helperPaint, markerPaint, grainlinePaint);
+    _drawPiece(canvas, front, frontBounds, frontOrigin, scale, outlinePaint, debugPaint, helperPaint, markerPaint, grainlinePaint);
   }
 
   void _drawHelperLine(Canvas canvas, PatternPoint start, PatternPoint end, _Bounds bounds, Offset origin, double scale, Paint paint) {
@@ -161,7 +168,31 @@ class PatternPreviewPainter extends CustomPainter {
     }
   }
 
-  void _drawPiece(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint outlinePaint, Paint debugPaint, Paint helperPaint, Paint markerPaint) {
+  void _drawGrainline(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint paint) {
+    final grainline = piece.grainline;
+    if (grainline == null) return;
+
+    final start = _p(grainline.start, bounds, origin, scale);
+    final end = _p(grainline.end, bounds, origin, scale);
+    canvas.drawLine(start, end, paint);
+
+    const arrowLength = 7.0;
+    const arrowWidth = 4.0;
+    void drawArrow(Offset tip, double direction) {
+      final baseY = tip.dy + direction * arrowLength;
+      final path = Path()
+        ..moveTo(tip.dx, tip.dy)
+        ..lineTo(tip.dx - arrowWidth, baseY)
+        ..moveTo(tip.dx, tip.dy)
+        ..lineTo(tip.dx + arrowWidth, baseY);
+      canvas.drawPath(path, paint);
+    }
+
+    drawArrow(start, 1);
+    drawArrow(end, -1);
+  }
+
+  void _drawPiece(Canvas canvas, PatternPiece piece, _Bounds bounds, Offset origin, double scale, Paint outlinePaint, Paint debugPaint, Paint helperPaint, Paint markerPaint, Paint grainlinePaint) {
     if (piece.outline.segments.isEmpty) return;
     _drawConstructionLines(canvas, piece, bounds, origin, scale, helperPaint);
 
@@ -175,11 +206,11 @@ class PatternPreviewPainter extends CustomPainter {
         path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
       } else {
         final end = _p(segment.end, bounds, origin, scale);
-        // Waist curves remain straight placeholders until waist truing is defined.
         path.lineTo(end.dx, end.dy);
       }
     }
     canvas.drawPath(path, outlinePaint);
+    _drawGrainline(canvas, piece, bounds, origin, scale, grainlinePaint);
 
     for (final dart in piece.darts) {
       canvas.drawLine(_p(dart.center, bounds, origin, scale), _p(dart.apex, bounds, origin, scale), debugPaint);
