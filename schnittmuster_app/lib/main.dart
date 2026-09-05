@@ -162,7 +162,9 @@ class PatternPreviewPainter extends CustomPainter {
       if(segment is BezierSegment){final c1=_p(segment.control1,bounds,origin,scale),c2=_p(segment.control2,bounds,origin,scale),end=_p(segment.end,bounds,origin,scale);path.cubicTo(c1.dx,c1.dy,c2.dx,c2.dy,end.dx,end.dy);}else{final end=_p(segment.end,bounds,origin,scale);path.lineTo(end.dx,end.dy);}
     }
     canvas.drawPath(path,outlinePaint); _drawGrainline(canvas,piece,bounds,origin,scale,grainlinePaint); _drawNotches(canvas,piece,bounds,origin,scale,notchPaint); _drawLabels(canvas,piece,bounds,origin,scale);
-    for(final dart in piece.darts)canvas.drawLine(_p(dart.center,bounds,origin,scale),_p(dart.apex,bounds,origin,scale),debugPaint);
+    for(final dart in piece.darts) {
+      canvas.drawLine(_p(dart.center,bounds,origin,scale),_p(dart.apex,bounds,origin,scale),debugPaint);
+    }
     for(final entry in piece.points.entries){
       final pos=_p(entry.value,bounds,origin,scale);canvas.drawCircle(pos,2.5,markerPaint);
       final tp=TextPainter(text:TextSpan(text:entry.key,style:const TextStyle(fontSize:10,color:Colors.black)),textDirection:TextDirection.ltr)..layout();tp.paint(canvas,pos+const Offset(4,-12));
