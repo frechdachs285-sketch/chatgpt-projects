@@ -55,6 +55,24 @@ class ConstructionValues {
   });
 }
 
+class SeamAllowanceSettings {
+  final bool enabled;
+  final double waist;
+  final double side;
+  final double backCenter;
+  final double frontCenter;
+  final double hem;
+
+  const SeamAllowanceSettings({
+    this.enabled = true,
+    this.waist = 1.5,
+    this.side = 1.5,
+    this.backCenter = 1.5,
+    this.frontCenter = 0.0,
+    this.hem = 3.0,
+  });
+}
+
 class Dart {
   final PatternPoint center;
   final PatternPoint apex;
@@ -153,6 +171,7 @@ class PatternPiece {
   final String name;
   final Map<String, PatternPoint> points;
   final PatternPath outline;
+  final PatternPath? cuttingOutline;
   final List<Dart> darts;
   final Grainline? grainline;
   final List<PatternNotch> notches;
@@ -163,6 +182,7 @@ class PatternPiece {
     required this.name,
     required this.points,
     required this.outline,
+    this.cuttingOutline,
     this.darts = const [],
     this.grainline,
     this.notches = const [],
