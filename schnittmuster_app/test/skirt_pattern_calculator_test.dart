@@ -72,6 +72,22 @@ void main() {
     expect(front.points['P17']!.distanceTo(front.points['P18']!), closeTo(10.0, 0.0001));
   });
 
+  test('Abweichende Taillenzugabe wird durchgaengig verwendet', () {
+    const measurements = Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60);
+    const construction = ConstructionValues(waistEase: 2.0);
+    final result = SkirtPatternCalculator().calculate(measurements, construction);
+    expect(result.isValid, isTrue);
+    final back = result.back!;
+    final front = result.front!;
+
+    expect(back.points['P10']!.x, closeTo(23.5, 0.000001));
+    expect(front.points['P16']!.x, closeTo(30.0, 0.000001));
+    expect(waistLength(back), closeTo(19.5, 0.00001));
+    expect(waistLength(front), closeTo(19.5, 0.00001));
+    expect(waistLength(back) + waistLength(front), closeTo(39.0, 0.00001));
+    expectProductionGeometry(measurements, construction);
+  });
+
   test('Fadenlaeufe sind vertikal und adaptiv positioniert', () {
     final result = SkirtPatternCalculator().calculate(
       const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60),
