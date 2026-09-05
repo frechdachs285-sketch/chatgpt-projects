@@ -93,7 +93,10 @@ class SkirtPatternCalculator {
       darts: [frontDart],
       grainline: _grainline(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength),
       notches: [PatternNotch(position: p['P7']!, role: 'side_hip')],
-      labels: [_pieceLabel(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: 'Rock - Vorderteil')],
+      labels: [
+        _pieceLabel(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: 'Rock - Vorderteil'),
+        PatternLabel(position: PatternPoint(p['P2']!.x, m.skirtLength * 0.5), text: 'Stoffbruch'),
+      ],
       outline: PatternPath([
         _bezierSegment(frontWaistCurves[0], 'waist'), LineSegment(frontDart.leg1, frontDart.apex), LineSegment(frontDart.apex, frontDart.leg2),
         _bezierSegment(frontWaistCurves[1], 'waist'), _bezierSegment(frontSideCurve, 'sideSeam'), LineSegment(p['P7']!, p['P8']!), LineSegment(p['P8']!, p['P4']!), LineSegment(p['P4']!, p['P2']!),
