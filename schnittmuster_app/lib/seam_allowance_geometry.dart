@@ -55,10 +55,10 @@ class SeamAllowanceGeometry {
   /// Creates a tolerance-controlled polyline of the exact Bezier offset.
   ///
   /// Every generated vertex lies on the exact normal offset. Intervals are
-  /// recursively split until the exact offset midpoint differs from the chord
-  /// midpoint by no more than [maxDeviation]. This removes dependence on an
-  /// arbitrary fixed sample count and gives the PDF/export path a physical
-  /// accuracy target in pattern units (centimetres in Rock v1).
+  /// recursively split until exact offset points at one quarter, one half and
+  /// three quarters of the interval all lie within [maxDeviation] of the chord.
+  /// This is intentionally stricter than a midpoint-only test, which can miss
+  /// the largest deviation on asymmetric curve sections.
   static List<PatternPoint> offsetBezierAdaptive(
     CubicBezierCurve curve,
     double distance, {
@@ -89,15 +89,24 @@ class SeamAllowanceGeometry {
       PatternPoint p1,
       int depth,
     ) {
-      final tm = (t0 + t1) / 2;
-      final pm = _offsetBezierPoint(curve, distance, tm);
-      final chordMid = PatternPoint(
-        (p0.x + p1.x) / 2,
-        (p0.y + p1.y) / 2,
-      );
-      final deviation = pm.distanceTo(chordMid);
+      final span = t1 - t0;
+      final tq1 = t0 + span * 0.25;
+      final tm = t0 + span * 0.5;
+      final tq3 = t0 + span * 0.75;
 
-      if (deviation <= maxDeviation) {
+      final pq1 = _offsetBezierPoint(curve, distance, tq1);
+      final pm = _offsetBezierPoint(curve, distance, tm);
+      final pq3 = _offsetBezierPoint(curve, distance, tq3);
+
+      final maxObservedDeviation = math.max(
+        _distanceToSegment(pq1, p0, p1),
+        math.max(
+          _distanceToSegment(pm, p0, p1),
+          _distanceToSegment(pq3, p0, p1),
+        ),
+      );
+
+      if (maxObservedDeviation <= maxDeviation) {
         result.add(p1);
         return;
       }
@@ -138,15 +147,6 @@ class SeamAllowanceGeometry {
   }
 
   /// Joins two already-offset edges by intersecting their terminal directions.
-  ///
-  /// [first] and [second] must each contain at least two points. The last two
-  /// points of [first] define the outgoing direction of the first edge, and the
-  /// first two points of [second] define the incoming direction of the second
-  /// edge. The returned point is the intersection of those infinite lines.
-  ///
-  /// This is the corner rule we use for two offset edges that must meet in one
-  /// precise miter point. Parallel or near-parallel directions are rejected so
-  /// that no unstable artificial corner is created.
   static PatternPoint joinOffsetEdges(
     List<PatternPoint> first,
     List<PatternPoint> second, {
@@ -195,9 +195,6 @@ class SeamAllowanceGeometry {
   }
 
   /// Builds one continuous polyline from offset edge point lists.
-  ///
-  /// Adjacent edges are joined at their exact miter intersection. The original
-  /// input lists are not modified.
   static List<PatternPoint> joinOffsetPolylineEdges(
     List<List<PatternPoint>> edges,
   ) {
@@ -259,6 +256,22 @@ class SeamAllowanceGeometry {
     final vx = offset.start.x - original.start.x;
     final vy = offset.start.y - original.start.y;
     return (dx * vy - dy * vx).abs() / length;
+  }
+
+  static double _distanceToSegment(
+    PatternPoint point,
+    PatternPoint a,
+    PatternPoint b,
+  ) {
+    final ab = b - a;
+    final ap = point - a;
+    final lengthSquared = ab.x * ab.x + ab.y * ab.y;
+    if (lengthSquared == 0) return point.distanceTo(a);
+
+    var t = (ap.x * ab.x + ap.y * ab.y) / lengthSquared;
+    if (t < 0) t = 0;
+    if (t > 1) t = 1;
+    return point.distanceTo(a + ab * t);
   }
 
   static double _cross(PatternPoint a, PatternPoint b) => a.x * b.y - a.y * b.x;
