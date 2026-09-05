@@ -17,18 +17,37 @@ class SchnittmusterApp extends StatelessWidget {
       );
 }
 
-class SkirtDebugPage extends StatelessWidget {
+class SkirtDebugPage extends StatefulWidget {
   const SkirtDebugPage({super.key});
+
+  @override
+  State<SkirtDebugPage> createState() => _SkirtDebugPageState();
+}
+
+class _SkirtDebugPageState extends State<SkirtDebugPage> {
+  bool _seamAllowanceEnabled = true;
+
   @override
   Widget build(BuildContext context) {
     final result = SkirtPatternCalculator().calculate(
       const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60),
       const ConstructionValues(),
+      seamAllowance: SeamAllowanceSettings(enabled: _seamAllowanceEnabled),
     );
     return Scaffold(
       appBar: AppBar(title: const Text('Rock v1 - Debug')),
       body: result.isValid
-          ? PatternPreview(front: result.front!, back: result.back!)
+          ? Column(
+              children: [
+                SwitchListTile(
+                  title: const Text('Nahtzugabe'),
+                  subtitle: Text(_seamAllowanceEnabled ? 'Ein' : 'Aus'),
+                  value: _seamAllowanceEnabled,
+                  onChanged: (value) => setState(() => _seamAllowanceEnabled = value),
+                ),
+                Expanded(child: PatternPreview(front: result.front!, back: result.back!)),
+              ],
+            )
           : Center(child: Text(result.errors.join('\n'))),
     );
   }
