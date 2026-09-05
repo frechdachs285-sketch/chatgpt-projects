@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:schnittmuster_app/pattern_geometry.dart';
 import 'package:schnittmuster_app/pattern_models.dart';
 import 'package:schnittmuster_app/seam_allowance_geometry.dart';
 
@@ -92,6 +93,81 @@ void main() {
 
     expect(
       () => SeamAllowanceGeometry.offsetLine(original, 1.5),
+      throwsArgumentError,
+    );
+  });
+
+  test('Bezier-Stuetzpunkte liegen exakt 1,5 cm auf der Normalen', () {
+    const curve = CubicBezierCurve(
+      start: PatternPoint(0, 0),
+      control1: PatternPoint(4, 1),
+      control2: PatternPoint(6, 8),
+      end: PatternPoint(10, 10),
+    );
+    const samples = 200;
+    const distance = 1.5;
+
+    final offset = SeamAllowanceGeometry.offsetBezierSamples(
+      curve,
+      distance,
+      samples: samples,
+    );
+
+    expect(offset.length, samples + 1);
+
+    for (var i = 0; i <= samples; i++) {
+      final t = i / samples;
+      expect(
+        SeamAllowanceGeometry.sampleOffsetDistance(curve, offset[i], t),
+        closeTo(distance, 0.000001),
+        reason: 'Abstand bei t=$t',
+      );
+
+      final base = curve.pointAt(t);
+      final tangent = curve.derivativeAt(t);
+      final offsetVector = offset[i] - base;
+      final dot = tangent.x * offsetVector.x + tangent.y * offsetVector.y;
+      expect(dot, closeTo(0, 0.000001), reason: 'Normale bei t=$t');
+    }
+  });
+
+  test('Bezier-Nullzugabe liefert die Originalpunkte', () {
+    const curve = CubicBezierCurve(
+      start: PatternPoint(0, 0),
+      control1: PatternPoint(2, 0),
+      control2: PatternPoint(4, 4),
+      end: PatternPoint(6, 4),
+    );
+    const samples = 40;
+
+    final offset = SeamAllowanceGeometry.offsetBezierSamples(
+      curve,
+      0,
+      samples: samples,
+    );
+
+    for (var i = 0; i <= samples; i++) {
+      expect(
+        offset[i].distanceTo(curve.pointAt(i / samples)),
+        lessThan(0.000001),
+      );
+    }
+  });
+
+  test('Bezier-Offset weist ungueltige Parameter ab', () {
+    const curve = CubicBezierCurve(
+      start: PatternPoint(0, 0),
+      control1: PatternPoint(2, 0),
+      control2: PatternPoint(4, 4),
+      end: PatternPoint(6, 4),
+    );
+
+    expect(
+      () => SeamAllowanceGeometry.offsetBezierSamples(curve, -1, samples: 20),
+      throwsArgumentError,
+    );
+    expect(
+      () => SeamAllowanceGeometry.offsetBezierSamples(curve, 1.5, samples: 0),
       throwsArgumentError,
     );
   });
