@@ -212,6 +212,7 @@ class _SkirtPageState extends State<SkirtPage> {
         controller: controller,
         enabled: _seamAllowanceEnabled,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        textInputAction: TextInputAction.next,
         decoration: InputDecoration(
           labelText: label,
           suffixText: 'cm',
@@ -227,11 +228,14 @@ class _SkirtPageState extends State<SkirtPage> {
   Widget build(BuildContext context) {
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final result = _result;
+    final previewHeight = math.max(430.0, MediaQuery.sizeOf(context).height * 0.48);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Rock-Schnittmuster')),
       body: SafeArea(
-        child: Column(
+        child: ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.only(bottom: 18),
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -351,22 +355,25 @@ class _SkirtPageState extends State<SkirtPage> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            const SizedBox(height: 6),
-            Expanded(
-              child: keyboardOpen
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text(
-                          'Eingabe fertigstellen und anschließend anwenden.',
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    )
-                  : result == null || !result.isValid
-                      ? const Center(child: Text('Bitte gültige Maße anwenden.'))
-                      : PatternPreview(front: result.front!, back: result.back!),
-            ),
+            const SizedBox(height: 8),
+            if (keyboardOpen)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(24, 8, 24, 24),
+                child: Text(
+                  'Eingabe fertigstellen und anschließend anwenden. Du kannst die Seite dabei nach oben und unten scrollen.',
+                  textAlign: TextAlign.center,
+                ),
+              )
+            else if (result == null || !result.isValid)
+              const SizedBox(
+                height: 260,
+                child: Center(child: Text('Bitte gültige Maße anwenden.')),
+              )
+            else
+              SizedBox(
+                height: previewHeight,
+                child: PatternPreview(front: result.front!, back: result.back!),
+              ),
           ],
         ),
       ),
