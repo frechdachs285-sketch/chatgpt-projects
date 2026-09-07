@@ -72,7 +72,63 @@ class SkirtCuttingOutlineBuilder {
     return PatternPath(segments);
   }
 
+  List<PatternPoint> buildDartNotchPoints({
+    required bool isBack,
+    required SegmentedWaistCurveResult closedWaist,
+    required List<Dart> dartsFromCenterToSide,
+    required SeamAllowanceSettings settings,
+    double curveMaxDeviation = 0.01,
+  }) {
+    if (!settings.enabled) {
+      throw ArgumentError('Nahtzugabe ist deaktiviert.');
+    }
+    if (!curveMaxDeviation.isFinite || curveMaxDeviation <= 0) {
+      throw ArgumentError.value(
+        curveMaxDeviation,
+        'curveMaxDeviation',
+        'muss endlich und groesser als 0 sein',
+      );
+    }
+
+    final unfolded = _buildUnfoldedWaistSegments(
+      isBack: isBack,
+      closedWaist: closedWaist,
+      dartsFromCenterToSide: dartsFromCenterToSide,
+      distance: settings.waist,
+      maxDeviation: curveMaxDeviation,
+    );
+
+    final result = <PatternPoint>[];
+    for (var i = 0; i < dartsFromCenterToSide.length; i++) {
+      result.add(unfolded[i].last);
+      result.add(unfolded[i + 1].first);
+    }
+    return result;
+  }
+
   List<PatternPoint> _buildWaistEdge({
+    required bool isBack,
+    required SegmentedWaistCurveResult closedWaist,
+    required List<Dart> dartsFromCenterToSide,
+    required double distance,
+    required double maxDeviation,
+  }) {
+    final unfolded = _buildUnfoldedWaistSegments(
+      isBack: isBack,
+      closedWaist: closedWaist,
+      dartsFromCenterToSide: dartsFromCenterToSide,
+      distance: distance,
+      maxDeviation: maxDeviation,
+    );
+
+    final points = <PatternPoint>[];
+    for (final segment in unfolded) {
+      points.addAll(segment);
+    }
+    return points;
+  }
+
+  List<List<PatternPoint>> _buildUnfoldedWaistSegments({
     required bool isBack,
     required SegmentedWaistCurveResult closedWaist,
     required List<Dart> dartsFromCenterToSide,
@@ -89,22 +145,10 @@ class SkirtCuttingOutlineBuilder {
         ),
     ];
 
-    final unfolded = const WaistCurveUnfolder().unfoldSampledSegments(
+    return const WaistCurveUnfolder().unfoldSampledSegments(
       closedSegments: closedOffsetSegments,
       dartsFromCenterToSide: dartsFromCenterToSide,
     );
-
-    final points = <PatternPoint>[];
-    for (final segment in unfolded) {
-      if (points.isEmpty) {
-        points.addAll(segment);
-      } else {
-        // The straight connection between the two unfolded endpoints is the
-        // cutting edge across the opened dart mouth.
-        points.addAll(segment);
-      }
-    }
-    return points;
   }
 
   List<PatternPoint> _offsetCurve(
