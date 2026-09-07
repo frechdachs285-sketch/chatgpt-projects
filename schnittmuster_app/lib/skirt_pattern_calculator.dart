@@ -48,12 +48,19 @@ class SkirtPatternCalculator {
     }
 
     final finishedWaistbandWidth = c.finishedWaistbandWidth;
+    final waistbandSeamAllowance = c.waistbandSeamAllowance;
+    if ((finishedWaistbandWidth == null) != (waistbandSeamAllowance == null)) {
+      return const PatternResult(errors: ['Bund: Bitte fertige Bundbreite und Bund-Nahtzugabe gemeinsam eingeben.']);
+    }
     if (finishedWaistbandWidth != null) {
       if (!finishedWaistbandWidth.isFinite || finishedWaistbandWidth <= 0) {
         return const PatternResult(errors: ['Fertige Bundbreite: Bitte einen Wert größer als 0 cm eingeben.']);
       }
       if (finishedWaistbandWidth > 15) {
         return const PatternResult(errors: ['Fertige Bundbreite: Für Rock v1 sind höchstens 15 cm zulässig.']);
+      }
+      if (!waistbandSeamAllowance!.isFinite || waistbandSeamAllowance < 0 || waistbandSeamAllowance > 5) {
+        return const PatternResult(errors: ['Bund-Nahtzugabe: Bitte einen Wert zwischen 0 und 5 cm eingeben.']);
       }
     }
 
@@ -124,12 +131,71 @@ class SkirtPatternCalculator {
         ]),
         cuttingOutline: frontCuttingOutline,
       );
-      return PatternResult(front: front, back: back);
+
+      final waistband = finishedWaistbandWidth == null
+          ? null
+          : _buildWaistband(
+              finishedLength: m.waist + c.waistEase,
+              finishedWidth: finishedWaistbandWidth,
+              seamAllowance: waistbandSeamAllowance!,
+            );
+
+      return PatternResult(front: front, back: back, waistband: waistband);
     } on StateError {
       return const PatternResult(errors: ['Diese Maßkombination kann mit dem aktuellen Rock-Grundschnitt noch nicht sauber berechnet werden. Bitte die Maße prüfen.']);
     } catch (_) {
       return const PatternResult(errors: ['Das Schnittmuster konnte mit diesen Maßen nicht erstellt werden. Bitte die Eingaben prüfen.']);
     }
+  }
+
+  PatternPiece _buildWaistband({required double finishedLength, required double finishedWidth, required double seamAllowance}) {
+    final cutLength = finishedLength + 2 * seamAllowance;
+    final cutWidth = 2 * finishedWidth + 2 * seamAllowance;
+    final s0 = PatternPoint(seamAllowance, seamAllowance);
+    final s1 = PatternPoint(seamAllowance + finishedLength, seamAllowance);
+    final s2 = PatternPoint(seamAllowance + finishedLength, seamAllowance + 2 * finishedWidth);
+    final s3 = PatternPoint(seamAllowance, seamAllowance + 2 * finishedWidth);
+    final c0 = const PatternPoint(0, 0);
+    final c1 = PatternPoint(cutLength, 0);
+    final c2 = PatternPoint(cutLength, cutWidth);
+    final c3 = PatternPoint(0, cutWidth);
+    final foldY = seamAllowance + finishedWidth;
+
+    return PatternPiece(
+      id: 'skirt_waistband',
+      name: 'Gerader Bund',
+      points: {
+        'CUT_TL': c0,
+        'CUT_TR': c1,
+        'CUT_BR': c2,
+        'CUT_BL': c3,
+        'SEAM_TL': s0,
+        'SEAM_TR': s1,
+        'SEAM_BR': s2,
+        'SEAM_BL': s3,
+      },
+      outline: PatternPath([
+        LineSegment(s0, s1),
+        LineSegment(s1, s2),
+        LineSegment(s2, s3),
+        LineSegment(s3, s0),
+      ]),
+      cuttingOutline: PatternPath([
+        LineSegment(c0, c1),
+        LineSegment(c1, c2),
+        LineSegment(c2, c3),
+        LineSegment(c3, c0),
+      ]),
+      guideLines: [LineSegment(PatternPoint(0, foldY), PatternPoint(cutLength, foldY))],
+      grainline: Grainline(
+        start: PatternPoint(seamAllowance + finishedLength * 0.2, foldY),
+        end: PatternPoint(seamAllowance + finishedLength * 0.8, foldY),
+      ),
+      labels: [
+        PatternLabel(position: PatternPoint(cutLength / 2, foldY - finishedWidth * 0.35), text: 'Gerader Bund'),
+        PatternLabel(position: PatternPoint(cutLength / 2, foldY + finishedWidth * 0.35), text: '1x zuschneiden / Faltlinie Mitte'),
+      ],
+    );
   }
 
   Grainline _grainline({required double centerX, required double sideX, required double skirtLength}) {
