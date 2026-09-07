@@ -70,6 +70,7 @@ class SkirtPatternCalculator {
         labels: [
           _pieceLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: 'Rock - Rueckenteil'),
           _cutLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: '2x gegengleich zuschneiden'),
+          _backCenterLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength),
           _hemLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: hemText),
         ],
         outline: PatternPath([
@@ -113,6 +114,7 @@ class SkirtPatternCalculator {
   }
   PatternLabel _pieceLabel({required double centerX, required double sideX, required double skirtLength, required String text}) => PatternLabel(position: PatternPoint((centerX + sideX) / 2, skirtLength * 0.82), text: text);
   PatternLabel _cutLabel({required double centerX, required double sideX, required double skirtLength, required String text}) => PatternLabel(position: PatternPoint((centerX + sideX) / 2, skirtLength * 0.88), text: text);
+  PatternLabel _backCenterLabel({required double centerX, required double sideX, required double skirtLength}) => PatternLabel(position: PatternPoint(centerX + (sideX - centerX) * 0.18, skirtLength * 0.5), text: 'Hintere Mitte');
   PatternLabel _hemLabel({required double centerX, required double sideX, required double skirtLength, required String text}) => PatternLabel(position: PatternPoint((centerX + sideX) / 2, skirtLength - 1.2), text: text);
   BezierSegment _bezierSegment(CubicBezierCurve curve, String role) => BezierSegment(start: curve.start, control1: curve.control1, control2: curve.control2, end: curve.end, role: role);
 
