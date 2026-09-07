@@ -239,11 +239,37 @@ class PatternPdfExporter {
 
     for (final notch in piece.notches) {
       final p = _local(notch.position, ox, oy);
-      final dir = piece.id == 'skirt_back' ? 1.0 : -1.0;
-      final a = _lineWidget(p.x, p.y, p.x + dir * 5, p.y - 2.5, 0.45);
-      final b = _lineWidget(p.x, p.y, p.x + dir * 5, p.y + 2.5, 0.45);
-      if (a != null) widgets.add(a);
-      if (b != null) widgets.add(b);
+      if (notch.role.startsWith('dart_')) {
+        final parts = notch.role.split('_');
+        if (parts.length == 3) {
+          final dartIndex = int.tryParse(parts[1]);
+          if (dartIndex != null && dartIndex >= 0 && dartIndex < piece.darts.length) {
+            final dart = piece.darts[dartIndex];
+            final legPoint = parts[2] == 'leg1' ? dart.leg1 : dart.leg2;
+            final target = _local(legPoint, ox, oy);
+            final dx = target.x - p.x;
+            final dy = target.y - p.y;
+            final length = math.sqrt(dx * dx + dy * dy);
+            if (length > 0.01) {
+              const notchLengthMm = 4.0;
+              final line = _lineWidget(
+                p.x,
+                p.y,
+                p.x + dx / length * notchLengthMm,
+                p.y + dy / length * notchLengthMm,
+                0.45,
+              );
+              if (line != null) widgets.add(line);
+            }
+          }
+        }
+      } else {
+        final dir = piece.id == 'skirt_back' ? 1.0 : -1.0;
+        final a = _lineWidget(p.x, p.y, p.x + dir * 5, p.y - 2.5, 0.45);
+        final b = _lineWidget(p.x, p.y, p.x + dir * 5, p.y + 2.5, 0.45);
+        if (a != null) widgets.add(a);
+        if (b != null) widgets.add(b);
+      }
     }
 
     for (final label in piece.labels) {
@@ -294,20 +320,8 @@ class PatternPdfExporter {
       if (x < 0 || x > _tileWidthMm || y < 0 || y > _tileHeightMm) return;
       final baseX = x - ux * arrowLength * direction;
       final baseY = y - uy * arrowLength * direction;
-      final left = _lineWidget(
-        x,
-        y,
-        baseX + px * arrowHalfWidth,
-        baseY + py * arrowHalfWidth,
-        0.40,
-      );
-      final right = _lineWidget(
-        x,
-        y,
-        baseX - px * arrowHalfWidth,
-        baseY - py * arrowHalfWidth,
-        0.40,
-      );
+      final left = _lineWidget(x, y, baseX + px * arrowHalfWidth, baseY + py * arrowHalfWidth, 0.40);
+      final right = _lineWidget(x, y, baseX - px * arrowHalfWidth, baseY - py * arrowHalfWidth, 0.40);
       if (left != null) widgets.add(left);
       if (right != null) widgets.add(right);
     }
@@ -390,8 +404,7 @@ class PatternPdfExporter {
     );
   }
 
-  _LocalPoint _local(PatternPoint p, double ox, double oy) =>
-      _LocalPoint(ox + p.x * 10, oy + p.y * 10);
+  _LocalPoint _local(PatternPoint p, double ox, double oy) => _LocalPoint(ox + p.x * 10, oy + p.y * 10);
 
   pw.Widget? _lineWidget(double x1, double y1, double x2, double y2, double strokeMm) {
     final clipped = _clipLine(x1, y1, x2, y2);
