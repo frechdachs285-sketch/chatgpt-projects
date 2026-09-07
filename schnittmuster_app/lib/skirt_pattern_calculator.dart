@@ -36,6 +36,17 @@ class SkirtPatternCalculator {
   PatternResult calculate(Measurements m, ConstructionValues c, {SeamAllowanceSettings seamAllowance = const SeamAllowanceSettings()}) {
     final errors = validator.validate(m);
     if (errors.isNotEmpty) return PatternResult(errors: errors);
+
+    final zipperLength = c.zipperLength;
+    if (zipperLength != null) {
+      if (!zipperLength.isFinite || zipperLength <= 0) {
+        return const PatternResult(errors: ['Reißverschlusslänge: Bitte einen Wert größer als 0 cm eingeben.']);
+      }
+      if (zipperLength >= m.skirtLength) {
+        return PatternResult(errors: ['Reißverschlusslänge: Der Wert muss kleiner als die hintere Mittelnaht (${m.skirtLength.toStringAsFixed(1)} cm) sein.']);
+      }
+    }
+
     try {
       final p = _calculatePoints(m, c);
       final backDart1 = _createDart(center: p['P11']!, apex: p['P13']!, waistStart: p['P1']!, waistEnd: p['P10']!, width: c.backDart1Width, length: c.backDart1Length);
@@ -62,7 +73,10 @@ class SkirtPatternCalculator {
 
       final back = PatternPiece(
         id: 'skirt_back', name: 'Rock Rueckenteil',
-        points: {for (final key in ['P1','P3','P5','P7','P8','P9','P10','P11','P12','P13','P14']) key: p[key]!},
+        points: {
+          for (final key in ['P1','P3','P5','P7','P8','P9','P10','P11','P12','P13','P14']) key: p[key]!,
+          if (p['ZIP_END'] != null) 'ZIP_END': p['ZIP_END']!,
+        },
         darts: [backDart1, backDart2],
         grainline: _grainline(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength),
         notches: [PatternNotch(position: p['P7']!, role: 'side_hip')],
@@ -130,6 +144,9 @@ class SkirtPatternCalculator {
       'P5': PatternPoint(0,m.hipDepth), 'P6': PatternPoint(width,m.hipDepth), 'P7': PatternPoint(sideX,m.hipDepth), 'P8': PatternPoint(sideX,m.skirtLength),
       'P9': PatternPoint(backWaistX,0), 'P10': PatternPoint(backWaistX,-c.sideWaistLift), 'P15': PatternPoint(frontWaistX,0), 'P16': PatternPoint(frontWaistX,-c.sideWaistLift),
     };
+    if (c.zipperLength != null) {
+      p['ZIP_END'] = PatternPoint(p['P1']!.x, c.zipperLength!);
+    }
     final backVector = p['P10']! - p['P1']!;
     p['P11'] = p['P1']! + backVector * (1/3); p['P12'] = p['P1']! + backVector * (2/3);
     p['P13'] = _dartApex(p['P11']!, backVector, c.backDart1Length); p['P14'] = _dartApex(p['P12']!, backVector, c.backDart2Length);
