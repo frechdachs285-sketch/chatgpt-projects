@@ -58,6 +58,7 @@ class SkirtPatternCalculator {
       final PatternPath? frontCuttingOutline = seamAllowance.enabled ? cuttingBuilder.build(isBack: false, closedWaist: closedFrontWaist, dartsFromCenterToSide: [frontDart], sideCurve: frontSideCurve, hipPoint: p['P7']!, sideHemPoint: p['P8']!, centerHemPoint: p['P4']!, centerWaistPoint: p['P2']!, settings: seamAllowance) : null;
       final backDartNotchPoints = seamAllowance.enabled ? cuttingBuilder.buildDartNotchPoints(isBack: true, closedWaist: closedBackWaist, dartsFromCenterToSide: [backDart1, backDart2], settings: seamAllowance) : const <PatternPoint>[];
       final frontDartNotchPoints = seamAllowance.enabled ? cuttingBuilder.buildDartNotchPoints(isBack: false, closedWaist: closedFrontWaist, dartsFromCenterToSide: [frontDart], settings: seamAllowance) : const <PatternPoint>[];
+      final hemText = seamAllowance.enabled ? 'Saumlinie / ${seamAllowance.hem.toStringAsFixed(1)} cm Saumzugabe' : 'Saumlinie';
 
       final back = PatternPiece(
         id: 'skirt_back', name: 'Rock Rueckenteil',
@@ -69,6 +70,7 @@ class SkirtPatternCalculator {
         labels: [
           _pieceLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: 'Rock - Rueckenteil'),
           _cutLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: '2x gegengleich zuschneiden'),
+          _hemLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: hemText),
         ],
         outline: PatternPath([
           _bezierSegment(backWaistCurves[0], 'waist'), LineSegment(backDart1.leg1, backDart1.apex), LineSegment(backDart1.apex, backDart1.leg2),
@@ -89,6 +91,7 @@ class SkirtPatternCalculator {
           _pieceLabel(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: 'Rock - Vorderteil'),
           _cutLabel(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: '1x im Stoffbruch zuschneiden'),
           PatternLabel(position: PatternPoint(p['P2']!.x, m.skirtLength * 0.5), text: 'Stoffbruch'),
+          _hemLabel(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: hemText),
         ],
         outline: PatternPath([
           _bezierSegment(frontWaistCurves[0], 'waist'), LineSegment(frontDart.leg1, frontDart.apex), LineSegment(frontDart.apex, frontDart.leg2),
@@ -110,6 +113,7 @@ class SkirtPatternCalculator {
   }
   PatternLabel _pieceLabel({required double centerX, required double sideX, required double skirtLength, required String text}) => PatternLabel(position: PatternPoint((centerX + sideX) / 2, skirtLength * 0.82), text: text);
   PatternLabel _cutLabel({required double centerX, required double sideX, required double skirtLength, required String text}) => PatternLabel(position: PatternPoint((centerX + sideX) / 2, skirtLength * 0.88), text: text);
+  PatternLabel _hemLabel({required double centerX, required double sideX, required double skirtLength, required String text}) => PatternLabel(position: PatternPoint((centerX + sideX) / 2, skirtLength - 1.2), text: text);
   BezierSegment _bezierSegment(CubicBezierCurve curve, String role) => BezierSegment(start: curve.start, control1: curve.control1, control2: curve.control2, end: curve.end, role: role);
 
   Map<String, PatternPoint> _calculatePoints(Measurements m, ConstructionValues c) {
