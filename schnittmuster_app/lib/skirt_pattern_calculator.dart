@@ -103,12 +103,33 @@ class SkirtPatternCalculator {
             )
           : null;
 
+      final backDartNotchPoints = seamAllowance.enabled
+          ? cuttingBuilder.buildDartNotchPoints(
+              isBack: true,
+              closedWaist: closedBackWaist,
+              dartsFromCenterToSide: [backDart1, backDart2],
+              settings: seamAllowance,
+            )
+          : const <PatternPoint>[];
+      final frontDartNotchPoints = seamAllowance.enabled
+          ? cuttingBuilder.buildDartNotchPoints(
+              isBack: false,
+              closedWaist: closedFrontWaist,
+              dartsFromCenterToSide: [frontDart],
+              settings: seamAllowance,
+            )
+          : const <PatternPoint>[];
+
       final back = PatternPiece(
         id: 'skirt_back', name: 'Rock Rueckenteil',
         points: {for (final key in ['P1','P3','P5','P7','P8','P9','P10','P11','P12','P13','P14']) key: p[key]!},
         darts: [backDart1, backDart2],
         grainline: _grainline(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength),
-        notches: [PatternNotch(position: p['P7']!, role: 'side_hip')],
+        notches: [
+          PatternNotch(position: p['P7']!, role: 'side_hip'),
+          for (var i = 0; i < backDartNotchPoints.length; i++)
+            PatternNotch(position: backDartNotchPoints[i], role: 'dart_${i ~/ 2}_leg${i % 2 + 1}'),
+        ],
         labels: [
           _pieceLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: 'Rock - Rueckenteil'),
           _cutLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: '2x gegengleich zuschneiden'),
@@ -126,7 +147,11 @@ class SkirtPatternCalculator {
         points: {for (final key in ['P2','P4','P6','P7','P8','P15','P16','P17','P18']) key: p[key]!},
         darts: [frontDart],
         grainline: _grainline(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength),
-        notches: [PatternNotch(position: p['P7']!, role: 'side_hip')],
+        notches: [
+          PatternNotch(position: p['P7']!, role: 'side_hip'),
+          for (var i = 0; i < frontDartNotchPoints.length; i++)
+            PatternNotch(position: frontDartNotchPoints[i], role: 'dart_${i ~/ 2}_leg${i % 2 + 1}'),
+        ],
         labels: [
           _pieceLabel(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: 'Rock - Vorderteil'),
           _cutLabel(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: '1x im Stoffbruch zuschneiden'),
