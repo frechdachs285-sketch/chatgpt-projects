@@ -172,6 +172,64 @@ class SideSeamCurveBuilder {
   }
 }
 
+class SideSeamLengthMatcher {
+  const SideSeamLengthMatcher();
+
+  CubicBezierCurve lengthenTo({
+    required CubicBezierCurve curve,
+    required double targetLength,
+    double tolerance = 0.000001,
+  }) {
+    final currentLength = curve.arcLength();
+    if (targetLength < currentLength - tolerance) {
+      throw ArgumentError('Die Ziel-Laenge darf nicht kuerzer als die vorhandene Seitennaht sein.');
+    }
+    if ((targetLength - currentLength).abs() <= tolerance) return curve;
+
+    final dx = curve.end.x - curve.start.x;
+    if (dx.abs() < 0.000001) {
+      throw ArgumentError('Die Seitenkurve benoetigt eine horizontale Ausladung.');
+    }
+    final outwardSign = dx.sign;
+
+    CubicBezierCurve curveFor(double outwardOffset) => CubicBezierCurve(
+          start: curve.start,
+          control1: PatternPoint(
+            curve.control1.x + outwardSign * outwardOffset,
+            curve.control1.y,
+          ),
+          control2: curve.control2,
+          end: curve.end,
+        );
+
+    var low = 0.0;
+    var high = 0.01;
+    var highCurve = curveFor(high);
+    while (highCurve.arcLength() < targetLength) {
+      high *= 2;
+      if (high > 5.0) {
+        throw StateError('Seitennaht konnte nicht auf die Ziel-Laenge eingestellt werden.');
+      }
+      highCurve = curveFor(high);
+    }
+
+    for (var i = 0; i < 70; i++) {
+      final mid = (low + high) * 0.5;
+      if (curveFor(mid).arcLength() < targetLength) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+
+    final result = curveFor((low + high) * 0.5);
+    if ((result.arcLength() - targetLength).abs() > tolerance * 10) {
+      throw StateError('Seitennaht-Ziel-Laenge wurde nicht ausreichend genau erreicht.');
+    }
+    return result;
+  }
+}
+
 class SideSeamCurveValidationResult {
   final List<String> errors;
 
