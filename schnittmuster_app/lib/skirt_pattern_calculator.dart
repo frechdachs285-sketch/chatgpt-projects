@@ -158,7 +158,7 @@ class SkirtPatternCalculator {
     final c3 = PatternPoint(0, cutWidth);
     final foldY = seamAllowance + finishedWidth;
 
-    final grainY = seamAllowance + finishedWidth * 1.55;
+    final grainY = seamAllowance + finishedWidth * 1.62;
     final grainStartX = seamAllowance + finishedLength * 0.58;
     final grainEndX = seamAllowance + finishedLength * 0.88;
     final arrowLength = math.min(1.2, finishedLength * 0.025);
@@ -200,8 +200,8 @@ class SkirtPatternCalculator {
       labels: [
         PatternLabel(position: PatternPoint(seamAllowance + finishedLength * 0.28, seamAllowance + finishedWidth * 0.45), text: 'Gerader Bund'),
         PatternLabel(position: PatternPoint(seamAllowance + finishedLength * 0.28, seamAllowance + finishedWidth * 1.55), text: '1x zuschneiden'),
-        PatternLabel(position: PatternPoint(seamAllowance + finishedLength * 0.72, foldY - finishedWidth * 0.22), text: 'Faltlinie'),
-        PatternLabel(position: PatternPoint((grainStartX + grainEndX) / 2, grainY - finishedWidth * 0.28), text: 'Fadenlauf'),
+        PatternLabel(position: PatternPoint(seamAllowance + finishedLength * 0.72, foldY - finishedWidth * 0.55), text: 'Faltlinie'),
+        PatternLabel(position: PatternPoint((grainStartX + grainEndX) / 2, grainY - finishedWidth * 0.20), text: 'Fadenlauf'),
       ],
     );
   }
