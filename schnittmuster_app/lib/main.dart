@@ -221,6 +221,7 @@ class _SkirtPageState extends State<SkirtPage> {
       final bytes = await PatternPdfExporter().buildPatternPdf(
         measurements: _appliedMeasurements,
         seamAllowance: _appliedSeamAllowance,
+        construction: _appliedConstruction,
       );
       await Printing.layoutPdf(
         name: 'Rock_Schnittmuster_1zu1.pdf',
@@ -624,6 +625,14 @@ class PatternPreviewPainter extends CustomPainter {
     }
   }
 
+  void _drawZipperEnd(Canvas canvas, PatternPiece piece, _Bounds b, Offset o, double s, Paint paint) {
+    if (piece.id != 'skirt_back') return;
+    final zipperEnd = piece.points['ZIP_END'];
+    if (zipperEnd == null) return;
+    final p = _p(zipperEnd, b, o, s);
+    canvas.drawLine(p, Offset(p.dx + math.max(8.0, 0.8 * s), p.dy), paint);
+  }
+
   void _drawLabels(Canvas canvas, PatternPiece piece, _Bounds b, Offset o, double s) {
     for (final label in piece.labels) {
       final pos = _p(label.position, b, o, s);
@@ -661,6 +670,7 @@ class PatternPreviewPainter extends CustomPainter {
     }
     _drawGrain(canvas, piece, b, o, s, grain);
     _drawNotches(canvas, piece, b, o, s, notch);
+    _drawZipperEnd(canvas, piece, b, o, s, notch);
     _drawLabels(canvas, piece, b, o, s);
   }
 
