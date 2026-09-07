@@ -9,40 +9,23 @@ import 'waist_curve_unfolder.dart';
 class MeasurementsValidator {
   List<String> validate(Measurements m) {
     final errors = <String>[];
-
     bool finite(double value) => value.isFinite;
-
     if (!finite(m.waist) || !finite(m.hip) || !finite(m.hipDepth) || !finite(m.skirtLength)) {
       errors.add('Bitte nur gültige Zahlen eingeben.');
       return errors;
     }
-
-    if (m.waist < 40 || m.waist > 180) {
-      errors.add('Taille: Bitte einen Wert zwischen 40 und 180 cm eingeben.');
-    }
-    if (m.hip < 52 || m.hip > 220) {
-      errors.add('Hüfte: Bitte einen Wert zwischen 52 und 220 cm eingeben.');
-    }
-    if (m.hipDepth < 14 || m.hipDepth > 40) {
-      errors.add('Hüfttiefe: Bitte einen Wert zwischen 14 und 40 cm eingeben.');
-    }
-    if (m.skirtLength < 25 || m.skirtLength > 150) {
-      errors.add('Rocklänge: Bitte einen Wert zwischen 25 und 150 cm eingeben.');
-    }
-
+    if (m.waist < 40 || m.waist > 180) errors.add('Taille: Bitte einen Wert zwischen 40 und 180 cm eingeben.');
+    if (m.hip < 52 || m.hip > 220) errors.add('Hüfte: Bitte einen Wert zwischen 52 und 220 cm eingeben.');
+    if (m.hipDepth < 14 || m.hipDepth > 40) errors.add('Hüfttiefe: Bitte einen Wert zwischen 14 und 40 cm eingeben.');
+    if (m.skirtLength < 25 || m.skirtLength > 150) errors.add('Rocklänge: Bitte einen Wert zwischen 25 und 150 cm eingeben.');
     if (m.hipDepth >= m.skirtLength) {
       errors.add('Die Rocklänge muss größer als die Hüfttiefe sein.');
     } else if (m.skirtLength - m.hipDepth < 5) {
       errors.add('Zwischen Hüfttiefe und Saum werden mindestens 5 cm benötigt.');
     }
-
-    final hipWaistDifference = m.hip - m.waist;
-    if (hipWaistDifference < 12) {
-      errors.add(
-        'Für den aktuellen Rock-Grundschnitt muss die Hüfte mindestens 12 cm größer als die Taille sein.',
-      );
+    if (m.hip - m.waist < 12) {
+      errors.add('Für den aktuellen Rock-Grundschnitt muss die Hüfte mindestens 12 cm größer als die Taille sein.');
     }
-
     return errors;
   }
 }
@@ -50,14 +33,9 @@ class MeasurementsValidator {
 class SkirtPatternCalculator {
   final MeasurementsValidator validator = MeasurementsValidator();
 
-  PatternResult calculate(
-    Measurements m,
-    ConstructionValues c, {
-    SeamAllowanceSettings seamAllowance = const SeamAllowanceSettings(),
-  }) {
+  PatternResult calculate(Measurements m, ConstructionValues c, {SeamAllowanceSettings seamAllowance = const SeamAllowanceSettings()}) {
     final errors = validator.validate(m);
     if (errors.isNotEmpty) return PatternResult(errors: errors);
-
     try {
       final p = _calculatePoints(m, c);
       final backDart1 = _createDart(center: p['P11']!, apex: p['P13']!, waistStart: p['P1']!, waistEnd: p['P10']!, width: c.backDart1Width, length: c.backDart1Length);
@@ -76,60 +54,18 @@ class SkirtPatternCalculator {
       final frontSideCurve = curveBuilder.build(start: closedFrontWaist.correctedSidePoint, end: p['P7']!);
 
       const cuttingBuilder = SkirtCuttingOutlineBuilder();
-      final PatternPath? backCuttingOutline = seamAllowance.enabled
-          ? cuttingBuilder.build(
-              isBack: true,
-              closedWaist: closedBackWaist,
-              dartsFromCenterToSide: [backDart1, backDart2],
-              sideCurve: backSideCurve,
-              hipPoint: p['P7']!,
-              sideHemPoint: p['P8']!,
-              centerHemPoint: p['P3']!,
-              centerWaistPoint: p['P1']!,
-              settings: seamAllowance,
-            )
-          : null;
-      final PatternPath? frontCuttingOutline = seamAllowance.enabled
-          ? cuttingBuilder.build(
-              isBack: false,
-              closedWaist: closedFrontWaist,
-              dartsFromCenterToSide: [frontDart],
-              sideCurve: frontSideCurve,
-              hipPoint: p['P7']!,
-              sideHemPoint: p['P8']!,
-              centerHemPoint: p['P4']!,
-              centerWaistPoint: p['P2']!,
-              settings: seamAllowance,
-            )
-          : null;
-
-      final backDartNotchPoints = seamAllowance.enabled
-          ? cuttingBuilder.buildDartNotchPoints(
-              isBack: true,
-              closedWaist: closedBackWaist,
-              dartsFromCenterToSide: [backDart1, backDart2],
-              settings: seamAllowance,
-            )
-          : const <PatternPoint>[];
-      final frontDartNotchPoints = seamAllowance.enabled
-          ? cuttingBuilder.buildDartNotchPoints(
-              isBack: false,
-              closedWaist: closedFrontWaist,
-              dartsFromCenterToSide: [frontDart],
-              settings: seamAllowance,
-            )
-          : const <PatternPoint>[];
+      final PatternPath? backCuttingOutline = seamAllowance.enabled ? cuttingBuilder.build(isBack: true, closedWaist: closedBackWaist, dartsFromCenterToSide: [backDart1, backDart2], sideCurve: backSideCurve, hipPoint: p['P7']!, sideHemPoint: p['P8']!, centerHemPoint: p['P3']!, centerWaistPoint: p['P1']!, settings: seamAllowance) : null;
+      final PatternPath? frontCuttingOutline = seamAllowance.enabled ? cuttingBuilder.build(isBack: false, closedWaist: closedFrontWaist, dartsFromCenterToSide: [frontDart], sideCurve: frontSideCurve, hipPoint: p['P7']!, sideHemPoint: p['P8']!, centerHemPoint: p['P4']!, centerWaistPoint: p['P2']!, settings: seamAllowance) : null;
+      final backDartNotchPoints = seamAllowance.enabled ? cuttingBuilder.buildDartNotchPoints(isBack: true, closedWaist: closedBackWaist, dartsFromCenterToSide: [backDart1, backDart2], settings: seamAllowance) : const <PatternPoint>[];
+      final frontDartNotchPoints = seamAllowance.enabled ? cuttingBuilder.buildDartNotchPoints(isBack: false, closedWaist: closedFrontWaist, dartsFromCenterToSide: [frontDart], settings: seamAllowance) : const <PatternPoint>[];
 
       final back = PatternPiece(
         id: 'skirt_back', name: 'Rock Rueckenteil',
         points: {for (final key in ['P1','P3','P5','P7','P8','P9','P10','P11','P12','P13','P14']) key: p[key]!},
         darts: [backDart1, backDart2],
         grainline: _grainline(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength),
-        notches: [
-          PatternNotch(position: p['P7']!, role: 'side_hip'),
-          for (var i = 0; i < backDartNotchPoints.length; i++)
-            PatternNotch(position: backDartNotchPoints[i], role: 'dart_${i ~/ 2}_leg${i % 2 + 1}'),
-        ],
+        notches: [PatternNotch(position: p['P7']!, role: 'side_hip')],
+        dartNotches: [for (var i = 0; i < backDartNotchPoints.length; i++) PatternNotch(position: backDartNotchPoints[i], role: 'dart_${i ~/ 2}_leg${i % 2 + 1}')],
         labels: [
           _pieceLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: 'Rock - Rueckenteil'),
           _cutLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: '2x gegengleich zuschneiden'),
@@ -147,11 +83,8 @@ class SkirtPatternCalculator {
         points: {for (final key in ['P2','P4','P6','P7','P8','P15','P16','P17','P18']) key: p[key]!},
         darts: [frontDart],
         grainline: _grainline(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength),
-        notches: [
-          PatternNotch(position: p['P7']!, role: 'side_hip'),
-          for (var i = 0; i < frontDartNotchPoints.length; i++)
-            PatternNotch(position: frontDartNotchPoints[i], role: 'dart_${i ~/ 2}_leg${i % 2 + 1}'),
-        ],
+        notches: [PatternNotch(position: p['P7']!, role: 'side_hip')],
+        dartNotches: [for (var i = 0; i < frontDartNotchPoints.length; i++) PatternNotch(position: frontDartNotchPoints[i], role: 'dart_${i ~/ 2}_leg${i % 2 + 1}')],
         labels: [
           _pieceLabel(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: 'Rock - Vorderteil'),
           _cutLabel(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: '1x im Stoffbruch zuschneiden'),
@@ -165,17 +98,9 @@ class SkirtPatternCalculator {
       );
       return PatternResult(front: front, back: back);
     } on StateError {
-      return const PatternResult(
-        errors: [
-          'Diese Maßkombination kann mit dem aktuellen Rock-Grundschnitt noch nicht sauber berechnet werden. Bitte die Maße prüfen.',
-        ],
-      );
+      return const PatternResult(errors: ['Diese Maßkombination kann mit dem aktuellen Rock-Grundschnitt noch nicht sauber berechnet werden. Bitte die Maße prüfen.']);
     } catch (_) {
-      return const PatternResult(
-        errors: [
-          'Das Schnittmuster konnte mit diesen Maßen nicht erstellt werden. Bitte die Eingaben prüfen.',
-        ],
-      );
+      return const PatternResult(errors: ['Das Schnittmuster konnte mit diesen Maßen nicht erstellt werden. Bitte die Eingaben prüfen.']);
     }
   }
 
@@ -183,19 +108,8 @@ class SkirtPatternCalculator {
     final x = (centerX + sideX) / 2;
     return Grainline(start: PatternPoint(x, skirtLength * 0.25), end: PatternPoint(x, skirtLength * 0.75));
   }
-
-  PatternLabel _pieceLabel({required double centerX, required double sideX, required double skirtLength, required String text}) {
-    final x = (centerX + sideX) / 2;
-    final y = skirtLength * 0.82;
-    return PatternLabel(position: PatternPoint(x, y), text: text);
-  }
-
-  PatternLabel _cutLabel({required double centerX, required double sideX, required double skirtLength, required String text}) {
-    final x = (centerX + sideX) / 2;
-    final y = skirtLength * 0.88;
-    return PatternLabel(position: PatternPoint(x, y), text: text);
-  }
-
+  PatternLabel _pieceLabel({required double centerX, required double sideX, required double skirtLength, required String text}) => PatternLabel(position: PatternPoint((centerX + sideX) / 2, skirtLength * 0.82), text: text);
+  PatternLabel _cutLabel({required double centerX, required double sideX, required double skirtLength, required String text}) => PatternLabel(position: PatternPoint((centerX + sideX) / 2, skirtLength * 0.88), text: text);
   BezierSegment _bezierSegment(CubicBezierCurve curve, String role) => BezierSegment(start: curve.start, control1: curve.control1, control2: curve.control2, end: curve.end, role: role);
 
   Map<String, PatternPoint> _calculatePoints(Measurements m, ConstructionValues c) {
