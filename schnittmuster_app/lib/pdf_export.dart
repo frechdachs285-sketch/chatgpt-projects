@@ -29,13 +29,14 @@ class PatternPdfExporter {
   Future<Uint8List> buildPatternPdf({
     required Measurements measurements,
     required SeamAllowanceSettings seamAllowance,
+    ConstructionValues construction = const ConstructionValues(),
   }) async {
     final doc = pw.Document();
     _addCalibrationPage(doc, measurements);
 
     final result = SkirtPatternCalculator().calculate(
       measurements,
-      const ConstructionValues(),
+      construction,
       seamAllowance: seamAllowance,
     );
 
@@ -268,6 +269,25 @@ class PatternPdfExporter {
         0.45,
       );
       if (line != null) widgets.add(line);
+    }
+
+    final zipperEnd = piece.points['ZIP_END'];
+    if (piece.id == 'skirt_back' && zipperEnd != null) {
+      final p = _local(zipperEnd, ox, oy);
+      final mark = _lineWidget(p.x, p.y, p.x + 8.0, p.y, 0.55);
+      if (mark != null) widgets.add(mark);
+      if (p.x >= -5 && p.x <= _tileWidthMm && p.y >= 0 && p.y <= _tileHeightMm) {
+        widgets.add(
+          pw.Positioned(
+            left: mm(math.max(0, p.x + 10)),
+            top: mm(math.max(0, p.y - 3)),
+            child: pw.Text(
+              'Reissverschluss Ende',
+              style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
+            ),
+          ),
+        );
+      }
     }
 
     for (final label in piece.labels) {
