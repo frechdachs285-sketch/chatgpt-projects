@@ -320,16 +320,32 @@ class PatternPdfExporter {
     final dy = clipped.y2 - clipped.y1;
     final length = math.sqrt(dx * dx + dy * dy);
     if (length < 0.01) return null;
-    final angle = math.atan2(dy, dx);
+
+    const joinOverlapMm = 0.35;
+    final ux = dx / length;
+    final uy = dy / length;
+    final extended = _clipLine(
+      clipped.x1 - ux * joinOverlapMm,
+      clipped.y1 - uy * joinOverlapMm,
+      clipped.x2 + ux * joinOverlapMm,
+      clipped.y2 + uy * joinOverlapMm,
+    );
+    if (extended == null) return null;
+
+    final drawDx = extended.x2 - extended.x1;
+    final drawDy = extended.y2 - extended.y1;
+    final drawLength = math.sqrt(drawDx * drawDx + drawDy * drawDy);
+    if (drawLength < 0.01) return null;
+    final angle = math.atan2(drawDy, drawDx);
 
     return pw.Positioned(
-      left: mm(clipped.x1),
-      top: mm(clipped.y1 - strokeMm / 2),
+      left: mm(extended.x1),
+      top: mm(extended.y1 - strokeMm / 2),
       child: pw.Transform.rotate(
         angle: angle,
         alignment: pw.Alignment.centerLeft,
         child: pw.Container(
-          width: mm(length),
+          width: mm(drawLength),
           height: mm(strokeMm),
           color: PdfColors.black,
         ),
