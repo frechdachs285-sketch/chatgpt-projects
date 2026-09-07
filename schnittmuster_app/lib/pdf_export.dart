@@ -234,10 +234,7 @@ class PatternPdfExporter {
 
     final grain = piece.grainline;
     if (grain != null) {
-      final a = _local(grain.start, ox, oy);
-      final z = _local(grain.end, ox, oy);
-      final line = _lineWidget(a.x, a.y, z.x, z.y, 0.30);
-      if (line != null) widgets.add(line);
+      widgets.addAll(_grainlineWidgets(grain, ox, oy));
     }
 
     for (final notch in piece.notches) {
@@ -267,6 +264,69 @@ class PatternPdfExporter {
           ),
         );
       }
+    }
+
+    return widgets;
+  }
+
+  List<pw.Widget> _grainlineWidgets(Grainline grain, double ox, double oy) {
+    final widgets = <pw.Widget>[];
+    final a = _local(grain.start, ox, oy);
+    final z = _local(grain.end, ox, oy);
+
+    final line = _lineWidget(a.x, a.y, z.x, z.y, 0.35);
+    if (line != null) widgets.add(line);
+
+    final dx = z.x - a.x;
+    final dy = z.y - a.y;
+    final length = math.sqrt(dx * dx + dy * dy);
+    if (length < 0.01) return widgets;
+
+    final ux = dx / length;
+    final uy = dy / length;
+    final px = -uy;
+    final py = ux;
+    const arrowLength = 7.0;
+    const arrowHalfWidth = 3.0;
+
+    void addArrowAt(double x, double y, double direction) {
+      if (x < 0 || x > _tileWidthMm || y < 0 || y > _tileHeightMm) return;
+      final baseX = x - ux * arrowLength * direction;
+      final baseY = y - uy * arrowLength * direction;
+      final left = _lineWidget(
+        x,
+        y,
+        baseX + px * arrowHalfWidth,
+        baseY + py * arrowHalfWidth,
+        0.35,
+      );
+      final right = _lineWidget(
+        x,
+        y,
+        baseX - px * arrowHalfWidth,
+        baseY - py * arrowHalfWidth,
+        0.35,
+      );
+      if (left != null) widgets.add(left);
+      if (right != null) widgets.add(right);
+    }
+
+    addArrowAt(a.x, a.y, -1.0);
+    addArrowAt(z.x, z.y, 1.0);
+
+    final mx = (a.x + z.x) / 2;
+    final my = (a.y + z.y) / 2;
+    if (mx >= 0 && mx <= _tileWidthMm && my >= 0 && my <= _tileHeightMm) {
+      widgets.add(
+        pw.Positioned(
+          left: mm(math.max(0, mx + 4)),
+          top: mm(math.max(0, my - 3)),
+          child: pw.Text(
+            'Fadenlauf',
+            style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
+          ),
+        ),
+      );
     }
 
     return widgets;
