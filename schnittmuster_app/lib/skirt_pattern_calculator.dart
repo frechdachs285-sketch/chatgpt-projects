@@ -47,6 +47,16 @@ class SkirtPatternCalculator {
       }
     }
 
+    final finishedWaistbandWidth = c.finishedWaistbandWidth;
+    if (finishedWaistbandWidth != null) {
+      if (!finishedWaistbandWidth.isFinite || finishedWaistbandWidth <= 0) {
+        return const PatternResult(errors: ['Fertige Bundbreite: Bitte einen Wert größer als 0 cm eingeben.']);
+      }
+      if (finishedWaistbandWidth > 15) {
+        return const PatternResult(errors: ['Fertige Bundbreite: Für Rock v1 sind höchstens 15 cm zulässig.']);
+      }
+    }
+
     try {
       final p = _calculatePoints(m, c);
       final backDart1 = _createDart(center: p['P11']!, apex: p['P13']!, waistStart: p['P1']!, waistEnd: p['P10']!, width: c.backDart1Width, length: c.backDart1Length);
