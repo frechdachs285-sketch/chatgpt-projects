@@ -273,8 +273,9 @@ class PatternPdfExporter {
     final widgets = <pw.Widget>[];
     final a = _local(grain.start, ox, oy);
     final z = _local(grain.end, ox, oy);
+    final visible = _clipLine(a.x, a.y, z.x, z.y);
 
-    final line = _lineWidget(a.x, a.y, z.x, z.y, 0.35);
+    final line = _lineWidget(a.x, a.y, z.x, z.y, 0.40);
     if (line != null) widgets.add(line);
 
     final dx = z.x - a.x;
@@ -298,14 +299,14 @@ class PatternPdfExporter {
         y,
         baseX + px * arrowHalfWidth,
         baseY + py * arrowHalfWidth,
-        0.35,
+        0.40,
       );
       final right = _lineWidget(
         x,
         y,
         baseX - px * arrowHalfWidth,
         baseY - py * arrowHalfWidth,
-        0.35,
+        0.40,
       );
       if (left != null) widgets.add(left);
       if (right != null) widgets.add(right);
@@ -314,19 +315,26 @@ class PatternPdfExporter {
     addArrowAt(a.x, a.y, -1.0);
     addArrowAt(z.x, z.y, 1.0);
 
-    final mx = (a.x + z.x) / 2;
-    final my = (a.y + z.y) / 2;
-    if (mx >= 0 && mx <= _tileWidthMm && my >= 0 && my <= _tileHeightMm) {
-      widgets.add(
-        pw.Positioned(
-          left: mm(math.max(0, mx + 4)),
-          top: mm(math.max(0, my - 3)),
-          child: pw.Text(
-            'Fadenlauf',
-            style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
-          ),
-        ),
+    if (visible != null) {
+      final visibleLength = math.sqrt(
+        math.pow(visible.x2 - visible.x1, 2) + math.pow(visible.y2 - visible.y1, 2),
       );
+      if (visibleLength >= 20) {
+        final mx = (visible.x1 + visible.x2) / 2;
+        final my = (visible.y1 + visible.y2) / 2;
+        final labelX = math.min(_tileWidthMm - 28, math.max(2, mx + 4));
+        final labelY = math.min(_tileHeightMm - 6, math.max(2, my - 3));
+        widgets.add(
+          pw.Positioned(
+            left: mm(labelX),
+            top: mm(labelY),
+            child: pw.Text(
+              'Fadenlauf',
+              style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
+            ),
+          ),
+        );
+      }
     }
 
     return widgets;
