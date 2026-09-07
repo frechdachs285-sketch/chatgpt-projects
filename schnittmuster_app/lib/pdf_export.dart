@@ -41,7 +41,12 @@ class PatternPdfExporter {
     );
 
     if (result.isValid) {
-      _addPatternTiles(doc, back: result.back!, front: result.front!);
+      _addPatternTiles(
+        doc,
+        back: result.back!,
+        front: result.front!,
+        waistband: result.waistband,
+      );
     }
 
     return doc.save();
@@ -94,9 +99,11 @@ class PatternPdfExporter {
     pw.Document doc, {
     required PatternPiece back,
     required PatternPiece front,
+    PatternPiece? waistband,
   }) {
     final bb = _pieceBounds(back);
     final fb = _pieceBounds(front);
+    final wb = waistband == null ? null : _pieceBounds(waistband);
 
     const pad = 15.0;
     const gap = 30.0;
@@ -105,14 +112,20 @@ class PatternPdfExporter {
     final backH = bb.height * 10;
     final frontW = fb.width * 10;
     final frontH = fb.height * 10;
+    final topW = backW + gap + frontW;
+    final topH = math.max(backH, frontH);
+    final waistW = wb == null ? 0.0 : wb.width * 10;
+    final waistH = wb == null ? 0.0 : wb.height * 10;
 
     final backOX = pad - bb.minX * 10;
     final backOY = pad - bb.minY * 10;
     final frontOX = pad + backW + gap - fb.minX * 10;
     final frontOY = pad - fb.minY * 10;
+    final waistOX = wb == null ? 0.0 : pad - wb.minX * 10;
+    final waistOY = wb == null ? 0.0 : pad + topH + gap - wb.minY * 10;
 
-    final canvasW = pad * 2 + backW + gap + frontW;
-    final canvasH = pad * 2 + math.max(backH, frontH);
+    final canvasW = pad * 2 + math.max(topW, waistW);
+    final canvasH = pad * 2 + topH + (wb == null ? 0.0 : gap + waistH);
 
     final stepX = _tileWidthMm - _tileOverlapMm;
     final stepY = _tileHeightMm - _tileOverlapMm;
@@ -131,6 +144,14 @@ class PatternPdfExporter {
       frontOX + fb.maxX * 10,
       frontOY + fb.maxY * 10,
     );
+    final waistBox = wb == null
+        ? null
+        : _PatternBounds(
+            waistOX + wb.minX * 10,
+            waistOY + wb.minY * 10,
+            waistOX + wb.maxX * 10,
+            waistOY + wb.maxY * 10,
+          );
 
     final kept = <String>{};
     for (var r = 0; r < rows; r++) {
@@ -138,7 +159,8 @@ class PatternPdfExporter {
         final x = c * stepX;
         final y = r * stepY;
         final tile = _PatternBounds(x, y, x + _tileWidthMm, y + _tileHeightMm);
-        if (_overlaps(tile, backBox) || _overlaps(tile, frontBox)) {
+        final overlapsWaist = waistBox != null && _overlaps(tile, waistBox);
+        if (_overlaps(tile, backBox) || _overlaps(tile, frontBox) || overlapsWaist) {
           kept.add('$c:$r');
         }
       }
@@ -157,10 +179,13 @@ class PatternPdfExporter {
             tileName: tileName,
             back: back,
             front: front,
+            waistband: waistband,
             backOffsetX: backOX - tileX,
             backOffsetY: backOY - tileY,
             frontOffsetX: frontOX - tileX,
             frontOffsetY: frontOY - tileY,
+            waistbandOffsetX: waistOX - tileX,
+            waistbandOffsetY: waistOY - tileY,
             left: kept.contains('${c - 1}:$r'),
             right: kept.contains('${c + 1}:$r'),
             top: kept.contains('$c:${r - 1}'),
@@ -175,10 +200,13 @@ class PatternPdfExporter {
     required String tileName,
     required PatternPiece back,
     required PatternPiece front,
+    PatternPiece? waistband,
     required double backOffsetX,
     required double backOffsetY,
     required double frontOffsetX,
     required double frontOffsetY,
+    required double waistbandOffsetX,
+    required double waistbandOffsetY,
     required bool left,
     required bool right,
     required bool top,
@@ -187,6 +215,7 @@ class PatternPdfExporter {
     final children = <pw.Widget>[
       ..._pieceWidgets(back, backOffsetX, backOffsetY),
       ..._pieceWidgets(front, frontOffsetX, frontOffsetY),
+      if (waistband != null) ..._pieceWidgets(waistband, waistbandOffsetX, waistbandOffsetY),
       ..._registrationWidgets(left: left, right: right, top: top, bottom: bottom),
     ];
 
@@ -232,6 +261,13 @@ class PatternPdfExporter {
       widgets.add(_pathPaintWidget(piece.cuttingOutline!, ox, oy, 0.72));
     }
     widgets.add(_pathPaintWidget(piece.outline, ox, oy, 0.30));
+
+    for (final guide in piece.guideLines) {
+      final a = _local(guide.start, ox, oy);
+      final z = _local(guide.end, ox, oy);
+      final line = _lineWidget(a.x, a.y, z.x, z.y, 0.35);
+      if (line != null) widgets.add(line);
+    }
 
     final grain = piece.grainline;
     if (grain != null) {
@@ -338,10 +374,10 @@ class PatternPdfExporter {
       if (x < 0 || x > _tileWidthMm || y < 0 || y > _tileHeightMm) return;
       final baseX = x - ux * arrowLength * direction;
       final baseY = y - uy * arrowLength * direction;
-      final left = _lineWidget(x, y, baseX + px * arrowHalfWidth, baseY + py * arrowHalfWidth, 0.40);
-      final right = _lineWidget(x, y, baseX - px * arrowHalfWidth, baseY - py * arrowHalfWidth, 0.40);
-      if (left != null) widgets.add(left);
-      if (right != null) widgets.add(right);
+      final leftLine = _lineWidget(x, y, baseX + px * arrowHalfWidth, baseY + py * arrowHalfWidth, 0.40);
+      final rightLine = _lineWidget(x, y, baseX - px * arrowHalfWidth, baseY - py * arrowHalfWidth, 0.40);
+      if (leftLine != null) widgets.add(leftLine);
+      if (rightLine != null) widgets.add(rightLine);
     }
 
     addArrowAt(a.x, a.y, -1.0);
@@ -576,6 +612,9 @@ class PatternPdfExporter {
           s.end,
           if (s is BezierSegment) ...[s.control1, s.control2],
         ],
+      for (final guide in piece.guideLines) ...[guide.start, guide.end],
+      if (piece.grainline != null) ...[piece.grainline!.start, piece.grainline!.end],
+      for (final label in piece.labels) label.position,
     ];
 
     var minX = pts.first.x;
