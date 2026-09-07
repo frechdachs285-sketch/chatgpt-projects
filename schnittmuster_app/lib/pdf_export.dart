@@ -322,8 +322,8 @@ class PatternPdfExporter {
       if (visibleLength >= 20) {
         final mx = (visible.x1 + visible.x2) / 2;
         final my = (visible.y1 + visible.y2) / 2;
-        final labelX = math.min(_tileWidthMm - 28, math.max(2, mx + 4));
-        final labelY = math.min(_tileHeightMm - 6, math.max(2, my - 3));
+        final labelX = math.min(_tileWidthMm - 28.0, math.max(2.0, mx + 4.0));
+        final labelY = math.min(_tileHeightMm - 6.0, math.max(2.0, my - 3.0));
         widgets.add(
           pw.Positioned(
             left: mm(labelX),
