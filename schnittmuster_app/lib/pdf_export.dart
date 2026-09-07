@@ -239,37 +239,35 @@ class PatternPdfExporter {
 
     for (final notch in piece.notches) {
       final p = _local(notch.position, ox, oy);
-      if (notch.role.startsWith('dart_')) {
-        final parts = notch.role.split('_');
-        if (parts.length == 3) {
-          final dartIndex = int.tryParse(parts[1]);
-          if (dartIndex != null && dartIndex >= 0 && dartIndex < piece.darts.length) {
-            final dart = piece.darts[dartIndex];
-            final legPoint = parts[2] == 'leg1' ? dart.leg1 : dart.leg2;
-            final target = _local(legPoint, ox, oy);
-            final dx = target.x - p.x;
-            final dy = target.y - p.y;
-            final length = math.sqrt(dx * dx + dy * dy);
-            if (length > 0.01) {
-              const notchLengthMm = 4.0;
-              final line = _lineWidget(
-                p.x,
-                p.y,
-                p.x + dx / length * notchLengthMm,
-                p.y + dy / length * notchLengthMm,
-                0.45,
-              );
-              if (line != null) widgets.add(line);
-            }
-          }
-        }
-      } else {
-        final dir = piece.id == 'skirt_back' ? 1.0 : -1.0;
-        final a = _lineWidget(p.x, p.y, p.x + dir * 5, p.y - 2.5, 0.45);
-        final b = _lineWidget(p.x, p.y, p.x + dir * 5, p.y + 2.5, 0.45);
-        if (a != null) widgets.add(a);
-        if (b != null) widgets.add(b);
-      }
+      final dir = piece.id == 'skirt_back' ? 1.0 : -1.0;
+      final a = _lineWidget(p.x, p.y, p.x + dir * 5, p.y - 2.5, 0.45);
+      final b = _lineWidget(p.x, p.y, p.x + dir * 5, p.y + 2.5, 0.45);
+      if (a != null) widgets.add(a);
+      if (b != null) widgets.add(b);
+    }
+
+    for (final notch in piece.dartNotches) {
+      final p = _local(notch.position, ox, oy);
+      final parts = notch.role.split('_');
+      if (parts.length != 3) continue;
+      final dartIndex = int.tryParse(parts[1]);
+      if (dartIndex == null || dartIndex < 0 || dartIndex >= piece.darts.length) continue;
+      final dart = piece.darts[dartIndex];
+      final legPoint = parts[2] == 'leg1' ? dart.leg1 : dart.leg2;
+      final target = _local(legPoint, ox, oy);
+      final dx = target.x - p.x;
+      final dy = target.y - p.y;
+      final length = math.sqrt(dx * dx + dy * dy);
+      if (length <= 0.01) continue;
+      const notchLengthMm = 4.0;
+      final line = _lineWidget(
+        p.x,
+        p.y,
+        p.x + dx / length * notchLengthMm,
+        p.y + dy / length * notchLengthMm,
+        0.45,
+      );
+      if (line != null) widgets.add(line);
     }
 
     for (final label in piece.labels) {
