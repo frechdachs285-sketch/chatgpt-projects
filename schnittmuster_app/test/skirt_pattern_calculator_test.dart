@@ -95,16 +95,8 @@ void main() {
     const construction = ConstructionValues();
     final calculator = SkirtPatternCalculator();
 
-    final enabled = calculator.calculate(
-      measurements,
-      construction,
-      seamAllowance: const SeamAllowanceSettings(enabled: true),
-    );
-    final disabled = calculator.calculate(
-      measurements,
-      construction,
-      seamAllowance: const SeamAllowanceSettings(enabled: false),
-    );
+    final enabled = calculator.calculate(measurements, construction, seamAllowance: const SeamAllowanceSettings(enabled: true));
+    final disabled = calculator.calculate(measurements, construction, seamAllowance: const SeamAllowanceSettings(enabled: false));
 
     expect(enabled.isValid, isTrue);
     expect(disabled.isValid, isTrue);
@@ -112,7 +104,6 @@ void main() {
     expect(enabled.front!.cuttingOutline, isNotNull);
     expect(disabled.back!.cuttingOutline, isNull);
     expect(disabled.front!.cuttingOutline, isNull);
-
     expect(disabled.back!.outline.segments.length, enabled.back!.outline.segments.length);
     expect(disabled.front!.outline.segments.length, enabled.front!.outline.segments.length);
     expect(waistLength(disabled.back!), closeTo(waistLength(enabled.back!), 1e-9));
@@ -125,6 +116,37 @@ void main() {
     }
   });
 
+  test('Benutzerdefinierte Nahtzugaben 2-2-2-4 werden geometrisch angewendet', () {
+    const measurements = Measurements(waist: 84, hip: 108, hipDepth: 22, skirtLength: 65);
+    const construction = ConstructionValues();
+    const seam = SeamAllowanceSettings(enabled: true, waist: 2.0, side: 2.0, backCenter: 2.0, frontCenter: 0.0, hem: 4.0);
+    final result = SkirtPatternCalculator().calculate(measurements, construction, seamAllowance: seam);
+    expect(result.isValid, isTrue);
+    expectClosedCuttingOutline(result.back!);
+    expectClosedCuttingOutline(result.front!);
+
+    final backLines = result.back!.cuttingOutline!.segments.whereType<LineSegment>().toList();
+    final frontLines = result.front!.cuttingOutline!.segments.whereType<LineSegment>().toList();
+    final foldX = (measurements.hip + construction.hipEase) / 2;
+    expect(frontLines.where((line) => (line.start.x - foldX).abs() < 1e-6 && (line.end.x - foldX).abs() < 1e-6), isNotEmpty);
+
+    final hemY = measurements.skirtLength + seam.hem;
+    expect(backLines.expand((line) => [line.start, line.end]).where((point) => (point.y - hemY).abs() < 1e-6).length, greaterThanOrEqualTo(2));
+    expect(frontLines.expand((line) => [line.start, line.end]).where((point) => (point.y - hemY).abs() < 1e-6).length, greaterThanOrEqualTo(2));
+
+    expect(backLines.where((line) => (line.start.x + seam.backCenter).abs() < 1e-6 && (line.end.x + seam.backCenter).abs() < 1e-6), isNotEmpty);
+
+    final withoutSeam = SkirtPatternCalculator().calculate(measurements, construction, seamAllowance: const SeamAllowanceSettings(enabled: false));
+    expect(waistLength(result.back!), closeTo(waistLength(withoutSeam.back!), 1e-9));
+    expect(waistLength(result.front!), closeTo(waistLength(withoutSeam.front!), 1e-9));
+    for (final key in result.back!.points.keys) {
+      expect(result.back!.points[key]!.distanceTo(withoutSeam.back!.points[key]!), lessThan(1e-9));
+    }
+    for (final key in result.front!.points.keys) {
+      expect(result.front!.points[key]!.distanceTo(withoutSeam.front!.points[key]!), lessThan(1e-9));
+    }
+  });
+
   test('Abweichende Taillenzugabe wird durchgaengig verwendet', () {
     const measurements = Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60);
     const construction = ConstructionValues(waistEase: 2.0);
@@ -132,7 +154,6 @@ void main() {
     expect(result.isValid, isTrue);
     final back = result.back!;
     final front = result.front!;
-
     expect(back.points['P10']!.x, closeTo(23.5, 0.000001));
     expect(front.points['P16']!.x, closeTo(30.0, 0.000001));
     expect(waistLength(back), closeTo(19.5, 0.00001));
@@ -142,15 +163,11 @@ void main() {
   });
 
   test('Fadenlaeufe sind vertikal und adaptiv positioniert', () {
-    final result = SkirtPatternCalculator().calculate(
-      const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60),
-      const ConstructionValues(),
-    );
+    final result = SkirtPatternCalculator().calculate(const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60), const ConstructionValues());
     final back = result.back!;
     final front = result.front!;
     final backGrainline = back.grainline!;
     final frontGrainline = front.grainline!;
-
     expect(backGrainline.start.x, closeTo(13.25, 0.000001));
     expect(backGrainline.end.x, closeTo(13.25, 0.000001));
     expect(frontGrainline.start.x, closeTo(39.0, 0.000001));
@@ -162,13 +179,9 @@ void main() {
   });
 
   test('Hueft-Passzeichen stimmen an P7 exakt ueberein', () {
-    final result = SkirtPatternCalculator().calculate(
-      const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60),
-      const ConstructionValues(),
-    );
+    final result = SkirtPatternCalculator().calculate(const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60), const ConstructionValues());
     final back = result.back!;
     final front = result.front!;
-
     expect(back.notches.length, 1);
     expect(front.notches.length, 1);
     final backNotch = back.notches.single;
@@ -185,10 +198,7 @@ void main() {
   });
 
   test('Produktionskontur nutzt echte Taillen-Beziers und ist lueckenlos', () {
-    expectProductionGeometry(
-      const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60),
-      const ConstructionValues(),
-    );
+    expectProductionGeometry(const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60), const ConstructionValues());
   });
 
   test('Produktionsgeometrie bleibt bei mehreren Koerpermassen exakt', () {
@@ -211,42 +221,25 @@ void main() {
       Measurements(waist: 84, hip: 108, hipDepth: 22, skirtLength: 65),
       Measurements(waist: 92, hip: 116, hipDepth: 24, skirtLength: 72),
     ];
-
     for (final measurements in cases) {
       final result = SkirtPatternCalculator().calculate(measurements, construction);
       expect(result.isValid, isTrue);
       expectClosedCuttingOutline(result.back!);
       expectClosedCuttingOutline(result.front!);
-
       final frontLines = result.front!.cuttingOutline!.segments.whereType<LineSegment>().toList();
       final foldX = (measurements.hip + construction.hipEase) / 2;
-      final foldSegments = frontLines.where(
-        (line) =>
-            (line.start.x - foldX).abs() < 0.000001 &&
-            (line.end.x - foldX).abs() < 0.000001,
-      );
+      final foldSegments = frontLines.where((line) => (line.start.x - foldX).abs() < 0.000001 && (line.end.x - foldX).abs() < 0.000001);
       expect(foldSegments, isNotEmpty);
-
       final hemY = measurements.skirtLength + const SeamAllowanceSettings().hem;
-      final backHemPoints = <PatternPoint>[
-        for (final line in result.back!.cuttingOutline!.segments.whereType<LineSegment>()) ...[
-          line.start,
-          line.end,
-        ],
-      ].where((point) => (point.y - hemY).abs() < 0.000001);
-      final frontHemPoints = <PatternPoint>[
-        for (final line in frontLines) ...[line.start, line.end],
-      ].where((point) => (point.y - hemY).abs() < 0.000001);
+      final backHemPoints = <PatternPoint>[for (final line in result.back!.cuttingOutline!.segments.whereType<LineSegment>()) ...[line.start, line.end]].where((point) => (point.y - hemY).abs() < 0.000001);
+      final frontHemPoints = <PatternPoint>[for (final line in frontLines) ...[line.start, line.end]].where((point) => (point.y - hemY).abs() < 0.000001);
       expect(backHemPoints.length, greaterThanOrEqualTo(2));
       expect(frontHemPoints.length, greaterThanOrEqualTo(2));
     }
   });
 
   test('Ungueltige Masse werden abgewiesen', () {
-    final result = SkirtPatternCalculator().calculate(
-      const Measurements(waist: 76, hip: 100, hipDepth: 61, skirtLength: 60),
-      const ConstructionValues(),
-    );
+    final result = SkirtPatternCalculator().calculate(const Measurements(waist: 76, hip: 100, hipDepth: 61, skirtLength: 60), const ConstructionValues());
     expect(result.isValid, isFalse);
     expect(result.errors, isNotEmpty);
   });
