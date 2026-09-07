@@ -42,6 +42,7 @@ class ConstructionValues {
   final double frontDartWidth;
   final double frontDartLength;
   final double? zipperLength;
+  final double? finishedWaistbandWidth;
 
   const ConstructionValues({
     this.waistEase = 1.0,
@@ -54,6 +55,7 @@ class ConstructionValues {
     this.frontDartWidth = 2.0,
     this.frontDartLength = 10.0,
     this.zipperLength,
+    this.finishedWaistbandWidth,
   });
 }
 
