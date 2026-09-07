@@ -38,6 +38,7 @@ class _SkirtPageState extends State<SkirtPage> {
   final _seamHemController = TextEditingController(text: '3.0');
   final _zipperController = TextEditingController();
   final _waistbandWidthController = TextEditingController();
+  final _waistbandSeamAllowanceController = TextEditingController();
 
   Measurements _appliedMeasurements = const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60);
   SeamAllowanceSettings _appliedSeamAllowance = const SeamAllowanceSettings(enabled: true, waist: 1.5, side: 1.5, backCenter: 1.5, frontCenter: 0.0, hem: 3.0);
@@ -68,6 +69,7 @@ class _SkirtPageState extends State<SkirtPage> {
     _seamHemController.dispose();
     _zipperController.dispose();
     _waistbandWidthController.dispose();
+    _waistbandSeamAllowanceController.dispose();
     super.dispose();
   }
 
@@ -100,10 +102,18 @@ class _SkirtPageState extends State<SkirtPage> {
     return SeamAllowanceSettings(enabled: _seamAllowanceEnabled, waist: waist, side: side, backCenter: backCenter, frontCenter: 0.0, hem: hem);
   }
 
-  ConstructionValues _constructionWith({double? zipperLength, bool keepZipper = true, double? finishedWaistbandWidth, bool keepWaistband = true}) {
+  ConstructionValues _constructionWith({
+    double? zipperLength,
+    bool keepZipper = true,
+    double? finishedWaistbandWidth,
+    bool keepWaistbandWidth = true,
+    double? waistbandSeamAllowance,
+    bool keepWaistbandSeamAllowance = true,
+  }) {
     return ConstructionValues(
       zipperLength: keepZipper ? (zipperLength ?? _appliedConstruction.zipperLength) : zipperLength,
-      finishedWaistbandWidth: keepWaistband ? (finishedWaistbandWidth ?? _appliedConstruction.finishedWaistbandWidth) : finishedWaistbandWidth,
+      finishedWaistbandWidth: keepWaistbandWidth ? (finishedWaistbandWidth ?? _appliedConstruction.finishedWaistbandWidth) : finishedWaistbandWidth,
+      waistbandSeamAllowance: keepWaistbandSeamAllowance ? (waistbandSeamAllowance ?? _appliedConstruction.waistbandSeamAllowance) : waistbandSeamAllowance,
     );
   }
 
@@ -162,20 +172,46 @@ class _SkirtPageState extends State<SkirtPage> {
     _recalculate(_appliedMeasurements, _appliedSeamAllowance, _constructionWith(zipperLength: value, keepZipper: text.isNotEmpty));
   }
 
-  void _applyWaistbandWidth() {
+  void _applyWaistband() {
     FocusScope.of(context).unfocus();
-    final text = _waistbandWidthController.text.trim().replaceAll(',', '.');
-    final double? value;
-    if (text.isEmpty) {
-      value = null;
-    } else {
-      value = double.tryParse(text);
-      if (value == null || !value.isFinite || value <= 0) {
-        setState(() => _inputMessage = 'Fertige Bundbreite: Bitte eine positive Zahl in cm eingeben oder das Feld leer lassen.');
-        return;
-      }
+    final widthText = _waistbandWidthController.text.trim().replaceAll(',', '.');
+    final seamText = _waistbandSeamAllowanceController.text.trim().replaceAll(',', '.');
+
+    if (widthText.isEmpty && seamText.isEmpty) {
+      _recalculate(
+        _appliedMeasurements,
+        _appliedSeamAllowance,
+        _constructionWith(
+          finishedWaistbandWidth: null,
+          keepWaistbandWidth: false,
+          waistbandSeamAllowance: null,
+          keepWaistbandSeamAllowance: false,
+        ),
+      );
+      return;
     }
-    _recalculate(_appliedMeasurements, _appliedSeamAllowance, _constructionWith(finishedWaistbandWidth: value, keepWaistband: text.isNotEmpty));
+
+    final width = double.tryParse(widthText);
+    final seamAllowance = double.tryParse(seamText);
+    if (width == null || !width.isFinite || width <= 0) {
+      setState(() => _inputMessage = 'Fertige Bundbreite: Bitte eine positive Zahl in cm eingeben.');
+      return;
+    }
+    if (seamAllowance == null || !seamAllowance.isFinite || seamAllowance < 0) {
+      setState(() => _inputMessage = 'Bund-Nahtzugabe: Bitte eine Zahl ab 0 cm eingeben.');
+      return;
+    }
+
+    _recalculate(
+      _appliedMeasurements,
+      _appliedSeamAllowance,
+      _constructionWith(
+        finishedWaistbandWidth: width,
+        keepWaistbandWidth: false,
+        waistbandSeamAllowance: seamAllowance,
+        keepWaistbandSeamAllowance: false,
+      ),
+    );
   }
 
   Future<void> _openPatternPdf() async {
@@ -262,12 +298,44 @@ class _SkirtPageState extends State<SkirtPage> {
             Card(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: ExpansionTile(
-                leading: const Icon(Icons.horizontal_rule), title: const Text('Bund'),
-                subtitle: Text(_appliedConstruction.finishedWaistbandWidth == null ? 'Fertige Bundbreite noch nicht festgelegt' : 'Fertige Bundbreite · ${_appliedConstruction.finishedWaistbandWidth!.toStringAsFixed(1)} cm'),
+                leading: const Icon(Icons.horizontal_rule),
+                title: const Text('Bund'),
+                subtitle: Text(
+                  _appliedConstruction.finishedWaistbandWidth == null || _appliedConstruction.waistbandSeamAllowance == null
+                      ? 'Bundmaße noch nicht vollständig festgelegt'
+                      : 'Fertig ${_appliedConstruction.finishedWaistbandWidth!.toStringAsFixed(1)} cm · Nahtzugabe ${_appliedConstruction.waistbandSeamAllowance!.toStringAsFixed(1)} cm',
+                ),
                 children: [Padding(padding: const EdgeInsets.fromLTRB(12, 4, 12, 10), child: Column(children: [
-                  TextField(controller: _waistbandWidthController, keyboardType: const TextInputType.numberWithOptions(decimal: true), textInputAction: TextInputAction.done, decoration: const InputDecoration(labelText: 'Fertige Bundbreite', suffixText: 'cm', helperText: 'Eigener Wert · leer lassen = noch kein Bund-Schnittteil', border: OutlineInputBorder(), isDense: true), onChanged: (_) { if (!_waistbandInputsDirty) setState(() => _waistbandInputsDirty = true); }, onSubmitted: (_) => _applyWaistbandWidth()),
+                  TextField(
+                    controller: _waistbandWidthController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(labelText: 'Fertige Bundbreite', suffixText: 'cm', helperText: 'Eigener Wert', border: OutlineInputBorder(), isDense: true),
+                    onChanged: (_) { if (!_waistbandInputsDirty) setState(() => _waistbandInputsDirty = true); },
+                  ),
                   const SizedBox(height: 8),
-                  SizedBox(width: double.infinity, child: OutlinedButton.icon(onPressed: _applyWaistbandWidth, icon: const Icon(Icons.check), label: Text(_waistbandInputsDirty ? 'Bundbreite anwenden' : _appliedConstruction.finishedWaistbandWidth == null ? 'Keine Bundbreite angewendet' : 'Bundbreite ist angewendet'))),
+                  TextField(
+                    controller: _waistbandSeamAllowanceController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    textInputAction: TextInputAction.done,
+                    decoration: const InputDecoration(labelText: 'Bund-Nahtzugabe', suffixText: 'cm', helperText: 'Ein gemeinsamer Wert rundherum', border: OutlineInputBorder(), isDense: true),
+                    onChanged: (_) { if (!_waistbandInputsDirty) setState(() => _waistbandInputsDirty = true); },
+                    onSubmitted: (_) => _applyWaistband(),
+                  ),
+                  const SizedBox(height: 8),
+                  const Align(alignment: Alignment.centerLeft, child: Text('Beide Felder leer lassen = noch kein Bund-Schnittteil')),
+                  const SizedBox(height: 8),
+                  SizedBox(width: double.infinity, child: OutlinedButton.icon(
+                    onPressed: _applyWaistband,
+                    icon: const Icon(Icons.check),
+                    label: Text(
+                      _waistbandInputsDirty
+                          ? 'Bundmaße anwenden'
+                          : _appliedConstruction.finishedWaistbandWidth == null
+                              ? 'Keine Bundmaße angewendet'
+                              : 'Bundmaße sind angewendet',
+                    ),
+                  )),
                 ]))],
               ),
             ),
