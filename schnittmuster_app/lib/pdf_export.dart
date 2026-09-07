@@ -197,7 +197,7 @@ class PatternPdfExporter {
 
   void _addWaistbandLandscapeTiles(pw.Document doc, PatternPiece waistband) {
     final b = _pieceBounds(waistband);
-    const padX = 10.0;
+    const padX = 5.0;
     const padY = 15.0;
     final pieceW = b.width * 10;
     final pieceH = b.height * 10;
