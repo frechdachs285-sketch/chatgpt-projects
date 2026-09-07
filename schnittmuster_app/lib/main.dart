@@ -344,7 +344,7 @@ class _SkirtPageState extends State<SkirtPage> {
             const SizedBox(height: 8),
             if (keyboardOpen) const Padding(padding: EdgeInsets.fromLTRB(24, 8, 24, 24), child: Text('Eingabe fertigstellen und anschließend anwenden. Du kannst die Seite dabei nach oben und unten scrollen.', textAlign: TextAlign.center))
             else if (result == null || !result.isValid) const SizedBox(height: 260, child: Center(child: Text('Bitte gültige Maße anwenden.')))
-            else SizedBox(height: previewHeight, child: PatternPreview(front: result.front!, back: result.back!)),
+            else SizedBox(height: previewHeight, child: PatternPreview(front: result.front!, back: result.back!, waistband: result.waistband)),
           ],
         ),
       ),
@@ -354,12 +354,13 @@ class _SkirtPageState extends State<SkirtPage> {
 
 class PatternPreview extends StatelessWidget {
   final PatternPiece front, back;
-  const PatternPreview({super.key, required this.front, required this.back});
+  final PatternPiece? waistband;
+  const PatternPreview({super.key, required this.front, required this.back, this.waistband});
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, constraints) {
         final width = constraints.maxWidth.isFinite ? constraints.maxWidth : 700.0;
         final height = constraints.maxHeight.isFinite ? constraints.maxHeight : 700.0;
-        return InteractiveViewer(minScale: 0.5, maxScale: 5, boundaryMargin: const EdgeInsets.all(100), child: CustomPaint(size: Size(width, height), painter: PatternPreviewPainter(front: front, back: back)));
+        return InteractiveViewer(minScale: 0.5, maxScale: 5, boundaryMargin: const EdgeInsets.all(100), child: CustomPaint(size: Size(width, height), painter: PatternPreviewPainter(front: front, back: back, waistband: waistband)));
       });
 }
 
@@ -367,9 +368,10 @@ class _Bounds { final double minX, minY, maxX, maxY; const _Bounds(this.minX, th
 
 class PatternPreviewPainter extends CustomPainter {
   final PatternPiece front, back;
-  PatternPreviewPainter({required this.front, required this.back});
+  final PatternPiece? waistband;
+  PatternPreviewPainter({required this.front, required this.back, this.waistband});
   _Bounds _bounds(PatternPiece piece) {
-    final points = <PatternPoint>[...piece.points.values, for (final dart in piece.darts) ...[dart.leg1, dart.leg2, dart.apex], for (final segment in piece.outline.segments) if (segment is BezierSegment) ...[segment.control1, segment.control2], if (piece.cuttingOutline != null) for (final segment in piece.cuttingOutline!.segments) ...[segment.start, segment.end, if (segment is BezierSegment) ...[segment.control1, segment.control2]], if (piece.grainline != null) ...[piece.grainline!.start, piece.grainline!.end], for (final notch in piece.notches) notch.position, for (final label in piece.labels) label.position];
+    final points = <PatternPoint>[...piece.points.values, for (final dart in piece.darts) ...[dart.leg1, dart.leg2, dart.apex], for (final segment in piece.outline.segments) if (segment is BezierSegment) ...[segment.control1, segment.control2], if (piece.cuttingOutline != null) for (final segment in piece.cuttingOutline!.segments) ...[segment.start, segment.end, if (segment is BezierSegment) ...[segment.control1, segment.control2]], for (final guide in piece.guideLines) ...[guide.start, guide.end], if (piece.grainline != null) ...[piece.grainline!.start, piece.grainline!.end], for (final notch in piece.notches) notch.position, for (final label in piece.labels) label.position];
     var minX = points.first.x, minY = points.first.y, maxX = points.first.x, maxY = points.first.y;
     for (final point in points.skip(1)) { minX = math.min(minX, point.x); minY = math.min(minY, point.y); maxX = math.max(maxX, point.x); maxY = math.max(maxY, point.y); }
     return _Bounds(minX, minY, maxX, maxY);
@@ -378,16 +380,40 @@ class PatternPreviewPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     const padding = 24.0, gap = 28.0;
-    final bb = _bounds(back), fb = _bounds(front); final total = bb.width + fb.width; final tall = math.max(bb.height, fb.height); final aw = math.max(1.0, size.width - padding * 2 - gap); final ah = math.max(1.0, size.height - padding * 2); final scale = math.min(aw / total, ah / tall); final used = total * scale + gap; final startX = math.max(padding, (size.width - used) / 2); const startY = padding; final bo = Offset(startX, startY); final fo = Offset(startX + bb.width * scale + gap, startY);
-    final cutting = Paint()..style = PaintingStyle.stroke..strokeWidth = 2.2; final outline = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.2; final grain = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.2; final notch = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.5; final dart = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.0;
-    _drawPiece(canvas, back, bb, bo, scale, cutting, outline, grain, notch, dart); _drawPiece(canvas, front, fb, fo, scale, cutting, outline, grain, notch, dart);
+    final bb = _bounds(back), fb = _bounds(front);
+    final wb = waistband == null ? null : _bounds(waistband!);
+    final topWidth = bb.width + fb.width;
+    final topHeight = math.max(bb.height, fb.height);
+    final contentWidth = math.max(topWidth, wb?.width ?? 0.0);
+    final contentHeight = topHeight + (wb == null ? 0.0 : gap + wb.height);
+    final aw = math.max(1.0, size.width - padding * 2 - gap);
+    final ah = math.max(1.0, size.height - padding * 2);
+    final scale = math.min(aw / contentWidth, ah / contentHeight);
+    final topUsed = topWidth * scale + gap;
+    final startX = math.max(padding, (size.width - topUsed) / 2);
+    const startY = padding;
+    final bo = Offset(startX, startY);
+    final fo = Offset(startX + bb.width * scale + gap, startY);
+    final cutting = Paint()..style = PaintingStyle.stroke..strokeWidth = 2.2;
+    final outline = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.2;
+    final grain = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.2;
+    final notch = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.5;
+    final dart = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.0;
+    _drawPiece(canvas, back, bb, bo, scale, cutting, outline, grain, notch, dart);
+    _drawPiece(canvas, front, fb, fo, scale, cutting, outline, grain, notch, dart);
+    if (waistband != null && wb != null) {
+      final waistUsed = wb.width * scale;
+      final wo = Offset(math.max(padding, (size.width - waistUsed) / 2), startY + topHeight * scale + gap);
+      _drawPiece(canvas, waistband!, wb, wo, scale, cutting, outline, grain, notch, dart);
+    }
   }
   void _drawPath(Canvas canvas, PatternPath pp, _Bounds b, Offset o, double s, Paint paint) { if (pp.segments.isEmpty) return; final first = _p(pp.segments.first.start, b, o, s); final path = Path()..moveTo(first.dx, first.dy); for (final seg in pp.segments) { if (seg is BezierSegment) { final c1 = _p(seg.control1, b, o, s), c2 = _p(seg.control2, b, o, s), e = _p(seg.end, b, o, s); path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, e.dx, e.dy); } else { final e = _p(seg.end, b, o, s); path.lineTo(e.dx, e.dy); } } canvas.drawPath(path, paint); }
   void _drawGrain(Canvas canvas, PatternPiece piece, _Bounds b, Offset o, double s, Paint paint) { final g = piece.grainline; if (g == null) return; final a = _p(g.start, b, o, s), z = _p(g.end, b, o, s); canvas.drawLine(a, z, paint); const l = 7.0, w = 4.0; void arrow(Offset tip, double d) { final by = tip.dy + d * l; canvas.drawPath(Path()..moveTo(tip.dx, tip.dy)..lineTo(tip.dx - w, by)..moveTo(tip.dx, tip.dy)..lineTo(tip.dx + w, by), paint); } arrow(a, 1); arrow(z, -1); }
   void _drawNotches(Canvas canvas, PatternPiece piece, _Bounds b, Offset o, double s, Paint paint) { const depth = 7.0, half = 4.0; for (final n in piece.notches) { final tip = _p(n.position, b, o, s); final out = piece.id == 'skirt_back' ? 1.0 : -1.0; final bx = tip.dx + out * depth; canvas.drawPath(Path()..moveTo(tip.dx, tip.dy)..lineTo(bx, tip.dy - half)..moveTo(tip.dx, tip.dy)..lineTo(bx, tip.dy + half), paint); } }
   void _drawZipperEnd(Canvas canvas, PatternPiece piece, _Bounds b, Offset o, double s, Paint paint) { if (piece.id != 'skirt_back') return; final zipperEnd = piece.points['ZIP_END']; if (zipperEnd == null) return; final p = _p(zipperEnd, b, o, s); canvas.drawLine(p, Offset(p.dx + math.max(8.0, 0.8 * s), p.dy), paint); }
+  void _drawGuideLines(Canvas canvas, PatternPiece piece, _Bounds b, Offset o, double s, Paint paint) { for (final guide in piece.guideLines) { canvas.drawLine(_p(guide.start, b, o, s), _p(guide.end, b, o, s), paint); } }
   void _drawLabels(Canvas canvas, PatternPiece piece, _Bounds b, Offset o, double s) { for (final label in piece.labels) { final pos = _p(label.position, b, o, s); final text = label.text.replaceAll('Rueckenteil', 'Rückenteil'); final tp = TextPainter(text: TextSpan(text: text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black)), textDirection: TextDirection.ltr, textAlign: TextAlign.center)..layout(); tp.paint(canvas, Offset(pos.dx - tp.width / 2, pos.dy - tp.height / 2)); } }
-  void _drawPiece(Canvas canvas, PatternPiece piece, _Bounds b, Offset o, double s, Paint cutting, Paint outline, Paint grain, Paint notch, Paint dart) { if (piece.outline.segments.isEmpty) return; if (piece.cuttingOutline != null) _drawPath(canvas, piece.cuttingOutline!, b, o, s, cutting); _drawPath(canvas, piece.outline, b, o, s, outline); for (final d in piece.darts) { canvas.drawLine(_p(d.leg1, b, o, s), _p(d.apex, b, o, s), dart); canvas.drawLine(_p(d.apex, b, o, s), _p(d.leg2, b, o, s), dart); } _drawGrain(canvas, piece, b, o, s, grain); _drawNotches(canvas, piece, b, o, s, notch); _drawZipperEnd(canvas, piece, b, o, s, notch); _drawLabels(canvas, piece, b, o, s); }
+  void _drawPiece(Canvas canvas, PatternPiece piece, _Bounds b, Offset o, double s, Paint cutting, Paint outline, Paint grain, Paint notch, Paint dart) { if (piece.outline.segments.isEmpty) return; if (piece.cuttingOutline != null) _drawPath(canvas, piece.cuttingOutline!, b, o, s, cutting); _drawPath(canvas, piece.outline, b, o, s, outline); _drawGuideLines(canvas, piece, b, o, s, dart); for (final d in piece.darts) { canvas.drawLine(_p(d.leg1, b, o, s), _p(d.apex, b, o, s), dart); canvas.drawLine(_p(d.apex, b, o, s), _p(d.leg2, b, o, s), dart); } _drawGrain(canvas, piece, b, o, s, grain); _drawNotches(canvas, piece, b, o, s, notch); _drawZipperEnd(canvas, piece, b, o, s, notch); _drawLabels(canvas, piece, b, o, s); }
   @override
   bool shouldRepaint(covariant PatternPreviewPainter oldDelegate) => true;
 }
