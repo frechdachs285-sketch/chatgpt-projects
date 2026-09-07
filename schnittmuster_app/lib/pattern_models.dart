@@ -175,6 +175,7 @@ class PatternPiece {
   final List<Dart> darts;
   final Grainline? grainline;
   final List<PatternNotch> notches;
+  final List<PatternNotch> dartNotches;
   final List<PatternLabel> labels;
 
   const PatternPiece({
@@ -186,6 +187,7 @@ class PatternPiece {
     this.darts = const [],
     this.grainline,
     this.notches = const [],
+    this.dartNotches = const [],
     this.labels = const [],
   });
 }
