@@ -228,9 +228,9 @@ class PatternPdfExporter {
     final widgets = <pw.Widget>[];
 
     if (piece.cuttingOutline != null) {
-      widgets.addAll(_pathWidgets(piece.cuttingOutline!, ox, oy, 0.72));
+      widgets.add(_pathPaintWidget(piece.cuttingOutline!, ox, oy, 0.72));
     }
-    widgets.addAll(_pathWidgets(piece.outline, ox, oy, 0.30));
+    widgets.add(_pathPaintWidget(piece.outline, ox, oy, 0.30));
 
     final grain = piece.grainline;
     if (grain != null) {
@@ -272,40 +272,53 @@ class PatternPdfExporter {
     return widgets;
   }
 
-  List<pw.Widget> _pathWidgets(PatternPath path, double ox, double oy, double strokeMm) {
-    final widgets = <pw.Widget>[];
-    for (final segment in path.segments) {
-      if (segment is BezierSegment) {
-        const samples = 48;
-        var prev = segment.start;
-        for (var i = 1; i <= samples; i++) {
-          final t = i / samples;
-          final next = _bezierPoint(segment, t);
-          final a = _local(prev, ox, oy);
-          final b = _local(next, ox, oy);
-          final line = _lineWidget(a.x, a.y, b.x, b.y, strokeMm);
-          if (line != null) widgets.add(line);
-          prev = next;
-        }
-      } else {
-        final a = _local(segment.start, ox, oy);
-        final b = _local(segment.end, ox, oy);
-        final line = _lineWidget(a.x, a.y, b.x, b.y, strokeMm);
-        if (line != null) widgets.add(line);
-      }
-    }
-    return widgets;
-  }
+  pw.Widget _pathPaintWidget(PatternPath path, double ox, double oy, double strokeMm) {
+    return pw.Positioned(
+      left: 0,
+      top: 0,
+      child: pw.ClipRect(
+        child: pw.CustomPaint(
+          size: PdfPoint(mm(_tileWidthMm), mm(_tileHeightMm)),
+          painter: (canvas, size) {
+            canvas
+              ..setStrokeColor(PdfColors.black)
+              ..setLineWidth(mm(strokeMm))
+              ..setLineJoin(PdfLineJoin.round)
+              ..setLineCap(PdfLineCap.round);
 
-  PatternPoint _bezierPoint(BezierSegment s, double t) {
-    final u = 1 - t;
-    final tt = t * t;
-    final uu = u * u;
-    final uuu = uu * u;
-    final ttt = tt * t;
-    return PatternPoint(
-      uuu * s.start.x + 3 * uu * t * s.control1.x + 3 * u * tt * s.control2.x + ttt * s.end.x,
-      uuu * s.start.y + 3 * uu * t * s.control1.y + 3 * u * tt * s.control2.y + ttt * s.end.y,
+            PatternPoint? previousEnd;
+            for (final segment in path.segments) {
+              final start = _local(segment.start, ox, oy);
+              final end = _local(segment.end, ox, oy);
+              final continues = previousEnd != null &&
+                  (previousEnd.x - segment.start.x).abs() < 1e-9 &&
+                  (previousEnd.y - segment.start.y).abs() < 1e-9;
+
+              if (!continues) {
+                canvas.moveTo(mm(start.x), size.y - mm(start.y));
+              }
+
+              if (segment is BezierSegment) {
+                final c1 = _local(segment.control1, ox, oy);
+                final c2 = _local(segment.control2, ox, oy);
+                canvas.curveTo(
+                  mm(c1.x),
+                  size.y - mm(c1.y),
+                  mm(c2.x),
+                  size.y - mm(c2.y),
+                  mm(end.x),
+                  size.y - mm(end.y),
+                );
+              } else {
+                canvas.lineTo(mm(end.x), size.y - mm(end.y));
+              }
+
+              previousEnd = segment.end;
+            }
+            canvas.strokePath();
+          },
+        ),
+      ),
     );
   }
 
