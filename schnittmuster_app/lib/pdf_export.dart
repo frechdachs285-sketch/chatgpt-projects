@@ -322,21 +322,14 @@ class PatternPdfExporter {
     if (length < 0.01) return null;
     final angle = math.atan2(dy, dx);
 
-    final overlap = math.min(1.20, length / 2);
-    final ux = dx / length;
-    final uy = dy / length;
-    final startX = clipped.x1 - ux * overlap;
-    final startY = clipped.y1 - uy * overlap;
-    final drawLength = length + overlap * 2;
-
     return pw.Positioned(
-      left: mm(startX),
-      top: mm(startY - strokeMm / 2),
+      left: mm(clipped.x1),
+      top: mm(clipped.y1 - strokeMm / 2),
       child: pw.Transform.rotate(
         angle: angle,
         alignment: pw.Alignment.centerLeft,
         child: pw.Container(
-          width: mm(drawLength),
+          width: mm(length),
           height: mm(strokeMm),
           color: PdfColors.black,
         ),
