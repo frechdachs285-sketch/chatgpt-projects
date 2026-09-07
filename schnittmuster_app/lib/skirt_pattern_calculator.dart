@@ -56,11 +56,8 @@ class SkirtPatternCalculator {
       if (!finishedWaistbandWidth.isFinite || finishedWaistbandWidth <= 0) {
         return const PatternResult(errors: ['Fertige Bundbreite: Bitte einen Wert größer als 0 cm eingeben.']);
       }
-      if (finishedWaistbandWidth > 15) {
-        return const PatternResult(errors: ['Fertige Bundbreite: Für Rock v1 sind höchstens 15 cm zulässig.']);
-      }
-      if (!waistbandSeamAllowance!.isFinite || waistbandSeamAllowance < 0 || waistbandSeamAllowance > 5) {
-        return const PatternResult(errors: ['Bund-Nahtzugabe: Bitte einen Wert zwischen 0 und 5 cm eingeben.']);
+      if (!waistbandSeamAllowance!.isFinite || waistbandSeamAllowance < 0) {
+        return const PatternResult(errors: ['Bund-Nahtzugabe: Bitte einen Wert ab 0 cm eingeben.']);
       }
     }
 
@@ -161,6 +158,12 @@ class SkirtPatternCalculator {
     final c3 = PatternPoint(0, cutWidth);
     final foldY = seamAllowance + finishedWidth;
 
+    final grainY = seamAllowance + finishedWidth * 1.55;
+    final grainStartX = seamAllowance + finishedLength * 0.58;
+    final grainEndX = seamAllowance + finishedLength * 0.88;
+    final arrowLength = math.min(1.2, finishedLength * 0.025);
+    final arrowHalfWidth = math.min(0.55, finishedWidth * 0.18);
+
     return PatternPiece(
       id: 'skirt_waistband',
       name: 'Gerader Bund',
@@ -186,14 +189,19 @@ class SkirtPatternCalculator {
         LineSegment(c2, c3),
         LineSegment(c3, c0),
       ]),
-      guideLines: [LineSegment(PatternPoint(0, foldY), PatternPoint(cutLength, foldY))],
-      grainline: Grainline(
-        start: PatternPoint(seamAllowance + finishedLength * 0.2, foldY),
-        end: PatternPoint(seamAllowance + finishedLength * 0.8, foldY),
-      ),
+      guideLines: [
+        LineSegment(PatternPoint(0, foldY), PatternPoint(cutLength, foldY)),
+        LineSegment(PatternPoint(grainStartX, grainY), PatternPoint(grainEndX, grainY)),
+        LineSegment(PatternPoint(grainStartX, grainY), PatternPoint(grainStartX + arrowLength, grainY - arrowHalfWidth)),
+        LineSegment(PatternPoint(grainStartX, grainY), PatternPoint(grainStartX + arrowLength, grainY + arrowHalfWidth)),
+        LineSegment(PatternPoint(grainEndX, grainY), PatternPoint(grainEndX - arrowLength, grainY - arrowHalfWidth)),
+        LineSegment(PatternPoint(grainEndX, grainY), PatternPoint(grainEndX - arrowLength, grainY + arrowHalfWidth)),
+      ],
       labels: [
-        PatternLabel(position: PatternPoint(cutLength / 2, foldY - finishedWidth * 0.35), text: 'Gerader Bund'),
-        PatternLabel(position: PatternPoint(cutLength / 2, foldY + finishedWidth * 0.35), text: '1x zuschneiden / Faltlinie Mitte'),
+        PatternLabel(position: PatternPoint(seamAllowance + finishedLength * 0.28, seamAllowance + finishedWidth * 0.45), text: 'Gerader Bund'),
+        PatternLabel(position: PatternPoint(seamAllowance + finishedLength * 0.28, seamAllowance + finishedWidth * 1.55), text: '1x zuschneiden'),
+        PatternLabel(position: PatternPoint(seamAllowance + finishedLength * 0.72, foldY - finishedWidth * 0.22), text: 'Faltlinie'),
+        PatternLabel(position: PatternPoint((grainStartX + grainEndX) / 2, grainY - finishedWidth * 0.28), text: 'Fadenlauf'),
       ],
     );
   }
