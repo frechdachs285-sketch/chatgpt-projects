@@ -43,6 +43,7 @@ class ConstructionValues {
   final double frontDartLength;
   final double? zipperLength;
   final double? finishedWaistbandWidth;
+  final double? waistbandSeamAllowance;
 
   const ConstructionValues({
     this.waistEase = 1.0,
@@ -56,6 +57,7 @@ class ConstructionValues {
     this.frontDartLength = 10.0,
     this.zipperLength,
     this.finishedWaistbandWidth,
+    this.waistbandSeamAllowance,
   });
 }
 
@@ -176,6 +178,7 @@ class PatternPiece {
   final Map<String, PatternPoint> points;
   final PatternPath outline;
   final PatternPath? cuttingOutline;
+  final List<LineSegment> guideLines;
   final List<Dart> darts;
   final Grainline? grainline;
   final List<PatternNotch> notches;
@@ -188,6 +191,7 @@ class PatternPiece {
     required this.points,
     required this.outline,
     this.cuttingOutline,
+    this.guideLines = const [],
     this.darts = const [],
     this.grainline,
     this.notches = const [],
@@ -199,12 +203,14 @@ class PatternPiece {
 class PatternResult {
   final PatternPiece? front;
   final PatternPiece? back;
+  final PatternPiece? waistband;
   final List<String> errors;
   final List<String> warnings;
 
   const PatternResult({
     this.front,
     this.back,
+    this.waistband,
     this.errors = const [],
     this.warnings = const [],
   });
