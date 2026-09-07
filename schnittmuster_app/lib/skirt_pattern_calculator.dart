@@ -75,8 +75,18 @@ class SkirtPatternCalculator {
       final backWaistCurves = waistUnfolder.unfold(closedCurve: closedBackWaist, dartsFromCenterToSide: [backDart1, backDart2]);
       final frontWaistCurves = waistUnfolder.unfold(closedCurve: closedFrontWaist, dartsFromCenterToSide: [frontDart]);
       final curveBuilder = const SideSeamCurveBuilder();
-      final backSideCurve = curveBuilder.build(start: closedBackWaist.correctedSidePoint, end: p['P7']!);
-      final frontSideCurve = curveBuilder.build(start: closedFrontWaist.correctedSidePoint, end: p['P7']!);
+      var backSideCurve = curveBuilder.build(start: closedBackWaist.correctedSidePoint, end: p['P7']!);
+      var frontSideCurve = curveBuilder.build(start: closedFrontWaist.correctedSidePoint, end: p['P7']!);
+      final backSideLength = backSideCurve.arcLength();
+      final frontSideLength = frontSideCurve.arcLength();
+      final targetSideLength = math.max(backSideLength, frontSideLength);
+      const sideMatcher = SideSeamLengthMatcher();
+      if (backSideLength < targetSideLength - 0.000001) {
+        backSideCurve = sideMatcher.lengthenTo(curve: backSideCurve, targetLength: targetSideLength);
+      }
+      if (frontSideLength < targetSideLength - 0.000001) {
+        frontSideCurve = sideMatcher.lengthenTo(curve: frontSideCurve, targetLength: targetSideLength);
+      }
 
       const cuttingBuilder = SkirtCuttingOutlineBuilder();
       final PatternPath? backCuttingOutline = seamAllowance.enabled ? cuttingBuilder.build(isBack: true, closedWaist: closedBackWaist, dartsFromCenterToSide: [backDart1, backDart2], sideCurve: backSideCurve, hipPoint: p['P7']!, sideHemPoint: p['P8']!, centerHemPoint: p['P3']!, centerWaistPoint: p['P1']!, settings: seamAllowance) : null;
