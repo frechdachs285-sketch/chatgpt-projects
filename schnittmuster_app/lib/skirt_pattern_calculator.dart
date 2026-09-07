@@ -109,7 +109,10 @@ class SkirtPatternCalculator {
         darts: [backDart1, backDart2],
         grainline: _grainline(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength),
         notches: [PatternNotch(position: p['P7']!, role: 'side_hip')],
-        labels: [_pieceLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: 'Rock - Rueckenteil')],
+        labels: [
+          _pieceLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: 'Rock - Rueckenteil'),
+          _cutLabel(centerX: p['P1']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: '2x gegengleich zuschneiden'),
+        ],
         outline: PatternPath([
           _bezierSegment(backWaistCurves[0], 'waist'), LineSegment(backDart1.leg1, backDart1.apex), LineSegment(backDart1.apex, backDart1.leg2),
           _bezierSegment(backWaistCurves[1], 'waist'), LineSegment(backDart2.leg1, backDart2.apex), LineSegment(backDart2.apex, backDart2.leg2),
@@ -126,6 +129,7 @@ class SkirtPatternCalculator {
         notches: [PatternNotch(position: p['P7']!, role: 'side_hip')],
         labels: [
           _pieceLabel(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: 'Rock - Vorderteil'),
+          _cutLabel(centerX: p['P2']!.x, sideX: p['P8']!.x, skirtLength: m.skirtLength, text: '1x im Stoffbruch zuschneiden'),
           PatternLabel(position: PatternPoint(p['P2']!.x, m.skirtLength * 0.5), text: 'Stoffbruch'),
         ],
         outline: PatternPath([
@@ -158,6 +162,12 @@ class SkirtPatternCalculator {
   PatternLabel _pieceLabel({required double centerX, required double sideX, required double skirtLength, required String text}) {
     final x = (centerX + sideX) / 2;
     final y = skirtLength * 0.82;
+    return PatternLabel(position: PatternPoint(x, y), text: text);
+  }
+
+  PatternLabel _cutLabel({required double centerX, required double sideX, required double skirtLength, required String text}) {
+    final x = (centerX + sideX) / 2;
+    final y = skirtLength * 0.88;
     return PatternLabel(position: PatternPoint(x, y), text: text);
   }
 
