@@ -37,6 +37,7 @@ class _SkirtPageState extends State<SkirtPage> {
   final _seamSideController = TextEditingController(text: '1.5');
   final _seamBackCenterController = TextEditingController(text: '1.5');
   final _seamHemController = TextEditingController(text: '3.0');
+  final _zipperController = TextEditingController();
 
   Measurements _appliedMeasurements = const Measurements(
     waist: 76,
@@ -54,15 +55,22 @@ class _SkirtPageState extends State<SkirtPage> {
     hem: 3.0,
   );
 
+  ConstructionValues _appliedConstruction = const ConstructionValues();
+
   PatternResult? _result;
   String? _inputMessage;
   bool _inputsDirty = false;
   bool _seamInputsDirty = false;
+  bool _zipperInputsDirty = false;
 
   @override
   void initState() {
     super.initState();
-    _recalculate(_appliedMeasurements, _appliedSeamAllowance);
+    _recalculate(
+      _appliedMeasurements,
+      _appliedSeamAllowance,
+      _appliedConstruction,
+    );
   }
 
   @override
@@ -75,6 +83,7 @@ class _SkirtPageState extends State<SkirtPage> {
     _seamSideController.dispose();
     _seamBackCenterController.dispose();
     _seamHemController.dispose();
+    _zipperController.dispose();
     super.dispose();
   }
 
@@ -128,10 +137,11 @@ class _SkirtPageState extends State<SkirtPage> {
   void _recalculate(
     Measurements measurements,
     SeamAllowanceSettings seamAllowance,
+    ConstructionValues construction,
   ) {
     final next = SkirtPatternCalculator().calculate(
       measurements,
-      const ConstructionValues(),
+      construction,
       seamAllowance: seamAllowance,
     );
     setState(() {
@@ -139,9 +149,11 @@ class _SkirtPageState extends State<SkirtPage> {
       if (next.isValid) {
         _appliedMeasurements = measurements;
         _appliedSeamAllowance = seamAllowance;
+        _appliedConstruction = construction;
         _inputMessage = null;
         _inputsDirty = false;
         _seamInputsDirty = false;
+        _zipperInputsDirty = false;
       } else {
         _inputMessage = next.errors.join('\n');
       }
@@ -155,7 +167,11 @@ class _SkirtPageState extends State<SkirtPage> {
       setState(() => _inputMessage = 'Bitte alle vier Maße als positive Zahl eingeben.');
       return;
     }
-    _recalculate(measurements, _appliedSeamAllowance);
+    _recalculate(
+      measurements,
+      _appliedSeamAllowance,
+      _appliedConstruction,
+    );
   }
 
   void _applySeamAllowances() {
@@ -167,7 +183,35 @@ class _SkirtPageState extends State<SkirtPage> {
       });
       return;
     }
-    _recalculate(_appliedMeasurements, seamAllowance);
+    _recalculate(
+      _appliedMeasurements,
+      seamAllowance,
+      _appliedConstruction,
+    );
+  }
+
+  void _applyZipperLength() {
+    FocusScope.of(context).unfocus();
+    final text = _zipperController.text.trim().replaceAll(',', '.');
+    final double? zipperLength;
+    if (text.isEmpty) {
+      zipperLength = null;
+    } else {
+      zipperLength = double.tryParse(text);
+      if (zipperLength == null || zipperLength <= 0) {
+        setState(() {
+          _inputMessage = 'Reißverschlusslänge: Bitte eine positive Zahl in cm eingeben oder das Feld leer lassen.';
+        });
+        return;
+      }
+    }
+
+    final construction = ConstructionValues(zipperLength: zipperLength);
+    _recalculate(
+      _appliedMeasurements,
+      _appliedSeamAllowance,
+      construction,
+    );
   }
 
   Future<void> _openPatternPdf() async {
@@ -279,7 +323,11 @@ class _SkirtPageState extends State<SkirtPage> {
                   frontCenter: 0.0,
                   hem: _appliedSeamAllowance.hem,
                 );
-                _recalculate(_appliedMeasurements, next);
+                _recalculate(
+                  _appliedMeasurements,
+                  next,
+                  _appliedConstruction,
+                );
               },
             ),
             Card(
@@ -326,6 +374,58 @@ class _SkirtPageState extends State<SkirtPage> {
                               _seamInputsDirty
                                   ? 'Nahtzugaben anwenden'
                                   : 'Nahtzugaben sind angewendet',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Card(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: ExpansionTile(
+                leading: const Icon(Icons.lock_outline),
+                title: const Text('Verschluss hinten'),
+                subtitle: Text(
+                  _appliedConstruction.zipperLength == null
+                      ? 'Noch keine Reißverschlusslänge festgelegt'
+                      : 'Verdeckter Reißverschluss · ${_appliedConstruction.zipperLength!.toStringAsFixed(1)} cm',
+                ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _zipperController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          textInputAction: TextInputAction.done,
+                          decoration: const InputDecoration(
+                            labelText: 'Reißverschlusslänge',
+                            suffixText: 'cm',
+                            helperText: 'Leer lassen = noch keine Reißverschlussmarkierung',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          onChanged: (_) {
+                            if (!_zipperInputsDirty) setState(() => _zipperInputsDirty = true);
+                          },
+                          onSubmitted: (_) => _applyZipperLength(),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _applyZipperLength,
+                            icon: const Icon(Icons.check),
+                            label: Text(
+                              _zipperInputsDirty
+                                  ? 'Reißverschlusslänge anwenden'
+                                  : _appliedConstruction.zipperLength == null
+                                      ? 'Keine Reißverschlusslänge angewendet'
+                                      : 'Reißverschlusslänge ist angewendet',
                             ),
                           ),
                         ),
