@@ -46,7 +46,10 @@ class TrouserPatternCalculator {
     p[0] = const PatternPoint(0.0, 0.0);
     p[1] = PatternPoint(0.0, m.bodyRise);
     p[2] = PatternPoint(0.0, m.hipDepth);
-    p[3] = PatternPoint(0.0, m.waistToFloor);
+
+    // Digital hem rule for Hose v1: lower P3 by exactly 1 cm while
+    // keeping the Aldrich hem-edge points on the original waist-to-floor line.
+    p[3] = PatternPoint(0.0, m.waistToFloor + 1.0);
     p[4] = PatternPoint(
       0.0,
       m.bodyRise + (m.waistToFloor - m.bodyRise) / 2.0 - 5.0,
@@ -62,10 +65,11 @@ class TrouserPatternCalculator {
     p[11] = PatternPoint(p[10]!.x + m.waist / 4.0 + 2.25, 0.0);
 
     final halfBottomMinusHalf = m.trouserBottomWidth / 2.0 - 0.5;
-    p[12] = PatternPoint(halfBottomMinusHalf, p[3]!.y);
+    final aldRichHemY = m.waistToFloor;
+    p[12] = PatternPoint(halfBottomMinusHalf, aldRichHemY);
     // Size-14 reference rule: 4-13 = 3-12 + 1.3 cm.
     p[13] = PatternPoint(halfBottomMinusHalf + 1.3, p[4]!.y);
-    p[14] = PatternPoint(-halfBottomMinusHalf, p[3]!.y);
+    p[14] = PatternPoint(-halfBottomMinusHalf, aldRichHemY);
     p[15] = PatternPoint(-p[13]!.x, p[4]!.y);
 
     p[16] = PatternPoint(p[5]!.x + oneToFive / 4.0, p[5]!.y);
