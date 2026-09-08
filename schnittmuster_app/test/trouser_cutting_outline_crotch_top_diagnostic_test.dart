@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:schnittmuster_app/pattern_models.dart';
 import 'package:schnittmuster_app/trouser_cutting_outline_builder.dart';
@@ -23,6 +25,7 @@ void main() {
   );
   const outlineBuilder = TrouserOutlineBuilder();
   const cuttingBuilder = TrouserCuttingOutlineBuilder();
+  const tolerance = 1e-9;
 
   List<TrouserOffsetPart> prepare(PatternPath outline, TrouserReferenceDraft d) =>
       cuttingBuilder.prepareOffsetParts(
@@ -34,19 +37,31 @@ void main() {
         backP22: d[22],
       );
 
-  test('front crotch finite offset reaches infinite P6-P10 normal-offset line', () {
+  test('front P6 corner has exact curve-end tangent and line-offset miter', () {
     final d = TrouserPatternCalculator.calculateReferencePoints(measurements);
     final parts = prepare(outlineBuilder.frontLowerContour(d), d);
     final crotchEnd = _lastRoleIndex(parts, 'front_crotch');
-    final crotch = parts[crotchEnd];
-    final top = parts[crotchEnd + 1];
+    final crotchPart = parts[crotchEnd];
+    final topPart = parts[crotchEnd + 1];
+    final crotch = crotchPart.source as BezierSegment;
 
-    expect(top.source, isA<LineSegment>());
+    expect(topPart.source, isA<LineSegment>());
     expect(crotch.allowanceCm, settings.normalCm);
-    expect(top.allowanceCm, settings.normalCm);
+    expect(topPart.allowanceCm, settings.normalCm);
+    expect(crotch.end.distanceTo(d[6]), lessThan(tolerance));
 
-    final hit = _polylineInfiniteLineIntersection(crotch.points, top.points);
-    expect(hit.x.isFinite && hit.y.isFinite, isTrue);
+    final exactOffsetEnd = _exactLeftOffsetEnd(crotch, crotchPart.allowanceCm);
+    expect(crotchPart.points.last.distanceTo(exactOffsetEnd), lessThan(tolerance));
+
+    final tangent = crotch.end - crotch.control2;
+    final miter = _infiniteLineIntersection(
+      exactOffsetEnd,
+      exactOffsetEnd + tangent,
+      topPart.points[0],
+      topPart.points[1],
+    );
+
+    expect(miter.x.isFinite && miter.y.isFinite, isTrue);
   });
 
   test('back crotch finite offset reaches infinite P21-P22 waist-offset line', () {
@@ -64,6 +79,34 @@ void main() {
     final hit = _polylineInfiniteLineIntersection(crotch.points, waist.points);
     expect(hit.x.isFinite && hit.y.isFinite, isTrue);
   });
+}
+
+PatternPoint _exactLeftOffsetEnd(BezierSegment curve, double distance) {
+  final tangent = curve.end - curve.control2;
+  final length = math.sqrt(tangent.x * tangent.x + tangent.y * tangent.y);
+  if (length <= 1e-12) throw StateError('Expected non-zero Bezier end tangent.');
+  final normal = PatternPoint(-tangent.y / length, tangent.x / length);
+  return curve.end + normal * distance;
+}
+
+PatternPoint _infiniteLineIntersection(
+  PatternPoint a,
+  PatternPoint b,
+  PatternPoint c,
+  PatternPoint d,
+) {
+  final rx = b.x - a.x;
+  final ry = b.y - a.y;
+  final sx = d.x - c.x;
+  final sy = d.y - c.y;
+  final denominator = rx * sy - ry * sx;
+  if (denominator.abs() <= 1e-12) {
+    throw StateError('Expected fixture lines not to be parallel.');
+  }
+  final qpx = c.x - a.x;
+  final qpy = c.y - a.y;
+  final t = (qpx * sy - qpy * sx) / denominator;
+  return PatternPoint(a.x + t * rx, a.y + t * ry);
 }
 
 int _lastRoleIndex(List<TrouserOffsetPart> parts, String role) {
