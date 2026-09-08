@@ -84,6 +84,26 @@ class TrouserCuttingOutlineBuilder {
     ];
   }
 
+  /// Returns the exact mathematical corner for two neighbouring straight
+  /// offset parts. Both offset segments are treated as infinite lines, exactly
+  /// matching the confirmed Hose-v1 corner rule for different allowances.
+  /// No source point or prepared offset point is modified.
+  PatternPoint lineLineTransition(
+    TrouserOffsetPart first,
+    TrouserOffsetPart second,
+  ) {
+    if (first.source is! LineSegment || second.source is! LineSegment) {
+      throw ArgumentError('lineLineTransition requires two straight parts.');
+    }
+    if (first.points.length != 2 || second.points.length != 2) {
+      throw StateError('Straight offset parts must contain exactly two points.');
+    }
+    return geometry.intersectLines(
+      LineSegment(first.points[0], first.points[1]),
+      LineSegment(second.points[0], second.points[1]),
+    );
+  }
+
   TrouserOffsetPart _preparePart(
     PathSegment segment, {
     required TrouserSeamAllowanceSettings settings,
