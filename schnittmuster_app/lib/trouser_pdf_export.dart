@@ -155,6 +155,10 @@ class TrouserPdfExporter {
                         originY: originY,
                         tileX: tileX,
                         tileY: tileY,
+                        row: row,
+                        col: col,
+                        rows: rows,
+                        cols: cols,
                       ),
                     ],
                   ),
@@ -302,58 +306,57 @@ class TrouserPdfExporter {
     required double originY,
     required double tileX,
     required double tileY,
+    required int row,
+    required int col,
+    required int rows,
+    required int cols,
   }) {
     const labelWidthMm = 36.0;
+    const labelHeightMm = 6.0;
     const labelHalfWidthMm = labelWidthMm / 2.0;
-    const labelHalfHeightMm = 3.0;
+    const labelHalfHeightMm = labelHeightMm / 2.0;
+    final stepX = _tileWidthMm - _tileOverlapMm;
+    final stepY = _tileHeightMm - _tileOverlapMm;
 
-    return [
-      for (final label in piece.labels)
-        if (_labelFitsTile(
-          label,
-          originX: originX,
-          originY: originY,
-          tileX: tileX,
-          tileY: tileY,
-          halfWidthMm: labelHalfWidthMm,
-          halfHeightMm: labelHalfHeightMm,
-        ))
-          pw.Positioned(
-            left: mm(originX + label.position.x * 10.0 - tileX - labelHalfWidthMm),
-            top: mm(originY + label.position.y * 10.0 - tileY - labelHalfHeightMm),
-            child: pw.SizedBox(
-              width: mm(labelWidthMm),
-              child: pw.Center(
-                child: pw.Text(
-                  label.text,
-                  style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
-                ),
+    final widgets = <pw.Widget>[];
+    for (final label in piece.labels) {
+      final centerX = originX + label.position.x * 10.0;
+      final centerY = originY + label.position.y * 10.0;
+
+      final preferredCol = ((centerX - _tileWidthMm / 2.0) / stepX)
+          .round()
+          .clamp(0, cols - 1);
+      final preferredRow = ((centerY - _tileHeightMm / 2.0) / stepY)
+          .round()
+          .clamp(0, rows - 1);
+
+      if (col != preferredCol || row != preferredRow) continue;
+
+      final localCenterX = centerX - tileX;
+      final localCenterY = centerY - tileY;
+      final left = (localCenterX - labelHalfWidthMm)
+          .clamp(0.0, _tileWidthMm - labelWidthMm);
+      final top = (localCenterY - labelHalfHeightMm)
+          .clamp(0.0, _tileHeightMm - labelHeightMm);
+
+      widgets.add(
+        pw.Positioned(
+          left: mm(left),
+          top: mm(top),
+          child: pw.SizedBox(
+            width: mm(labelWidthMm),
+            height: mm(labelHeightMm),
+            child: pw.Center(
+              child: pw.Text(
+                label.text,
+                style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
               ),
             ),
           ),
-    ];
-  }
-
-  bool _labelFitsTile(
-    PatternLabel label, {
-    required double originX,
-    required double originY,
-    required double tileX,
-    required double tileY,
-    required double halfWidthMm,
-    required double halfHeightMm,
-  }) {
-    final centerX = originX + label.position.x * 10.0;
-    final centerY = originY + label.position.y * 10.0;
-    final left = centerX - halfWidthMm;
-    final right = centerX + halfWidthMm;
-    final top = centerY - halfHeightMm;
-    final bottom = centerY + halfHeightMm;
-
-    return left >= tileX &&
-        right <= tileX + _tileWidthMm &&
-        top >= tileY &&
-        bottom <= tileY + _tileHeightMm;
+        ),
+      );
+    }
+    return widgets;
   }
 
   _LocalPoint _local(PatternPoint point, double ox, double oy) =>
