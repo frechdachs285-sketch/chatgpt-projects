@@ -22,6 +22,12 @@ class TrouserPatternPieceBuilder {
       outline: outlines.frontLowerContour(draft),
       darts: [_toDart(frontDart, width: 2.0, length: 10.0)],
       grainline: Grainline(start: draft[0], end: draft[3]),
+      labels: [
+        PatternLabel(
+          position: _midpoint(draft[0], draft[3]),
+          text: 'Vorderhose',
+        ),
+      ],
     );
   }
 
@@ -38,6 +44,12 @@ class TrouserPatternPieceBuilder {
         _toDart(dart31, width: 2.0, length: 10.0),
       ],
       grainline: Grainline(start: draft[0], end: draft[3]),
+      labels: [
+        PatternLabel(
+          position: _midpoint(draft[0], draft[3]),
+          text: 'Hinterhose',
+        ),
+      ],
     );
   }
 
@@ -45,6 +57,9 @@ class TrouserPatternPieceBuilder {
       Map.unmodifiable({
         for (final entry in draft.points.entries) 'P${entry.key}': entry.value,
       });
+
+  PatternPoint _midpoint(PatternPoint a, PatternPoint b) =>
+      PatternPoint((a.x + b.x) / 2.0, (a.y + b.y) / 2.0);
 
   Dart _toDart(
     TrouserDart dart, {
