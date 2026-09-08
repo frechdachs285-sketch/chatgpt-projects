@@ -25,38 +25,22 @@ class TrouserCurveOffsetSample {
 class TrouserSeamAllowanceGeometry {
   const TrouserSeamAllowanceGeometry();
 
-  /// Returns a line parallel to [source] at the exact perpendicular distance
-  /// [distanceCm].
-  ///
-  /// [side] is evaluated relative to the direction source.start -> source.end.
-  /// No corner handling or curve approximation happens here.
   LineSegment offsetLine(
     LineSegment source, {
     required double distanceCm,
     required TrouserOffsetSide side,
   }) {
     _validateDistance(distanceCm);
-
     final dx = source.end.x - source.start.x;
     final dy = source.end.y - source.start.y;
     final length = math.sqrt(dx * dx + dy * dy);
     if (length <= 0.0) {
       throw ArgumentError('Cannot offset a zero-length line segment.');
     }
-
-    final normal = _normal(dx, dy, side);
-    final shift = normal * distanceCm;
-
+    final shift = _normal(dx, dy, side) * distanceCm;
     return LineSegment(source.start + shift, source.end + shift);
   }
 
-  /// Samples the true normal-distance offset of a cubic Bezier.
-  ///
-  /// Every returned sample lies exactly [distanceCm] from its corresponding
-  /// source point along the local curve normal. The samples are intentionally
-  /// not yet converted into the final cutting outline: adaptive subdivision
-  /// and the confirmed 0.01 cm (0.1 mm) approximation tolerance are handled in
-  /// the next layer so the original Bezier remains untouched.
   List<TrouserCurveOffsetSample> sampleBezierOffset(
     BezierSegment source, {
     required double distanceCm,
@@ -67,31 +51,129 @@ class TrouserSeamAllowanceGeometry {
     if (intervals < 1) {
       throw ArgumentError.value(intervals, 'intervals', 'must be >= 1');
     }
+    return List.generate(
+      intervals + 1,
+      (i) => _offsetSample(source, i / intervals, distanceCm, side),
+    );
+  }
 
-    final samples = <TrouserCurveOffsetSample>[];
-    for (var i = 0; i <= intervals; i++) {
-      final t = i / intervals;
-      final point = _bezierPoint(source, t);
-      final derivative = _bezierDerivative(source, t);
-      final length = math.sqrt(
-        derivative.x * derivative.x + derivative.y * derivative.y,
-      );
-      if (length <= 1e-12) {
-        throw StateError(
-          'Cannot offset cubic Bezier at t=$t because its tangent is zero.',
-        );
-      }
-
-      final normal = _normal(derivative.x, derivative.y, side);
-      samples.add(
-        TrouserCurveOffsetSample(
-          t: t,
-          source: point,
-          offset: point + normal * distanceCm,
-        ),
+  /// Returns a polyline approximation of the true normal-distance offset.
+  ///
+  /// Each interval is recursively split until the true offset midpoint differs
+  /// from the straight chord between its two accepted offset endpoints by no
+  /// more than [toleranceCm]. For Hose v1 the caller uses the confirmed
+  /// engineering tolerance 0.01 cm = 0.1 mm.
+  List<PatternPoint> adaptiveBezierOffset(
+    BezierSegment source, {
+    required double distanceCm,
+    required TrouserOffsetSide side,
+    required double toleranceCm,
+    int maxDepth = 20,
+  }) {
+    _validateDistance(distanceCm);
+    if (!toleranceCm.isFinite || toleranceCm <= 0.0) {
+      throw ArgumentError.value(
+        toleranceCm,
+        'toleranceCm',
+        'must be a finite value > 0',
       );
     }
-    return samples;
+    if (maxDepth < 1) {
+      throw ArgumentError.value(maxDepth, 'maxDepth', 'must be >= 1');
+    }
+
+    final first = _offsetSample(source, 0.0, distanceCm, side);
+    final last = _offsetSample(source, 1.0, distanceCm, side);
+    final result = <PatternPoint>[first.offset];
+    _subdivideOffset(
+      source,
+      first,
+      last,
+      distanceCm,
+      side,
+      toleranceCm,
+      maxDepth,
+      0,
+      result,
+    );
+    return result;
+  }
+
+  void _subdivideOffset(
+    BezierSegment source,
+    TrouserCurveOffsetSample a,
+    TrouserCurveOffsetSample b,
+    double distanceCm,
+    TrouserOffsetSide side,
+    double toleranceCm,
+    int maxDepth,
+    int depth,
+    List<PatternPoint> result,
+  ) {
+    final tm = (a.t + b.t) / 2.0;
+    final mid = _offsetSample(source, tm, distanceCm, side);
+    final chordMid = PatternPoint(
+      (a.offset.x + b.offset.x) / 2.0,
+      (a.offset.y + b.offset.y) / 2.0,
+    );
+    final error = mid.offset.distanceTo(chordMid);
+
+    if (error <= toleranceCm) {
+      result.add(b.offset);
+      return;
+    }
+    if (depth >= maxDepth) {
+      throw StateError(
+        'Adaptive Bezier offset did not reach tolerance $toleranceCm cm.',
+      );
+    }
+
+    _subdivideOffset(
+      source,
+      a,
+      mid,
+      distanceCm,
+      side,
+      toleranceCm,
+      maxDepth,
+      depth + 1,
+      result,
+    );
+    _subdivideOffset(
+      source,
+      mid,
+      b,
+      distanceCm,
+      side,
+      toleranceCm,
+      maxDepth,
+      depth + 1,
+      result,
+    );
+  }
+
+  TrouserCurveOffsetSample _offsetSample(
+    BezierSegment source,
+    double t,
+    double distanceCm,
+    TrouserOffsetSide side,
+  ) {
+    final point = _bezierPoint(source, t);
+    final derivative = _bezierDerivative(source, t);
+    final length = math.sqrt(
+      derivative.x * derivative.x + derivative.y * derivative.y,
+    );
+    if (length <= 1e-12) {
+      throw StateError(
+        'Cannot offset cubic Bezier at t=$t because its tangent is zero.',
+      );
+    }
+    final normal = _normal(derivative.x, derivative.y, side);
+    return TrouserCurveOffsetSample(
+      t: t,
+      source: point,
+      offset: point + normal * distanceCm,
+    );
   }
 
   void _validateDistance(double distanceCm) {
