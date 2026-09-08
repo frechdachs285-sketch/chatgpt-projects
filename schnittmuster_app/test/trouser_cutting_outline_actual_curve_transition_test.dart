@@ -25,10 +25,7 @@ void main() {
   const cuttingBuilder = TrouserCuttingOutlineBuilder();
   const tolerance = 1e-9;
 
-  List<TrouserOffsetPart> prepareParts(
-    PatternPath outline,
-    TrouserReferenceDraft draft,
-  ) =>
+  List<TrouserOffsetPart> prepareParts(PatternPath outline, TrouserReferenceDraft draft) =>
       cuttingBuilder.prepareOffsetParts(
         outline,
         settings: settings,
@@ -86,6 +83,34 @@ void main() {
     expect(actual.distanceTo(expected), lessThan(tolerance));
   });
 
+  test('actual front lower to upper inseam uses same allowance and finite curve crossing', () {
+    final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
+    final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
+    final hemIndex = _hemIndex(parts, 'front_hem');
+    final lowerPart = parts[hemIndex + 1];
+    final upperPart = parts[hemIndex + 2];
+    expect(lowerPart.source, isA<LineSegment>());
+    expect((upperPart.source as BezierSegment).role, 'front_inseam');
+    expect(lowerPart.allowanceCm, upperPart.allowanceCm);
+    final expected = _polylineInfiniteLineIntersection(upperPart.points, lowerPart.points);
+    final actual = cuttingBuilder.lowerUpperInseamTransition(lowerPart, upperPart);
+    expect(actual.distanceTo(expected), lessThan(tolerance));
+  });
+
+  test('actual back lower to upper inseam uses same allowance and finite curve crossing', () {
+    final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
+    final parts = prepareParts(outlineBuilder.backLowerContour(draft), draft);
+    final hemIndex = _hemIndex(parts, 'back_hem');
+    final lowerPart = parts[hemIndex + 1];
+    final upperPart = parts[hemIndex + 2];
+    expect(lowerPart.source, isA<LineSegment>());
+    expect((upperPart.source as BezierSegment).role, 'back_inseam');
+    expect(lowerPart.allowanceCm, upperPart.allowanceCm);
+    final expected = _polylineInfiniteLineIntersection(upperPart.points, lowerPart.points);
+    final actual = cuttingBuilder.lowerUpperInseamTransition(lowerPart, upperPart);
+    expect(actual.distanceTo(expected), lessThan(tolerance));
+  });
+
   test('sideHemTransition rejects reversed part order', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
     final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
@@ -98,6 +123,13 @@ void main() {
     final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'front_hem');
     expect(() => cuttingBuilder.hemLowerInseamTransition(parts[hemIndex + 1], parts[hemIndex]), throwsArgumentError);
+  });
+
+  test('lowerUpperInseamTransition rejects reversed part order', () {
+    final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
+    final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
+    final hemIndex = _hemIndex(parts, 'front_hem');
+    expect(() => cuttingBuilder.lowerUpperInseamTransition(parts[hemIndex + 2], parts[hemIndex + 1]), throwsArgumentError);
   });
 }
 
