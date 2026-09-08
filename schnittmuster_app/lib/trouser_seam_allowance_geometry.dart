@@ -46,6 +46,28 @@ class TrouserSeamAllowanceGeometry {
     return LineSegment(source.start + shift, source.end + shift);
   }
 
+  /// Returns the mathematical intersection of the two infinite lines defined
+  /// by [first] and [second]. This deliberately uses the extended lines so
+  /// different seam-allowance widths can meet at their exact corner.
+  PatternPoint intersectLines(LineSegment first, LineSegment second) {
+    final rx = first.end.x - first.start.x;
+    final ry = first.end.y - first.start.y;
+    final sx = second.end.x - second.start.x;
+    final sy = second.end.y - second.start.y;
+    final denominator = rx * sy - ry * sx;
+    if (denominator.abs() <= 1e-12) {
+      throw StateError('Cannot intersect parallel or coincident lines.');
+    }
+
+    final qpx = second.start.x - first.start.x;
+    final qpy = second.start.y - first.start.y;
+    final t = (qpx * sy - qpy * sx) / denominator;
+    return PatternPoint(
+      first.start.x + t * rx,
+      first.start.y + t * ry,
+    );
+  }
+
   List<TrouserCurveOffsetSample> sampleBezierOffset(
     BezierSegment source, {
     required double distanceCm,
