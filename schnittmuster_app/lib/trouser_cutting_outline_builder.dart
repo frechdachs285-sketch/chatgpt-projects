@@ -40,6 +40,16 @@ class TrouserCuttingOutlineBuilder {
     return geometry.intersectPolylineWithLine(curvePart.points, LineSegment(linePart.points[0], linePart.points[1]));
   }
 
+  /// Same geometry as curveLineTransition, but with the contour stored in the
+  /// opposite order. The finite accepted curve offset is still the object
+  /// tested against the infinite straight offset line.
+  PatternPoint lineCurveTransition(TrouserOffsetPart linePart, TrouserOffsetPart curvePart) {
+    if (linePart.source is! LineSegment || curvePart.source is! BezierSegment) {
+      throw ArgumentError('lineCurveTransition requires straight part first and curve part second.');
+    }
+    return curveLineTransition(curvePart, linePart);
+  }
+
   PatternPoint curveCurveTransition(TrouserOffsetPart first, TrouserOffsetPart second) {
     if (first.source is! BezierSegment || second.source is! BezierSegment) throw ArgumentError('curveCurveTransition requires two curved parts.');
     if (first.points.length < 2 || second.points.length < 2) throw StateError('Curve offset parts must contain at least two points.');
@@ -55,9 +65,6 @@ class TrouserCuttingOutlineBuilder {
     return curveCurveTransition(sidePart, hemPart);
   }
 
-  /// Resolves the actual hem -> lower-inseam corner. The hem remains a finite
-  /// accepted offset polyline; the straight lower inseam is treated as an
-  /// infinite offset line, matching the agreed mathematical-intersection rule.
   PatternPoint hemLowerInseamTransition(TrouserOffsetPart hemPart, TrouserOffsetPart lowerInseamPart) {
     final hem = hemPart.source;
     final inseam = lowerInseamPart.source;
@@ -65,6 +72,21 @@ class TrouserCuttingOutlineBuilder {
       throw ArgumentError('hemLowerInseamTransition requires hem curve first and lower inseam line second.');
     }
     return curveLineTransition(hemPart, lowerInseamPart);
+  }
+
+  /// Joins the lower straight inseam to the upper curved inseam. Both parts
+  /// must use the same normal allowance, so no artificial corner or radius is
+  /// introduced. The accepted upper curve remains finite and the lower
+  /// straight offset is treated as an infinite line for the transition point.
+  PatternPoint lowerUpperInseamTransition(TrouserOffsetPart lowerPart, TrouserOffsetPart upperPart) {
+    final upper = upperPart.source;
+    if (lowerPart.source is! LineSegment || upper is! BezierSegment || !upper.role.endsWith('_inseam')) {
+      throw ArgumentError('lowerUpperInseamTransition requires lower inseam line first and upper inseam curve second.');
+    }
+    if ((lowerPart.allowanceCm - upperPart.allowanceCm).abs() > 1e-12) {
+      throw ArgumentError('Lower and upper inseam must use the same seam allowance.');
+    }
+    return lineCurveTransition(lowerPart, upperPart);
   }
 
   TrouserOffsetPart _preparePart(PathSegment segment, {required TrouserSeamAllowanceSettings settings, required PatternPoint frontP10, required PatternPoint frontP11, required PatternPoint backP21, required PatternPoint backP22}) {
