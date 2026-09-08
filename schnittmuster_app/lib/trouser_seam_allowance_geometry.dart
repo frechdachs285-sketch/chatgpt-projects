@@ -68,6 +68,47 @@ class TrouserSeamAllowanceGeometry {
     );
   }
 
+  /// Finds the deterministic transition between an accepted adaptive curve
+  /// offset polyline and an infinite offset line.
+  ///
+  /// The polyline is tested segment by segment in its stored direction. The
+  /// first mathematical intersection lying on a finite polyline segment is
+  /// returned. The line itself is deliberately infinite, matching the agreed
+  /// corner rule for seam-allowance transitions.
+  PatternPoint intersectPolylineWithLine(
+    List<PatternPoint> polyline,
+    LineSegment line,
+  ) {
+    if (polyline.length < 2) {
+      throw ArgumentError.value(
+        polyline,
+        'polyline',
+        'must contain at least 2 points',
+      );
+    }
+
+    for (var i = 0; i < polyline.length - 1; i++) {
+      final a = polyline[i];
+      final b = polyline[i + 1];
+      final rx = b.x - a.x;
+      final ry = b.y - a.y;
+      final sx = line.end.x - line.start.x;
+      final sy = line.end.y - line.start.y;
+      final denominator = rx * sy - ry * sx;
+      if (denominator.abs() <= 1e-12) continue;
+
+      final qpx = line.start.x - a.x;
+      final qpy = line.start.y - a.y;
+      final t = (qpx * sy - qpy * sx) / denominator;
+      if (t >= -1e-12 && t <= 1.0 + 1e-12) {
+        final clampedT = t.clamp(0.0, 1.0).toDouble();
+        return PatternPoint(a.x + clampedT * rx, a.y + clampedT * ry);
+      }
+    }
+
+    throw StateError('Offset polyline does not intersect the offset line.');
+  }
+
   List<TrouserCurveOffsetSample> sampleBezierOffset(
     BezierSegment source, {
     required double distanceCm,
