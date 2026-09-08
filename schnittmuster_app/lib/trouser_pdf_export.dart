@@ -151,8 +151,10 @@ class TrouserPdfExporter {
                         ),
                       ..._labelWidgets(
                         piece,
-                        originX - tileX,
-                        originY - tileY,
+                        originX: originX,
+                        originY: originY,
+                        tileX: tileX,
+                        tileY: tileY,
                       ),
                     ],
                   ),
@@ -294,23 +296,64 @@ class TrouserPdfExporter {
     );
   }
 
-  List<pw.Widget> _labelWidgets(PatternPiece piece, double ox, double oy) {
+  List<pw.Widget> _labelWidgets(
+    PatternPiece piece, {
+    required double originX,
+    required double originY,
+    required double tileX,
+    required double tileY,
+  }) {
+    const labelWidthMm = 36.0;
+    const labelHalfWidthMm = labelWidthMm / 2.0;
+    const labelHalfHeightMm = 3.0;
+
     return [
       for (final label in piece.labels)
-        pw.Positioned(
-          left: mm(ox + label.position.x * 10.0) - mm(18),
-          top: mm(oy + label.position.y * 10.0) - mm(3),
-          child: pw.SizedBox(
-            width: mm(36),
-            child: pw.Center(
-              child: pw.Text(
-                label.text,
-                style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+        if (_labelFitsTile(
+          label,
+          originX: originX,
+          originY: originY,
+          tileX: tileX,
+          tileY: tileY,
+          halfWidthMm: labelHalfWidthMm,
+          halfHeightMm: labelHalfHeightMm,
+        ))
+          pw.Positioned(
+            left: mm(originX + label.position.x * 10.0 - tileX - labelHalfWidthMm),
+            top: mm(originY + label.position.y * 10.0 - tileY - labelHalfHeightMm),
+            child: pw.SizedBox(
+              width: mm(labelWidthMm),
+              child: pw.Center(
+                child: pw.Text(
+                  label.text,
+                  style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+                ),
               ),
             ),
           ),
-        ),
     ];
+  }
+
+  bool _labelFitsTile(
+    PatternLabel label, {
+    required double originX,
+    required double originY,
+    required double tileX,
+    required double tileY,
+    required double halfWidthMm,
+    required double halfHeightMm,
+  }) {
+    final centerX = originX + label.position.x * 10.0;
+    final centerY = originY + label.position.y * 10.0;
+    final left = centerX - halfWidthMm;
+    final right = centerX + halfWidthMm;
+    final top = centerY - halfHeightMm;
+    final bottom = centerY + halfHeightMm;
+
+    return left >= tileX &&
+        right <= tileX + _tileWidthMm &&
+        top >= tileY &&
+        bottom <= tileY + _tileHeightMm;
   }
 
   _LocalPoint _local(PatternPoint point, double ox, double oy) =>
