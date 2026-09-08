@@ -28,25 +28,25 @@ void main() {
     }
   }
 
-  test('front lower contour is continuous and keeps confirmed endpoints', () {
+  test('front contour is continuous from P11 to confirmed crotch endpoint P6', () {
     final path = builder.frontLowerContour(draft);
 
     expect(path.segments, isNotEmpty);
     expect(path.segments.first.start.distanceTo(draft[11]), lessThan(1e-9));
-    expect(path.segments.last.end.distanceTo(draft[9]), lessThan(1e-9));
+    expect(path.segments.last.end.distanceTo(draft[6]), lessThan(1e-9));
     expectContinuous(path);
   });
 
-  test('back lower contour is continuous and keeps confirmed endpoints', () {
+  test('back contour is continuous from P22 to confirmed crotch endpoint P21', () {
     final path = builder.backLowerContour(draft);
 
     expect(path.segments, isNotEmpty);
     expect(path.segments.first.start.distanceTo(draft[22]), lessThan(1e-9));
-    expect(path.segments.last.end.distanceTo(draft[24]), lessThan(1e-9));
+    expect(path.segments.last.end.distanceTo(draft[21]), lessThan(1e-9));
     expectContinuous(path);
   });
 
-  test('front and back contours include hem roles', () {
+  test('front and back contours include confirmed hem and crotch roles', () {
     final front = builder.frontLowerContour(draft);
     final back = builder.backLowerContour(draft);
 
@@ -55,7 +55,15 @@ void main() {
       isTrue,
     );
     expect(
+      front.segments.whereType<BezierSegment>().any((s) => s.role == 'front_crotch'),
+      isTrue,
+    );
+    expect(
       back.segments.whereType<BezierSegment>().any((s) => s.role == 'back_hem'),
+      isTrue,
+    );
+    expect(
+      back.segments.whereType<BezierSegment>().any((s) => s.role == 'back_crotch'),
       isTrue,
     );
   });
