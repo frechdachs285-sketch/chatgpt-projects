@@ -83,7 +83,7 @@ void main() {
     expect(actual.distanceTo(expected), lessThan(tolerance));
   });
 
-  test('actual front lower to upper inseam uses same allowance and finite curve crossing', () {
+  test('actual front lower to upper inseam uses offset-line and curve-start tangent intersection', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
     final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'front_hem');
@@ -92,12 +92,12 @@ void main() {
     expect(lowerPart.source, isA<LineSegment>());
     expect((upperPart.source as BezierSegment).role, 'front_inseam');
     expect(lowerPart.allowanceCm, upperPart.allowanceCm);
-    final expected = _polylineInfiniteLineIntersection(upperPart.points, lowerPart.points);
+    final expected = _infiniteLineIntersection(lowerPart.points[0], lowerPart.points[1], upperPart.points[0], upperPart.points[1]);
     final actual = cuttingBuilder.lowerUpperInseamTransition(lowerPart, upperPart);
     expect(actual.distanceTo(expected), lessThan(tolerance));
   });
 
-  test('actual back lower to upper inseam uses same allowance and finite curve crossing', () {
+  test('actual back lower to upper inseam uses offset-line and curve-start tangent intersection', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
     final parts = prepareParts(outlineBuilder.backLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'back_hem');
@@ -106,7 +106,7 @@ void main() {
     expect(lowerPart.source, isA<LineSegment>());
     expect((upperPart.source as BezierSegment).role, 'back_inseam');
     expect(lowerPart.allowanceCm, upperPart.allowanceCm);
-    final expected = _polylineInfiniteLineIntersection(upperPart.points, lowerPart.points);
+    final expected = _infiniteLineIntersection(lowerPart.points[0], lowerPart.points[1], upperPart.points[0], upperPart.points[1]);
     final actual = cuttingBuilder.lowerUpperInseamTransition(lowerPart, upperPart);
     expect(actual.distanceTo(expected), lessThan(tolerance));
   });
@@ -155,6 +155,19 @@ PatternPoint _polylineInfiniteLineIntersection(List<PatternPoint> polyline, List
     if (hit != null) return hit;
   }
   throw StateError('Expected fixture polyline and infinite line to intersect.');
+}
+
+PatternPoint _infiniteLineIntersection(PatternPoint a, PatternPoint b, PatternPoint c, PatternPoint d) {
+  final rx = b.x - a.x;
+  final ry = b.y - a.y;
+  final sx = d.x - c.x;
+  final sy = d.y - c.y;
+  final denominator = rx * sy - ry * sx;
+  if (denominator.abs() <= 1e-12) throw StateError('Expected fixture lines not to be parallel.');
+  final qpx = c.x - a.x;
+  final qpy = c.y - a.y;
+  final t = (qpx * sy - qpy * sx) / denominator;
+  return PatternPoint(a.x + t * rx, a.y + t * ry);
 }
 
 PatternPoint? _segmentIntersection(PatternPoint a, PatternPoint b, PatternPoint c, PatternPoint d) {
