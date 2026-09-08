@@ -126,6 +126,19 @@ class TrouserSeamAllowanceGeometry {
     return result;
   }
 
+  /// Converts an already accepted offset polyline into the PatternPath model
+  /// used by cuttingOutline. No geometry is changed: every accepted point is
+  /// connected to the next one by a straight segment.
+  PatternPath polylinePath(List<PatternPoint> points) {
+    if (points.length < 2) {
+      throw ArgumentError.value(points, 'points', 'must contain at least 2 points');
+    }
+    return PatternPath([
+      for (var i = 0; i < points.length - 1; i++)
+        LineSegment(points[i], points[i + 1]),
+    ]);
+  }
+
   void _subdivideOffset(
     BezierSegment source,
     TrouserCurveOffsetSample a,
