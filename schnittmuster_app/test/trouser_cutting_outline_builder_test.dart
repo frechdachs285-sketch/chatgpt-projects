@@ -32,10 +32,10 @@ void main() {
 
   test('hem role uses only hem allowance', () {
     final hem = BezierSegment(
-      const PatternPoint(8.0, 10.0),
-      const PatternPoint(5.0, 11.0),
-      const PatternPoint(-5.0, 11.0),
-      const PatternPoint(-8.0, 10.0),
+      start: const PatternPoint(8.0, 10.0),
+      control1: const PatternPoint(5.0, 11.0),
+      control2: const PatternPoint(-5.0, 11.0),
+      end: const PatternPoint(-8.0, 10.0),
       role: 'front_hem',
     );
     expect(allowance(hem), settings.hemCm);
@@ -56,10 +56,10 @@ void main() {
 
   test('non-hem bezier uses normal allowance', () {
     final crotch = BezierSegment(
-      const PatternPoint(0.0, 4.0),
-      const PatternPoint(-1.0, 5.0),
-      const PatternPoint(-2.0, 6.0),
-      const PatternPoint(-3.0, 7.0),
+      start: const PatternPoint(0.0, 4.0),
+      control1: const PatternPoint(-1.0, 5.0),
+      control2: const PatternPoint(-2.0, 6.0),
+      end: const PatternPoint(-3.0, 7.0),
       role: 'front_crotch',
     );
     expect(allowance(crotch), settings.normalCm);
