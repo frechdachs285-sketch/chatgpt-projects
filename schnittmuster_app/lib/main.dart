@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
+import 'measurement_profile_store.dart';
 import 'pattern_models.dart';
 import 'pdf_export.dart';
 import 'skirt_pattern_calculator.dart';
@@ -39,6 +40,10 @@ class _SkirtPageState extends State<SkirtPage> {
   final _zipperController = TextEditingController();
   final _waistbandWidthController = TextEditingController();
   final _waistbandSeamAllowanceController = TextEditingController();
+  final _profileNameController = TextEditingController();
+  final _profileStore = MeasurementProfileStore();
+  List<MeasurementProfile> _profiles = const [];
+  String? _selectedProfileName;
 
   Measurements _appliedMeasurements = const Measurements(waist: 76, hip: 100, hipDepth: 21, skirtLength: 60);
   SeamAllowanceSettings _appliedSeamAllowance = const SeamAllowanceSettings(enabled: true, waist: 1.5, side: 1.5, backCenter: 1.5, frontCenter: 0.0, hem: 3.0);
@@ -55,6 +60,64 @@ class _SkirtPageState extends State<SkirtPage> {
   void initState() {
     super.initState();
     _recalculate(_appliedMeasurements, _appliedSeamAllowance, _appliedConstruction);
+    _loadProfiles();
+  }
+
+  Future<void> _loadProfiles() async {
+    final profiles = await _profileStore.load();
+    if (!mounted) return;
+    setState(() => _profiles = profiles);
+  }
+
+  String _formatMeasurement(double value) => value == value.roundToDouble() ? value.toStringAsFixed(0) : value.toString();
+
+  Future<void> _saveProfile() async {
+    FocusScope.of(context).unfocus();
+    final name = _profileNameController.text.trim();
+    final measurements = _enteredMeasurements;
+    if (name.isEmpty) {
+      setState(() => _inputMessage = 'Bitte einen Namen für das Maßprofil eingeben.');
+      return;
+    }
+    if (measurements == null) {
+      setState(() => _inputMessage = 'Bitte alle vier Maße als positive Zahl eingeben.');
+      return;
+    }
+    final profiles = await _profileStore.upsert(MeasurementProfile(name: name, measurements: measurements));
+    if (!mounted) return;
+    setState(() {
+      _profiles = profiles;
+      _selectedProfileName = name;
+      _inputMessage = null;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Maßprofil „$name“ gespeichert.')));
+  }
+
+  void _loadSelectedProfile() {
+    final name = _selectedProfileName;
+    if (name == null) return;
+    final profile = _profiles.where((item) => item.name == name).firstOrNull;
+    if (profile == null) return;
+    final m = profile.measurements;
+    _waistController.text = _formatMeasurement(m.waist);
+    _hipController.text = _formatMeasurement(m.hip);
+    _hipDepthController.text = _formatMeasurement(m.hipDepth);
+    _skirtLengthController.text = _formatMeasurement(m.skirtLength);
+    _profileNameController.text = profile.name;
+    _recalculate(m, _appliedSeamAllowance, _appliedConstruction);
+  }
+
+  Future<void> _deleteSelectedProfile() async {
+    final name = _selectedProfileName;
+    if (name == null) return;
+    final profiles = await _profileStore.delete(name);
+    if (!mounted) return;
+    setState(() {
+      _profiles = profiles;
+      _selectedProfileName = null;
+      _profileNameController.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Maßprofil „$name“ gelöscht.')));
   }
 
   @override
@@ -70,6 +133,7 @@ class _SkirtPageState extends State<SkirtPage> {
     _zipperController.dispose();
     _waistbandWidthController.dispose();
     _waistbandSeamAllowanceController.dispose();
+    _profileNameController.dispose();
     super.dispose();
   }
 
@@ -244,6 +308,38 @@ class _SkirtPageState extends State<SkirtPage> {
         onChanged: (_) { if (!_seamInputsDirty) setState(() => _seamInputsDirty = true); },
       );
 
+  Widget _profileCard() => Card(
+        margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        child: ExpansionTile(
+          leading: const Icon(Icons.person_outline),
+          title: const Text('Maßprofil'),
+          subtitle: Text(_selectedProfileName == null ? '${_profiles.length} Profil${_profiles.length == 1 ? '' : 'e'} gespeichert' : 'Ausgewählt: $_selectedProfileName'),
+          children: [Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+            child: Column(children: [
+              TextField(controller: _profileNameController, decoration: const InputDecoration(labelText: 'Profilname', hintText: 'z. B. Mein Maßprofil', border: OutlineInputBorder(), isDense: true)),
+              const SizedBox(height: 8),
+              SizedBox(width: double.infinity, child: FilledButton.tonalIcon(onPressed: _saveProfile, icon: const Icon(Icons.save_outlined), label: const Text('Aktuelle Maße speichern'))),
+              if (_profiles.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: _profiles.any((profile) => profile.name == _selectedProfileName) ? _selectedProfileName : null,
+                  decoration: const InputDecoration(labelText: 'Gespeichertes Profil', border: OutlineInputBorder(), isDense: true),
+                  items: [for (final profile in _profiles) DropdownMenuItem(value: profile.name, child: Text(profile.name))],
+                  onChanged: (value) => setState(() => _selectedProfileName = value),
+                ),
+                const SizedBox(height: 8),
+                Row(children: [
+                  Expanded(child: OutlinedButton.icon(onPressed: _selectedProfileName == null ? null : _loadSelectedProfile, icon: const Icon(Icons.download_outlined), label: const Text('Laden'))),
+                  const SizedBox(width: 8),
+                  IconButton(onPressed: _selectedProfileName == null ? null : _deleteSelectedProfile, tooltip: 'Profil löschen', icon: const Icon(Icons.delete_outline)),
+                ]),
+              ],
+            ]),
+          )],
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
@@ -256,6 +352,7 @@ class _SkirtPageState extends State<SkirtPage> {
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.only(bottom: 18),
           children: [
+            _profileCard(),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               child: GridView.count(crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 2.7, children: [
