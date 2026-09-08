@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:schnittmuster_app/pattern_models.dart';
 import 'package:schnittmuster_app/trouser_cutting_outline_builder.dart';
+import 'package:schnittmuster_app/trouser_cutting_outline_p6_transition.dart';
 import 'package:schnittmuster_app/trouser_outline_builder.dart';
 import 'package:schnittmuster_app/trouser_pattern_calculator.dart';
 import 'package:schnittmuster_app/trouser_seam_allowance.dart';
@@ -37,7 +38,7 @@ void main() {
         backP22: d[22],
       );
 
-  test('front P6 corner has exact curve-end tangent and line-offset miter', () {
+  test('front P6 production transition equals independent exact miter', () {
     final d = TrouserPatternCalculator.calculateReferencePoints(measurements);
     final parts = prepare(outlineBuilder.frontLowerContour(d), d);
     final crotchEnd = _lastRoleIndex(parts, 'front_crotch');
@@ -54,14 +55,15 @@ void main() {
     expect(crotchPart.points.last.distanceTo(exactOffsetEnd), lessThan(tolerance));
 
     final tangent = crotch.end - crotch.control2;
-    final miter = _infiniteLineIntersection(
+    final expected = _infiniteLineIntersection(
       exactOffsetEnd,
       exactOffsetEnd + tangent,
       topPart.points[0],
       topPart.points[1],
     );
+    final actual = cuttingBuilder.frontCrotchTopTransition(crotchPart, topPart);
 
-    expect(miter.x.isFinite && miter.y.isFinite, isTrue);
+    expect(actual.distanceTo(expected), lessThan(tolerance));
   });
 
   test('back crotch finite offset reaches infinite P21-P22 waist-offset line', () {
