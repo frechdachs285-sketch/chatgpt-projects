@@ -145,6 +145,25 @@ class _TrouserPreviewPainter extends CustomPainter {
       _drawArrowHead(canvas, start, end, grainPaint);
       _drawArrowHead(canvas, end, start, grainPaint);
     }
+
+    for (final label in piece.labels) {
+      final position = map(label.position);
+      final painter = TextPainter(
+        text: TextSpan(
+          text: label.text,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      painter.paint(
+        canvas,
+        Offset(position.dx - painter.width / 2.0, position.dy - painter.height / 2.0),
+      );
+    }
   }
 
   void _drawArrowHead(Canvas canvas, Offset tip, Offset other, Paint paint) {
@@ -191,6 +210,9 @@ class _TrouserPreviewPainter extends CustomPainter {
     final grain = piece.grainline;
     if (grain != null) {
       points.addAll([grain.start, grain.end]);
+    }
+    for (final label in piece.labels) {
+      points.add(label.position);
     }
     return _boundsOf(points);
   }
