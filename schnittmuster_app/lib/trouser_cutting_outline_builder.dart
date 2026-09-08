@@ -71,11 +71,6 @@ class TrouserCuttingOutlineBuilder {
     return curveLineTransition(hemPart, lowerInseamPart);
   }
 
-  /// Resolves the real direction change between the lower straight inseam and
-  /// the upper curved inseam. Both use the same normal allowance. The corner
-  /// is the mathematical intersection of the infinite lower offset line and
-  /// the tangent line of the accepted upper offset polyline at their shared
-  /// contour end. No radius or extra construction measurement is introduced.
   PatternPoint lowerUpperInseamTransition(TrouserOffsetPart lowerPart, TrouserOffsetPart upperPart) {
     final upper = upperPart.source;
     if (lowerPart.source is! LineSegment || upper is! BezierSegment || !upper.role.endsWith('_inseam')) {
@@ -87,12 +82,24 @@ class TrouserCuttingOutlineBuilder {
     if (lowerPart.points.length != 2 || upperPart.points.length < 2) {
       throw StateError('Inseam offset parts do not contain enough points.');
     }
-
     final lowerLine = LineSegment(lowerPart.points[0], lowerPart.points[1]);
-    // In the clockwise Hose-v1 outline the upper inseam follows the lower
-    // inseam, so its accepted offset polyline starts at the shared P15/P29 end.
     final upperTangent = LineSegment(upperPart.points[0], upperPart.points[1]);
     return geometry.intersectLines(lowerLine, upperTangent);
+  }
+
+  /// Joins the upper inseam to the crotch using their finite accepted offset
+  /// polylines. Both contour parts use the same normal allowance at P9/P24;
+  /// no extension, radius or additional construction value is introduced.
+  PatternPoint upperInseamCrotchTransition(TrouserOffsetPart inseamPart, TrouserOffsetPart crotchPart) {
+    final inseam = inseamPart.source;
+    final crotch = crotchPart.source;
+    if (inseam is! BezierSegment || crotch is! BezierSegment || !inseam.role.endsWith('_inseam') || !crotch.role.endsWith('_crotch')) {
+      throw ArgumentError('upperInseamCrotchTransition requires upper inseam curve first and crotch curve second.');
+    }
+    if ((inseamPart.allowanceCm - crotchPart.allowanceCm).abs() > 1e-12) {
+      throw ArgumentError('Upper inseam and crotch must use the same seam allowance.');
+    }
+    return curveCurveTransition(inseamPart, crotchPart);
   }
 
   TrouserOffsetPart _preparePart(PathSegment segment, {required TrouserSeamAllowanceSettings settings, required PatternPoint frontP10, required PatternPoint frontP11, required PatternPoint backP21, required PatternPoint backP22}) {
