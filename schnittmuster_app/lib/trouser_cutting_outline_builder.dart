@@ -40,9 +40,6 @@ class TrouserCuttingOutlineBuilder {
     return geometry.intersectPolylineWithLine(curvePart.points, LineSegment(linePart.points[0], linePart.points[1]));
   }
 
-  /// Same geometry as curveLineTransition, but with the contour stored in the
-  /// opposite order. The finite accepted curve offset is still the object
-  /// tested against the infinite straight offset line.
   PatternPoint lineCurveTransition(TrouserOffsetPart linePart, TrouserOffsetPart curvePart) {
     if (linePart.source is! LineSegment || curvePart.source is! BezierSegment) {
       throw ArgumentError('lineCurveTransition requires straight part first and curve part second.');
@@ -74,10 +71,11 @@ class TrouserCuttingOutlineBuilder {
     return curveLineTransition(hemPart, lowerInseamPart);
   }
 
-  /// Joins the lower straight inseam to the upper curved inseam. Both parts
-  /// must use the same normal allowance, so no artificial corner or radius is
-  /// introduced. The accepted upper curve remains finite and the lower
-  /// straight offset is treated as an infinite line for the transition point.
+  /// Resolves the real direction change between the lower straight inseam and
+  /// the upper curved inseam. Both use the same normal allowance. The corner
+  /// is the mathematical intersection of the infinite lower offset line and
+  /// the tangent line of the accepted upper offset polyline at their shared
+  /// contour end. No radius or extra construction measurement is introduced.
   PatternPoint lowerUpperInseamTransition(TrouserOffsetPart lowerPart, TrouserOffsetPart upperPart) {
     final upper = upperPart.source;
     if (lowerPart.source is! LineSegment || upper is! BezierSegment || !upper.role.endsWith('_inseam')) {
@@ -86,7 +84,15 @@ class TrouserCuttingOutlineBuilder {
     if ((lowerPart.allowanceCm - upperPart.allowanceCm).abs() > 1e-12) {
       throw ArgumentError('Lower and upper inseam must use the same seam allowance.');
     }
-    return lineCurveTransition(lowerPart, upperPart);
+    if (lowerPart.points.length != 2 || upperPart.points.length < 2) {
+      throw StateError('Inseam offset parts do not contain enough points.');
+    }
+
+    final lowerLine = LineSegment(lowerPart.points[0], lowerPart.points[1]);
+    // In the clockwise Hose-v1 outline the upper inseam follows the lower
+    // inseam, so its accepted offset polyline starts at the shared P15/P29 end.
+    final upperTangent = LineSegment(upperPart.points[0], upperPart.points[1]);
+    return geometry.intersectLines(lowerLine, upperTangent);
   }
 
   TrouserOffsetPart _preparePart(PathSegment segment, {required TrouserSeamAllowanceSettings settings, required PatternPoint frontP10, required PatternPoint frontP11, required PatternPoint backP21, required PatternPoint backP22}) {
