@@ -21,6 +21,7 @@ class TrouserPatternPieceBuilder {
       points: _points(draft),
       outline: outlines.frontLowerContour(draft),
       darts: [_toDart(frontDart, width: 2.0, length: 10.0)],
+      grainline: Grainline(start: draft[0], end: draft[3]),
     );
   }
 
@@ -36,6 +37,7 @@ class TrouserPatternPieceBuilder {
         _toDart(dart30, width: 2.0, length: 12.0),
         _toDart(dart31, width: 2.0, length: 10.0),
       ],
+      grainline: Grainline(start: draft[0], end: draft[3]),
     );
   }
 
