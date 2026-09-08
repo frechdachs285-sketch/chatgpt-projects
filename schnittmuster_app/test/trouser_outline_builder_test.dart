@@ -28,22 +28,35 @@ void main() {
     }
   }
 
-  test('front contour is continuous from P11 to confirmed crotch endpoint P6', () {
+  void expectClosed(PatternPath path, {double tolerance = 1e-9}) {
+    expectContinuous(path, tolerance: tolerance);
+    expect(
+      path.segments.last.end.distanceTo(path.segments.first.start),
+      lessThanOrEqualTo(tolerance),
+      reason: 'Kontur ist nicht geschlossen.',
+    );
+  }
+
+  test('front contour is continuous and closed through P6-P10-P11', () {
     final path = builder.frontLowerContour(draft);
 
     expect(path.segments, isNotEmpty);
     expect(path.segments.first.start.distanceTo(draft[11]), lessThan(1e-9));
-    expect(path.segments.last.end.distanceTo(draft[6]), lessThan(1e-9));
-    expectContinuous(path);
+    expect(path.segments[path.segments.length - 2].start.distanceTo(draft[6]), lessThan(1e-9));
+    expect(path.segments[path.segments.length - 2].end.distanceTo(draft[10]), lessThan(1e-9));
+    expect(path.segments.last.start.distanceTo(draft[10]), lessThan(1e-9));
+    expect(path.segments.last.end.distanceTo(draft[11]), lessThan(1e-9));
+    expectClosed(path);
   });
 
-  test('back contour is continuous from P22 to confirmed crotch endpoint P21', () {
+  test('back contour is continuous and closed through P21-P22', () {
     final path = builder.backLowerContour(draft);
 
     expect(path.segments, isNotEmpty);
     expect(path.segments.first.start.distanceTo(draft[22]), lessThan(1e-9));
-    expect(path.segments.last.end.distanceTo(draft[21]), lessThan(1e-9));
-    expectContinuous(path);
+    expect(path.segments.last.start.distanceTo(draft[21]), lessThan(1e-9));
+    expect(path.segments.last.end.distanceTo(draft[22]), lessThan(1e-9));
+    expectClosed(path);
   });
 
   test('front and back contours include confirmed hem and crotch roles', () {
