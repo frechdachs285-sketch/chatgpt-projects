@@ -2,6 +2,18 @@ import 'pattern_models.dart';
 import 'trouser_seam_allowance.dart';
 import 'trouser_seam_allowance_geometry.dart';
 
+class TrouserOffsetPart {
+  final PathSegment source;
+  final double allowanceCm;
+  final List<PatternPoint> points;
+
+  const TrouserOffsetPart({
+    required this.source,
+    required this.allowanceCm,
+    required this.points,
+  });
+}
+
 /// Builds only the separate Hose-v1 cutting outline.
 ///
 /// The confirmed seam-line outline is never modified. Allowance assignment is
@@ -40,6 +52,59 @@ class TrouserCuttingOutlineBuilder {
     }
 
     return settings.normalCm;
+  }
+
+  /// Prepares every offset segment in the same order as the confirmed seam
+  /// outline. This is deliberately an intermediate representation: joining
+  /// corners is a separate step, so the original outline cannot be changed by
+  /// accident while transition rules are applied.
+  List<TrouserOffsetPart> prepareOffsetParts(
+    PatternPath outline, {
+    required TrouserSeamAllowanceSettings settings,
+    required PatternPoint frontP10,
+    required PatternPoint frontP11,
+    required PatternPoint backP21,
+    required PatternPoint backP22,
+  }) {
+    if (!settings.enabled) return const [];
+    if (!settings.isValid) {
+      throw ArgumentError('Invalid Hose-v1 seam allowance settings.');
+    }
+
+    return [
+      for (final segment in outline.segments)
+        _preparePart(
+          segment,
+          settings: settings,
+          frontP10: frontP10,
+          frontP11: frontP11,
+          backP21: backP21,
+          backP22: backP22,
+        ),
+    ];
+  }
+
+  TrouserOffsetPart _preparePart(
+    PathSegment segment, {
+    required TrouserSeamAllowanceSettings settings,
+    required PatternPoint frontP10,
+    required PatternPoint frontP11,
+    required PatternPoint backP21,
+    required PatternPoint backP22,
+  }) {
+    final allowance = allowanceForSegment(
+      segment,
+      settings: settings,
+      frontP10: frontP10,
+      frontP11: frontP11,
+      backP21: backP21,
+      backP22: backP22,
+    );
+    return TrouserOffsetPart(
+      source: segment,
+      allowanceCm: allowance,
+      points: offsetSegment(segment, distanceCm: allowance),
+    );
   }
 
   /// Offsets one confirmed contour segment outward without changing it.
