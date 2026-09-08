@@ -149,6 +149,11 @@ class TrouserPdfExporter {
                           originX - tileX,
                           originY - tileY,
                         ),
+                      ..._labelWidgets(
+                        piece,
+                        originX - tileX,
+                        originY - tileY,
+                      ),
                     ],
                   ),
                 ),
@@ -289,6 +294,23 @@ class TrouserPdfExporter {
     );
   }
 
+  List<pw.Widget> _labelWidgets(PatternPiece piece, double ox, double oy) {
+    return [
+      for (final label in piece.labels)
+        pw.Positioned(
+          left: mm(ox + label.position.x * 10.0) - mm(18),
+          top: mm(oy + label.position.y * 10.0) - mm(3),
+          width: mm(36),
+          child: pw.Center(
+            child: pw.Text(
+              label.text,
+              style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+            ),
+          ),
+        ),
+    ];
+  }
+
   _LocalPoint _local(PatternPoint point, double ox, double oy) =>
       _LocalPoint(ox + point.x * 10.0, oy + point.y * 10.0);
 
@@ -308,6 +330,9 @@ class TrouserPdfExporter {
     final grain = piece.grainline;
     if (grain != null) {
       points.addAll([grain.start, grain.end]);
+    }
+    for (final label in piece.labels) {
+      points.add(label.position);
     }
 
     var minX = points.first.x;
