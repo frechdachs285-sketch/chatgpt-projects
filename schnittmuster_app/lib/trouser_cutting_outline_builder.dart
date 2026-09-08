@@ -104,6 +104,34 @@ class TrouserCuttingOutlineBuilder {
     );
   }
 
+  /// Returns the deterministic mathematical transition between one accepted
+  /// adaptive curve-offset polyline and one straight offset part.
+  ///
+  /// The curve polyline remains finite and is searched in its stored path
+  /// direction; the straight offset is treated as an infinite line. This does
+  /// not invent a tangent extension for the curve and does not modify either
+  /// prepared part.
+  PatternPoint curveLineTransition(
+    TrouserOffsetPart curvePart,
+    TrouserOffsetPart linePart,
+  ) {
+    if (curvePart.source is! BezierSegment || linePart.source is! LineSegment) {
+      throw ArgumentError(
+        'curveLineTransition requires curve part first and straight part second.',
+      );
+    }
+    if (curvePart.points.length < 2) {
+      throw StateError('Curve offset part must contain at least two points.');
+    }
+    if (linePart.points.length != 2) {
+      throw StateError('Straight offset part must contain exactly two points.');
+    }
+    return geometry.intersectPolylineWithLine(
+      curvePart.points,
+      LineSegment(linePart.points[0], linePart.points[1]),
+    );
+  }
+
   TrouserOffsetPart _preparePart(
     PathSegment segment, {
     required TrouserSeamAllowanceSettings settings,
