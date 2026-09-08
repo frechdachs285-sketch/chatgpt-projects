@@ -97,16 +97,13 @@ class TrouserCurveBuilder {
 
   /// Back side seam through P22-P25, the digital 0.5 cm inward form point
   /// between P25 and P27, then P27-P26.
-  ///
-  /// The 0.5 cm depth is the Aldrich construction value. Its 50% placement
-  /// is the documented Hose-v1 digitization rule.
   TrouserNaturalSpline backSideSeam({
     required PatternPoint p22,
     required PatternPoint p25,
     required PatternPoint p27,
     required PatternPoint p26,
   }) {
-    final shaping = inwardMidpointCurve(
+    final shaping = backSideShapingCurve(
       start: p25,
       end: p27,
       depth: 0.5,
@@ -115,17 +112,39 @@ class TrouserCurveBuilder {
     return naturalSplineThrough([p22, p25, q, p27, p26]);
   }
 
-  /// App digitization for an Aldrich "curve inwards" instruction.
-  ///
-  /// The Aldrich depth remains exact. Because the source does not numerically
-  /// locate the maximum shaping along the seam, Hose v1 places it at 50% of
-  /// the chord and offsets it exactly [depth] perpendicular to the chord.
-  /// For the left-hand inseams in the current construction, inward is the
-  /// normal with positive x.
+  /// Hose-v1 back-side shaping: 0.5 cm inward at the chord midpoint.
+  /// On the right-hand back side seam, inward is the normal with negative x.
+  CubicBezierCurve backSideShapingCurve({
+    required PatternPoint start,
+    required PatternPoint end,
+    required double depth,
+  }) =>
+      _midpointCurve(
+        start: start,
+        end: end,
+        depth: depth,
+        positiveXNormal: false,
+      );
+
+  /// App digitization for the left-hand inseams.
+  /// Inward is the normal with positive x.
   CubicBezierCurve inwardMidpointCurve({
     required PatternPoint start,
     required PatternPoint end,
     required double depth,
+  }) =>
+      _midpointCurve(
+        start: start,
+        end: end,
+        depth: depth,
+        positiveXNormal: true,
+      );
+
+  CubicBezierCurve _midpointCurve({
+    required PatternPoint start,
+    required PatternPoint end,
+    required double depth,
+    required bool positiveXNormal,
   }) {
     if (!depth.isFinite || depth <= 0.0) {
       throw ArgumentError('Die Einformung muss endlich und groesser als 0 sein.');
@@ -140,7 +159,7 @@ class TrouserCurveBuilder {
 
     var nx = -dy / length;
     var ny = dx / length;
-    if (nx < 0.0) {
+    if ((positiveXNormal && nx < 0.0) || (!positiveXNormal && nx > 0.0)) {
       nx = -nx;
       ny = -ny;
     }
@@ -174,10 +193,6 @@ class TrouserCurveBuilder {
   }
 
   /// Exact symmetric Hose-v1 hem parabola.
-  ///
-  /// [left] and [right] lie on the original Aldrich hem line. [center] is
-  /// exactly midway between them in x and is the lowered P3. A quadratic
-  /// parabola is represented exactly as a cubic Bezier curve.
   CubicBezierCurve symmetricHemParabola({
     required PatternPoint left,
     required PatternPoint center,
