@@ -27,18 +27,10 @@ void main() {
 
   test('actual front side-seam to hem transition uses finite offset crossing', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
-    final parts = cuttingBuilder.prepareOffsetParts(
-      outlineBuilder.frontLowerContour(draft),
-      settings: settings,
-      frontP10: draft[10],
-      frontP11: draft[11],
-      backP21: draft[21],
-      backP22: draft[22],
-    );
+    final parts = _parts(outlineBuilder.frontLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'front_hem');
     final sidePart = parts[hemIndex - 1];
     final hemPart = parts[hemIndex];
-
     expect((sidePart.source as BezierSegment).role, 'front_side_seam');
     final expected = _firstIntersection(sidePart.points, hemPart.points);
     final actual = cuttingBuilder.sideHemTransition(sidePart, hemPart);
@@ -47,88 +39,114 @@ void main() {
 
   test('actual back side-seam to hem transition uses finite offset crossing', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
-    final parts = cuttingBuilder.prepareOffsetParts(
-      outlineBuilder.backLowerContour(draft),
-      settings: settings,
-      frontP10: draft[10],
-      frontP11: draft[11],
-      backP21: draft[21],
-      backP22: draft[22],
-    );
+    final parts = _parts(outlineBuilder.backLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'back_hem');
     final sidePart = parts[hemIndex - 1];
     final hemPart = parts[hemIndex];
-
     expect((sidePart.source as BezierSegment).role, 'back_side_seam');
     final expected = _firstIntersection(sidePart.points, hemPart.points);
     final actual = cuttingBuilder.sideHemTransition(sidePart, hemPart);
     expect(actual.distanceTo(expected), lessThan(tolerance));
   });
 
+  test('actual front hem to lower inseam uses finite hem and infinite line', () {
+    final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
+    final parts = _parts(outlineBuilder.frontLowerContour(draft), draft);
+    final hemIndex = _hemIndex(parts, 'front_hem');
+    final hemPart = parts[hemIndex];
+    final lowerInseamPart = parts[hemIndex + 1];
+    expect(lowerInseamPart.source, isA<LineSegment>());
+    final expected = _polylineInfiniteLineIntersection(hemPart.points, lowerInseamPart.points);
+    final actual = cuttingBuilder.hemLowerInseamTransition(hemPart, lowerInseamPart);
+    expect(actual.distanceTo(expected), lessThan(tolerance));
+  });
+
+  test('actual back hem to lower inseam uses finite hem and infinite line', () {
+    final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
+    final parts = _parts(outlineBuilder.backLowerContour(draft), draft);
+    final hemIndex = _hemIndex(parts, 'back_hem');
+    final hemPart = parts[hemIndex];
+    final lowerInseamPart = parts[hemIndex + 1];
+    expect(lowerInseamPart.source, isA<LineSegment>());
+    final expected = _polylineInfiniteLineIntersection(hemPart.points, lowerInseamPart.points);
+    final actual = cuttingBuilder.hemLowerInseamTransition(hemPart, lowerInseamPart);
+    expect(actual.distanceTo(expected), lessThan(tolerance));
+  });
+
   test('sideHemTransition rejects reversed part order', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
-    final parts = cuttingBuilder.prepareOffsetParts(
-      outlineBuilder.frontLowerContour(draft),
-      settings: settings,
-      frontP10: draft[10],
-      frontP11: draft[11],
-      backP21: draft[21],
-      backP22: draft[22],
-    );
+    final parts = _parts(outlineBuilder.frontLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'front_hem');
-    expect(
-      () => cuttingBuilder.sideHemTransition(parts[hemIndex], parts[hemIndex - 1]),
-      throwsArgumentError,
-    );
+    expect(() => cuttingBuilder.sideHemTransition(parts[hemIndex], parts[hemIndex - 1]), throwsArgumentError);
   });
+
+  test('hemLowerInseamTransition rejects reversed part order', () {
+    final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
+    final parts = _parts(outlineBuilder.frontLowerContour(draft), draft);
+    final hemIndex = _hemIndex(parts, 'front_hem');
+    expect(() => cuttingBuilder.hemLowerInseamTransition(parts[hemIndex + 1], parts[hemIndex]), throwsArgumentError);
+  });
+
+  List<TrouserOffsetPart> _parts(PatternPath outline, Map<int, PatternPoint> draft) =>
+      cuttingBuilder.prepareOffsetParts(
+        outline,
+        settings: settings,
+        frontP10: draft[10]!,
+        frontP11: draft[11]!,
+        backP21: draft[21]!,
+        backP22: draft[22]!,
+      );
 }
 
 int _hemIndex(List<TrouserOffsetPart> parts, String role) {
-  final index = parts.indexWhere(
-    (part) => part.source is BezierSegment &&
-        (part.source as BezierSegment).role == role,
-  );
+  final index = parts.indexWhere((part) => part.source is BezierSegment && (part.source as BezierSegment).role == role);
   expect(index, greaterThan(0));
   return index;
 }
 
-PatternPoint _firstIntersection(
-  List<PatternPoint> first,
-  List<PatternPoint> second,
-) {
+PatternPoint _firstIntersection(List<PatternPoint> first, List<PatternPoint> second) {
   for (var i = 0; i < first.length - 1; i++) {
     for (var j = 0; j < second.length - 1; j++) {
-      final hit = _segmentIntersection(
-        first[i],
-        first[i + 1],
-        second[j],
-        second[j + 1],
-      );
+      final hit = _segmentIntersection(first[i], first[i + 1], second[j], second[j + 1]);
       if (hit != null) return hit;
     }
   }
   throw StateError('Expected fixture polylines to intersect.');
 }
 
-PatternPoint? _segmentIntersection(
-  PatternPoint a,
-  PatternPoint b,
-  PatternPoint c,
-  PatternPoint d,
-) {
+PatternPoint _polylineInfiniteLineIntersection(List<PatternPoint> polyline, List<PatternPoint> line) {
+  for (var i = 0; i < polyline.length - 1; i++) {
+    final hit = _segmentInfiniteLineIntersection(polyline[i], polyline[i + 1], line[0], line[1]);
+    if (hit != null) return hit;
+  }
+  throw StateError('Expected fixture polyline and infinite line to intersect.');
+}
+
+PatternPoint? _segmentIntersection(PatternPoint a, PatternPoint b, PatternPoint c, PatternPoint d) {
   final rx = b.x - a.x;
   final ry = b.y - a.y;
   final sx = d.x - c.x;
   final sy = d.y - c.y;
   final denominator = rx * sy - ry * sx;
   if (denominator.abs() <= 1e-12) return null;
-
   final qpx = c.x - a.x;
   final qpy = c.y - a.y;
   final t = (qpx * sy - qpy * sx) / denominator;
   final u = (qpx * ry - qpy * rx) / denominator;
-  if (t < -1e-12 || t > 1.0 + 1e-12 || u < -1e-12 || u > 1.0 + 1e-12) {
-    return null;
-  }
+  if (t < -1e-12 || t > 1.0 + 1e-12 || u < -1e-12 || u > 1.0 + 1e-12) return null;
+  return PatternPoint(a.x + t * rx, a.y + t * ry);
+}
+
+PatternPoint? _segmentInfiniteLineIntersection(PatternPoint a, PatternPoint b, PatternPoint c, PatternPoint d) {
+  final rx = b.x - a.x;
+  final ry = b.y - a.y;
+  final sx = d.x - c.x;
+  final sy = d.y - c.y;
+  final denominator = rx * sy - ry * sx;
+  if (denominator.abs() <= 1e-12) return null;
+  final qpx = c.x - a.x;
+  final qpy = c.y - a.y;
+  final t = (qpx * sy - qpy * sx) / denominator;
+  if (t < -1e-12 || t > 1.0 + 1e-12) return null;
   return PatternPoint(a.x + t * rx, a.y + t * ry);
 }
