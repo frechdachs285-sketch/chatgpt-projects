@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
+import 'garment_selection_page.dart';
 import 'measurement_profile_store.dart';
 import 'pattern_models.dart';
 import 'pdf_export.dart';
@@ -16,7 +17,13 @@ class SchnittmusterApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'Schnittmuster App',
         theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo),
-        home: const SkirtPage(),
+        home: Builder(
+          builder: (context) => GarmentSelectionPage(
+            onOpenSkirt: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SkirtPage()),
+            ),
+          ),
+        ),
       );
 }
 
