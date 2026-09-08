@@ -5,6 +5,11 @@ import 'pattern_models.dart';
 /// Defines on which side of the directed source geometry an offset is created.
 enum TrouserOffsetSide { left, right }
 
+/// The confirmed front and back Hose-v1 contours are clockwise in the app's
+/// y-down coordinate system. Their interior is therefore on the directed
+/// right side and their exterior is on the directed left side.
+const TrouserOffsetSide trouserOuterOffsetSide = TrouserOffsetSide.left;
+
 /// One sampled point of a cubic Bezier together with its exact normal offset.
 class TrouserCurveOffsetSample {
   final double t;
