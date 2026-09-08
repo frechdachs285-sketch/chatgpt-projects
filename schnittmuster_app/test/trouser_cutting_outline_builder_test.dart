@@ -15,6 +15,7 @@ void main() {
   const p11 = PatternPoint(8.0, 0.0);
   const p21 = PatternPoint(-2.0, 1.0);
   const p22 = PatternPoint(7.0, 0.0);
+  const tolerance = 1e-9;
 
   double allowance(PathSegment segment) => builder.allowanceForSegment(
         segment,
@@ -140,5 +141,57 @@ void main() {
 
     expect(parts, isEmpty);
     expect(identical(outline.segments.single, original), isTrue);
+  });
+
+  test('lineLineTransition returns exact corner of extended offset lines', () {
+    final firstSource = LineSegment(
+      const PatternPoint(0.0, 0.0),
+      const PatternPoint(4.0, 0.0),
+    );
+    final secondSource = LineSegment(
+      const PatternPoint(4.0, 0.0),
+      const PatternPoint(4.0, 5.0),
+    );
+    final first = TrouserOffsetPart(
+      source: firstSource,
+      allowanceCm: 1.0,
+      points: const [PatternPoint(0.0, 1.0), PatternPoint(4.0, 1.0)],
+    );
+    final second = TrouserOffsetPart(
+      source: secondSource,
+      allowanceCm: 2.0,
+      points: const [PatternPoint(2.0, 0.0), PatternPoint(2.0, 5.0)],
+    );
+
+    final corner = builder.lineLineTransition(first, second);
+
+    expect(corner.x, closeTo(2.0, tolerance));
+    expect(corner.y, closeTo(1.0, tolerance));
+  });
+
+  test('lineLineTransition rejects a curved source part', () {
+    final curve = BezierSegment(
+      start: const PatternPoint(0.0, 0.0),
+      control1: const PatternPoint(1.0, 0.0),
+      control2: const PatternPoint(2.0, 1.0),
+      end: const PatternPoint(3.0, 1.0),
+      role: 'test_curve',
+    );
+    final line = LineSegment(
+      const PatternPoint(3.0, 1.0),
+      const PatternPoint(3.0, 5.0),
+    );
+    final first = TrouserOffsetPart(
+      source: curve,
+      allowanceCm: 1.0,
+      points: const [PatternPoint(0.0, 1.0), PatternPoint(3.0, 2.0)],
+    );
+    final second = TrouserOffsetPart(
+      source: line,
+      allowanceCm: 1.0,
+      points: const [PatternPoint(2.0, 1.0), PatternPoint(2.0, 5.0)],
+    );
+
+    expect(() => builder.lineLineTransition(first, second), throwsArgumentError);
   });
 }
