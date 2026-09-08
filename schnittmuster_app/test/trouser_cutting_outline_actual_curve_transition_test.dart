@@ -14,6 +14,7 @@ void main() {
     waistToFloor: 105.0,
     trouserBottomWidth: 22.0,
   );
+  // Test fixture only. Hose-v1 has no product seam-allowance defaults.
   const settings = TrouserSeamAllowanceSettings(
     enabled: true,
     normalCm: 1.5,
@@ -22,63 +23,79 @@ void main() {
   );
   const outlineBuilder = TrouserOutlineBuilder();
   const cuttingBuilder = TrouserCuttingOutlineBuilder();
+  const tolerance = 1e-9;
 
-  test('actual front side-seam and hem offset polylines intersect', () {
+  test('actual front side-seam to hem transition uses finite offset crossing', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
-    final outline = outlineBuilder.frontLowerContour(draft);
     final parts = cuttingBuilder.prepareOffsetParts(
-      outline,
+      outlineBuilder.frontLowerContour(draft),
       settings: settings,
       frontP10: draft[10],
       frontP11: draft[11],
       backP21: draft[21],
       backP22: draft[22],
     );
-
-    final hemIndex = parts.indexWhere(
-      (part) => part.source is BezierSegment &&
-          (part.source as BezierSegment).role == 'front_hem',
-    );
-    expect(hemIndex, greaterThan(0));
+    final hemIndex = _hemIndex(parts, 'front_hem');
     final sidePart = parts[hemIndex - 1];
     final hemPart = parts[hemIndex];
-    expect(sidePart.source, isA<BezierSegment>());
-    expect((sidePart.source as BezierSegment).role, 'front_side_seam');
 
-    expect(_polylineIntersections(sidePart.points, hemPart.points), isNotEmpty);
+    expect((sidePart.source as BezierSegment).role, 'front_side_seam');
+    final expected = _firstIntersection(sidePart.points, hemPart.points);
+    final actual = cuttingBuilder.sideHemTransition(sidePart, hemPart);
+    expect(actual.distanceTo(expected), lessThan(tolerance));
   });
 
-  test('actual back side-seam and hem offset polylines intersect', () {
+  test('actual back side-seam to hem transition uses finite offset crossing', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
-    final outline = outlineBuilder.backLowerContour(draft);
     final parts = cuttingBuilder.prepareOffsetParts(
-      outline,
+      outlineBuilder.backLowerContour(draft),
       settings: settings,
       frontP10: draft[10],
       frontP11: draft[11],
       backP21: draft[21],
       backP22: draft[22],
     );
-
-    final hemIndex = parts.indexWhere(
-      (part) => part.source is BezierSegment &&
-          (part.source as BezierSegment).role == 'back_hem',
-    );
-    expect(hemIndex, greaterThan(0));
+    final hemIndex = _hemIndex(parts, 'back_hem');
     final sidePart = parts[hemIndex - 1];
     final hemPart = parts[hemIndex];
-    expect(sidePart.source, isA<BezierSegment>());
-    expect((sidePart.source as BezierSegment).role, 'back_side_seam');
 
-    expect(_polylineIntersections(sidePart.points, hemPart.points), isNotEmpty);
+    expect((sidePart.source as BezierSegment).role, 'back_side_seam');
+    final expected = _firstIntersection(sidePart.points, hemPart.points);
+    final actual = cuttingBuilder.sideHemTransition(sidePart, hemPart);
+    expect(actual.distanceTo(expected), lessThan(tolerance));
+  });
+
+  test('sideHemTransition rejects reversed part order', () {
+    final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
+    final parts = cuttingBuilder.prepareOffsetParts(
+      outlineBuilder.frontLowerContour(draft),
+      settings: settings,
+      frontP10: draft[10],
+      frontP11: draft[11],
+      backP21: draft[21],
+      backP22: draft[22],
+    );
+    final hemIndex = _hemIndex(parts, 'front_hem');
+    expect(
+      () => cuttingBuilder.sideHemTransition(parts[hemIndex], parts[hemIndex - 1]),
+      throwsArgumentError,
+    );
   });
 }
 
-List<PatternPoint> _polylineIntersections(
+int _hemIndex(List<TrouserOffsetPart> parts, String role) {
+  final index = parts.indexWhere(
+    (part) => part.source is BezierSegment &&
+        (part.source as BezierSegment).role == role,
+  );
+  expect(index, greaterThan(0));
+  return index;
+}
+
+PatternPoint _firstIntersection(
   List<PatternPoint> first,
   List<PatternPoint> second,
 ) {
-  final hits = <PatternPoint>[];
   for (var i = 0; i < first.length - 1; i++) {
     for (var j = 0; j < second.length - 1; j++) {
       final hit = _segmentIntersection(
@@ -87,10 +104,10 @@ List<PatternPoint> _polylineIntersections(
         second[j],
         second[j + 1],
       );
-      if (hit != null) hits.add(hit);
+      if (hit != null) return hit;
     }
   }
-  return hits;
+  throw StateError('Expected fixture polylines to intersect.');
 }
 
 PatternPoint? _segmentIntersection(
