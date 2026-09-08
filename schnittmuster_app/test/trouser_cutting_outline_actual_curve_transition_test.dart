@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:schnittmuster_app/pattern_models.dart';
 import 'package:schnittmuster_app/trouser_cutting_outline_builder.dart';
@@ -83,30 +85,48 @@ void main() {
     expect(actual.distanceTo(expected), lessThan(tolerance));
   });
 
-  test('actual front lower to upper inseam uses offset-line and curve-start tangent intersection', () {
+  test('actual front lower to upper inseam uses exact Bezier start tangent', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
     final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'front_hem');
     final lowerPart = parts[hemIndex + 1];
     final upperPart = parts[hemIndex + 2];
+    final upper = upperPart.source as BezierSegment;
     expect(lowerPart.source, isA<LineSegment>());
-    expect((upperPart.source as BezierSegment).role, 'front_inseam');
+    expect(upper.role, 'front_inseam');
     expect(lowerPart.allowanceCm, upperPart.allowanceCm);
-    final expected = _infiniteLineIntersection(lowerPart.points[0], lowerPart.points[1], upperPart.points[0], upperPart.points[1]);
+    final offsetStart = _exactLeftOffsetStart(upper, upperPart.allowanceCm);
+    final tangent = upper.control1 - upper.start;
+    expect(upperPart.points.first.distanceTo(offsetStart), lessThan(tolerance));
+    final expected = _infiniteLineIntersection(
+      lowerPart.points[0],
+      lowerPart.points[1],
+      offsetStart,
+      offsetStart + tangent,
+    );
     final actual = cuttingBuilder.lowerUpperInseamTransition(lowerPart, upperPart);
     expect(actual.distanceTo(expected), lessThan(tolerance));
   });
 
-  test('actual back lower to upper inseam uses offset-line and curve-start tangent intersection', () {
+  test('actual back lower to upper inseam uses exact Bezier start tangent', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
     final parts = prepareParts(outlineBuilder.backLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'back_hem');
     final lowerPart = parts[hemIndex + 1];
     final upperPart = parts[hemIndex + 2];
+    final upper = upperPart.source as BezierSegment;
     expect(lowerPart.source, isA<LineSegment>());
-    expect((upperPart.source as BezierSegment).role, 'back_inseam');
+    expect(upper.role, 'back_inseam');
     expect(lowerPart.allowanceCm, upperPart.allowanceCm);
-    final expected = _infiniteLineIntersection(lowerPart.points[0], lowerPart.points[1], upperPart.points[0], upperPart.points[1]);
+    final offsetStart = _exactLeftOffsetStart(upper, upperPart.allowanceCm);
+    final tangent = upper.control1 - upper.start;
+    expect(upperPart.points.first.distanceTo(offsetStart), lessThan(tolerance));
+    final expected = _infiniteLineIntersection(
+      lowerPart.points[0],
+      lowerPart.points[1],
+      offsetStart,
+      offsetStart + tangent,
+    );
     final actual = cuttingBuilder.lowerUpperInseamTransition(lowerPart, upperPart);
     expect(actual.distanceTo(expected), lessThan(tolerance));
   });
@@ -164,6 +184,14 @@ void main() {
     final inseamIndex = _roleIndex(parts, 'front_inseam');
     expect(() => cuttingBuilder.upperInseamCrotchTransition(parts[inseamIndex + 1], parts[inseamIndex]), throwsArgumentError);
   });
+}
+
+PatternPoint _exactLeftOffsetStart(BezierSegment curve, double distance) {
+  final tangent = curve.control1 - curve.start;
+  final length = math.sqrt(tangent.x * tangent.x + tangent.y * tangent.y);
+  if (length <= 1e-12) throw StateError('Expected non-zero Bezier start tangent.');
+  final normal = PatternPoint(-tangent.y / length, tangent.x / length);
+  return curve.start + normal * distance;
 }
 
 int _hemIndex(List<TrouserOffsetPart> parts, String role) {
