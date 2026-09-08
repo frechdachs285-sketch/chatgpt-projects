@@ -300,11 +300,13 @@ class TrouserPdfExporter {
         pw.Positioned(
           left: mm(ox + label.position.x * 10.0) - mm(18),
           top: mm(oy + label.position.y * 10.0) - mm(3),
-          width: mm(36),
-          child: pw.Center(
-            child: pw.Text(
-              label.text,
-              style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+          child: pw.SizedBox(
+            width: mm(36),
+            child: pw.Center(
+              child: pw.Text(
+                label.text,
+                style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+              ),
             ),
           ),
         ),
