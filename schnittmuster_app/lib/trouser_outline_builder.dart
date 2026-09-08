@@ -10,9 +10,10 @@ class TrouserOutlineBuilder {
 
   const TrouserOutlineBuilder({this.curves = const TrouserCurveBuilder()});
 
-  /// Confirmed contour from the front waist-side point P11 clockwise to P6:
+  /// Closed confirmed front contour:
   /// P11..P12 side seam -> reversed hem P12..P14 -> P14-P15 ->
-  /// reversed 0.75 cm inseam P15..P9 -> reversed crotch P9..P6.
+  /// reversed 0.75 cm inseam P15..P9 -> reversed crotch P9..P6 ->
+  /// straight Aldrich upper lines P6-P10-P11.
   PatternPath frontLowerContour(TrouserReferenceDraft d) {
     final side = curves.frontSideSeam(
       p11: d[11],
@@ -39,12 +40,15 @@ class TrouserOutlineBuilder {
       _segment(_reverse(upperInseam), 'front_inseam'),
       ...frontCrotch.segments.reversed
           .map((curve) => _segment(_reverse(curve), 'front_crotch')),
+      LineSegment(d[6], d[10]),
+      LineSegment(d[10], d[11]),
     ]);
   }
 
-  /// Confirmed contour from the back waist-side point P22 clockwise to P21:
+  /// Closed confirmed back contour:
   /// P22..P26 side seam -> reversed hem P26..P28 -> P28-P29 ->
-  /// reversed 1.25 cm inseam P29..P24 -> reversed crotch P24..P21.
+  /// reversed 1.25 cm inseam P29..P24 -> reversed crotch P24..P21 ->
+  /// straight Aldrich upper line P21-P22.
   PatternPath backLowerContour(TrouserReferenceDraft d) {
     final side = curves.backSideSeam(
       p22: d[22],
@@ -72,6 +76,7 @@ class TrouserOutlineBuilder {
       _segment(_reverse(upperInseam), 'back_inseam'),
       ...backCrotch.segments.reversed
           .map((curve) => _segment(_reverse(curve), 'back_crotch')),
+      LineSegment(d[21], d[22]),
     ]);
   }
 
