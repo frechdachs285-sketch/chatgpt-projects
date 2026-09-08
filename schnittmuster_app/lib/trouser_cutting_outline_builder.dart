@@ -40,24 +40,17 @@ class TrouserCuttingOutlineBuilder {
     if (!settings.isValid) {
       throw ArgumentError('Invalid Hose-v1 seam allowance settings.');
     }
-
     if (segment is BezierSegment && segment.role.endsWith('_hem')) {
       return settings.hemCm;
     }
-
     if (segment is LineSegment &&
         (_sameDirectedLine(segment, frontP10, frontP11) ||
             _sameDirectedLine(segment, backP21, backP22))) {
       return settings.waistCm;
     }
-
     return settings.normalCm;
   }
 
-  /// Prepares every offset segment in the same order as the confirmed seam
-  /// outline. This is deliberately an intermediate representation: joining
-  /// corners is a separate step, so the original outline cannot be changed by
-  /// accident while transition rules are applied.
   List<TrouserOffsetPart> prepareOffsetParts(
     PatternPath outline, {
     required TrouserSeamAllowanceSettings settings,
@@ -70,7 +63,6 @@ class TrouserCuttingOutlineBuilder {
     if (!settings.isValid) {
       throw ArgumentError('Invalid Hose-v1 seam allowance settings.');
     }
-
     return [
       for (final segment in outline.segments)
         _preparePart(
@@ -84,10 +76,6 @@ class TrouserCuttingOutlineBuilder {
     ];
   }
 
-  /// Returns the exact mathematical corner for two neighbouring straight
-  /// offset parts. Both offset segments are treated as infinite lines, exactly
-  /// matching the confirmed Hose-v1 corner rule for different allowances.
-  /// No source point or prepared offset point is modified.
   PatternPoint lineLineTransition(
     TrouserOffsetPart first,
     TrouserOffsetPart second,
@@ -104,13 +92,6 @@ class TrouserCuttingOutlineBuilder {
     );
   }
 
-  /// Returns the deterministic mathematical transition between one accepted
-  /// adaptive curve-offset polyline and one straight offset part.
-  ///
-  /// The curve polyline remains finite and is searched in its stored path
-  /// direction; the straight offset is treated as an infinite line. This does
-  /// not invent a tangent extension for the curve and does not modify either
-  /// prepared part.
   PatternPoint curveLineTransition(
     TrouserOffsetPart curvePart,
     TrouserOffsetPart linePart,
@@ -130,6 +111,42 @@ class TrouserCuttingOutlineBuilder {
       curvePart.points,
       LineSegment(linePart.points[0], linePart.points[1]),
     );
+  }
+
+  /// Returns the finite accepted offset-polyline intersection for two
+  /// neighbouring curved contour parts. This is the confirmed internal rule
+  /// used for the Hose-v1 side-seam -> hem transition: no curve extension,
+  /// tangent construction or arbitrary radius is introduced.
+  PatternPoint curveCurveTransition(
+    TrouserOffsetPart first,
+    TrouserOffsetPart second,
+  ) {
+    if (first.source is! BezierSegment || second.source is! BezierSegment) {
+      throw ArgumentError('curveCurveTransition requires two curved parts.');
+    }
+    if (first.points.length < 2 || second.points.length < 2) {
+      throw StateError('Curve offset parts must contain at least two points.');
+    }
+    return geometry.intersectPolylines(first.points, second.points);
+  }
+
+  /// Resolves the actual Hose-v1 side-seam -> hem transition from prepared
+  /// offset parts while keeping both original seam-line segments untouched.
+  PatternPoint sideHemTransition(
+    TrouserOffsetPart sidePart,
+    TrouserOffsetPart hemPart,
+  ) {
+    final side = sidePart.source;
+    final hem = hemPart.source;
+    if (side is! BezierSegment ||
+        hem is! BezierSegment ||
+        !side.role.endsWith('_side_seam') ||
+        !hem.role.endsWith('_hem')) {
+      throw ArgumentError(
+        'sideHemTransition requires side-seam curve first and hem curve second.',
+      );
+    }
+    return curveCurveTransition(sidePart, hemPart);
   }
 
   TrouserOffsetPart _preparePart(
@@ -155,9 +172,6 @@ class TrouserCuttingOutlineBuilder {
     );
   }
 
-  /// Offsets one confirmed contour segment outward without changing it.
-  /// Curves use the accepted adaptive polyline representation at the Hose-v1
-  /// tolerance; straight segments remain exact parallel offsets.
   List<PatternPoint> offsetSegment(
     PathSegment segment, {
     required double distanceCm,
