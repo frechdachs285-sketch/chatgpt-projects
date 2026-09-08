@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'pattern_models.dart';
 import 'trouser_pattern_calculator.dart';
 import 'trouser_pattern_piece_builder.dart';
+import 'trouser_preview.dart';
 
 class TrouserPage extends StatefulWidget {
   const TrouserPage({super.key});
@@ -125,7 +126,10 @@ class _TrouserPageState extends State<TrouserPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text('Körper- und Konstruktionsmaße', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Körper- und Konstruktionsmaße',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 12),
             _field('Taillenumfang', _waistController),
             _field('Hüftumfang', _hipController),
@@ -144,7 +148,10 @@ class _TrouserPageState extends State<TrouserPage> {
             ),
             if (_message != null) ...[
               const SizedBox(height: 12),
-              Text(_message!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              Text(
+                _message!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             ],
             if (draft != null && front != null && back != null) ...[
               const SizedBox(height: 16),
@@ -157,12 +164,23 @@ class _TrouserPageState extends State<TrouserPage> {
                       const Text('Berechnung erfolgreich'),
                       const SizedBox(height: 6),
                       Text('Referenzpunkte: ${draft.points.length}'),
-                      Text('Vorderhose: ${front.outline.segments.length} Kontursegmente, ${front.darts.length} Abnäher'),
-                      Text('Hinterhose: ${back.outline.segments.length} Kontursegmente, ${back.darts.length} Abnäher'),
+                      Text(
+                        'Vorderhose: ${front.outline.segments.length} Kontursegmente, ${front.darts.length} Abnäher',
+                      ),
+                      Text(
+                        'Hinterhose: ${back.outline.segments.length} Kontursegmente, ${back.darts.length} Abnäher',
+                      ),
                     ],
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+              Text(
+                'Vorschau',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              TrouserPreview(front: front, back: back),
             ],
           ],
         ),
