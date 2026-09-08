@@ -88,25 +88,51 @@ class TrouserSeamAllowanceGeometry {
     }
 
     for (var i = 0; i < polyline.length - 1; i++) {
-      final a = polyline[i];
-      final b = polyline[i + 1];
-      final rx = b.x - a.x;
-      final ry = b.y - a.y;
-      final sx = line.end.x - line.start.x;
-      final sy = line.end.y - line.start.y;
-      final denominator = rx * sy - ry * sx;
-      if (denominator.abs() <= 1e-12) continue;
-
-      final qpx = line.start.x - a.x;
-      final qpy = line.start.y - a.y;
-      final t = (qpx * sy - qpy * sx) / denominator;
-      if (t >= -1e-12 && t <= 1.0 + 1e-12) {
-        final clampedT = t.clamp(0.0, 1.0).toDouble();
-        return PatternPoint(a.x + clampedT * rx, a.y + clampedT * ry);
-      }
+      final hit = _finiteSegmentIntersection(
+        polyline[i],
+        polyline[i + 1],
+        line.start,
+        line.end,
+        secondInfinite: true,
+      );
+      if (hit != null) return hit;
     }
 
     throw StateError('Offset polyline does not intersect the offset line.');
+  }
+
+  /// Finds the first mathematical intersection of two finite accepted offset
+  /// polylines. Both are scanned in their stored path direction. No tangent or
+  /// curve extension is invented; only existing finite polyline segments are
+  /// eligible for the transition.
+  PatternPoint intersectPolylines(
+    List<PatternPoint> first,
+    List<PatternPoint> second,
+  ) {
+    if (first.length < 2) {
+      throw ArgumentError.value(first, 'first', 'must contain at least 2 points');
+    }
+    if (second.length < 2) {
+      throw ArgumentError.value(
+        second,
+        'second',
+        'must contain at least 2 points',
+      );
+    }
+
+    for (var i = 0; i < first.length - 1; i++) {
+      for (var j = 0; j < second.length - 1; j++) {
+        final hit = _finiteSegmentIntersection(
+          first[i],
+          first[i + 1],
+          second[j],
+          second[j + 1],
+        );
+        if (hit != null) return hit;
+      }
+    }
+
+    throw StateError('Offset polylines do not intersect.');
   }
 
   List<TrouserCurveOffsetSample> sampleBezierOffset(
@@ -178,6 +204,31 @@ class TrouserSeamAllowanceGeometry {
       for (var i = 0; i < points.length - 1; i++)
         LineSegment(points[i], points[i + 1]),
     ]);
+  }
+
+  PatternPoint? _finiteSegmentIntersection(
+    PatternPoint a,
+    PatternPoint b,
+    PatternPoint c,
+    PatternPoint d, {
+    bool secondInfinite = false,
+  }) {
+    final rx = b.x - a.x;
+    final ry = b.y - a.y;
+    final sx = d.x - c.x;
+    final sy = d.y - c.y;
+    final denominator = rx * sy - ry * sx;
+    if (denominator.abs() <= 1e-12) return null;
+
+    final qpx = c.x - a.x;
+    final qpy = c.y - a.y;
+    final t = (qpx * sy - qpy * sx) / denominator;
+    final u = (qpx * ry - qpy * rx) / denominator;
+    if (t < -1e-12 || t > 1.0 + 1e-12) return null;
+    if (!secondInfinite && (u < -1e-12 || u > 1.0 + 1e-12)) return null;
+
+    final clampedT = t.clamp(0.0, 1.0).toDouble();
+    return PatternPoint(a.x + clampedT * rx, a.y + clampedT * ry);
   }
 
   void _subdivideOffset(
