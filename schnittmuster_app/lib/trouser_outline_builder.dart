@@ -10,10 +10,9 @@ class TrouserOutlineBuilder {
 
   const TrouserOutlineBuilder({this.curves = const TrouserCurveBuilder()});
 
-  /// Confirmed lower contour of the front leg, clockwise from waist-side
-  /// towards crotch-side:
+  /// Confirmed contour from the front waist-side point P11 clockwise to P6:
   /// P11..P12 side seam -> reversed hem P12..P14 -> P14-P15 ->
-  /// reversed 0.75 cm inseam P15..P9.
+  /// reversed 0.75 cm inseam P15..P9 -> reversed crotch P9..P6.
   PatternPath frontLowerContour(TrouserReferenceDraft d) {
     final side = curves.frontSideSeam(
       p11: d[11],
@@ -27,19 +26,25 @@ class TrouserOutlineBuilder {
       end: d[15],
       depth: 0.75,
     );
+    final frontCrotch = curves.naturalSplineThrough([
+      d[6],
+      curves.frontCrotchGuide(d[5]),
+      d[9],
+    ]);
 
     return PatternPath([
       ...side.segments.map((curve) => _segment(curve, 'front_side_seam')),
       _segment(_reverse(hem), 'front_hem'),
       LineSegment(d[14], d[15]),
       _segment(_reverse(upperInseam), 'front_inseam'),
+      ...frontCrotch.segments.reversed
+          .map((curve) => _segment(_reverse(curve), 'front_crotch')),
     ]);
   }
 
-  /// Confirmed lower contour of the back leg, clockwise from waist-side
-  /// towards crotch-side:
+  /// Confirmed contour from the back waist-side point P22 clockwise to P21:
   /// P22..P26 side seam -> reversed hem P26..P28 -> P28-P29 ->
-  /// reversed 1.25 cm inseam P29..P24.
+  /// reversed 1.25 cm inseam P29..P24 -> reversed crotch P24..P21.
   PatternPath backLowerContour(TrouserReferenceDraft d) {
     final side = curves.backSideSeam(
       p22: d[22],
@@ -53,12 +58,20 @@ class TrouserOutlineBuilder {
       end: d[29],
       depth: 1.25,
     );
+    final backCrotch = curves.naturalSplineThrough([
+      d[21],
+      d[19],
+      curves.backCrotchGuide(d[16]),
+      d[24],
+    ]);
 
     return PatternPath([
       ...side.segments.map((curve) => _segment(curve, 'back_side_seam')),
       _segment(_reverse(hem), 'back_hem'),
       LineSegment(d[28], d[29]),
       _segment(_reverse(upperInseam), 'back_inseam'),
+      ...backCrotch.segments.reversed
+          .map((curve) => _segment(_reverse(curve), 'back_crotch')),
     ]);
   }
 
