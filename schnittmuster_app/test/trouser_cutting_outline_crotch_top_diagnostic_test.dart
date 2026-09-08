@@ -46,7 +46,7 @@ void main() {
     final crotch = crotchPart.source as BezierSegment;
 
     expect(topPart.source, isA<LineSegment>());
-    expect(crotch.allowanceCm, settings.normalCm);
+    expect(crotchPart.allowanceCm, settings.normalCm);
     expect(topPart.allowanceCm, settings.normalCm);
     expect(crotch.end.distanceTo(d[6]), lessThan(tolerance));
 
