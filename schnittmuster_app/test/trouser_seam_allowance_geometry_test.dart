@@ -112,4 +112,29 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('polylinePath preserves every accepted offset point exactly', () {
+    const points = <PatternPoint>[
+      PatternPoint(1.0, 2.0),
+      PatternPoint(3.0, 4.0),
+      PatternPoint(6.0, 5.0),
+      PatternPoint(8.0, 9.0),
+    ];
+
+    final path = geometry.polylinePath(points);
+
+    expect(path.segments.length, 3);
+    for (var i = 0; i < path.segments.length; i++) {
+      final segment = path.segments[i] as LineSegment;
+      expect(segment.start.distanceTo(points[i]), lessThan(tolerance));
+      expect(segment.end.distanceTo(points[i + 1]), lessThan(tolerance));
+    }
+  });
+
+  test('polylinePath rejects fewer than two points', () {
+    expect(
+      () => geometry.polylinePath(const [PatternPoint(1.0, 2.0)]),
+      throwsArgumentError,
+    );
+  });
 }
