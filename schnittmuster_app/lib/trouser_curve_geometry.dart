@@ -85,6 +85,36 @@ class TrouserCurveBuilder {
     );
   }
 
+  /// Front side seam through the fixed Aldrich points P11-P8-P13-P12.
+  TrouserNaturalSpline frontSideSeam({
+    required PatternPoint p11,
+    required PatternPoint p8,
+    required PatternPoint p13,
+    required PatternPoint p12,
+  }) {
+    return naturalSplineThrough([p11, p8, p13, p12]);
+  }
+
+  /// Back side seam through P22-P25, the digital 0.5 cm inward form point
+  /// between P25 and P27, then P27-P26.
+  ///
+  /// The 0.5 cm depth is the Aldrich construction value. Its 50% placement
+  /// is the documented Hose-v1 digitization rule.
+  TrouserNaturalSpline backSideSeam({
+    required PatternPoint p22,
+    required PatternPoint p25,
+    required PatternPoint p27,
+    required PatternPoint p26,
+  }) {
+    final shaping = inwardMidpointCurve(
+      start: p25,
+      end: p27,
+      depth: 0.5,
+    );
+    final q = shaping.pointAt(0.5);
+    return naturalSplineThrough([p22, p25, q, p27, p26]);
+  }
+
   /// App digitization for an Aldrich "curve inwards" instruction.
   ///
   /// The Aldrich depth remains exact. Because the source does not numerically
@@ -124,13 +154,11 @@ class TrouserCurveBuilder {
       midpoint.y + ny * depth,
     );
 
-    // Exact quadratic Bezier through start, formPoint at t=.5 and end.
     final quadraticControl = PatternPoint(
       2.0 * formPoint.x - 0.5 * (start.x + end.x),
       2.0 * formPoint.y - 0.5 * (start.y + end.y),
     );
 
-    // Convert the quadratic exactly to the CubicBezierCurve used elsewhere.
     return CubicBezierCurve(
       start: start,
       control1: PatternPoint(
