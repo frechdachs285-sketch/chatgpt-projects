@@ -31,7 +31,9 @@ class _TrouserPageState extends State<TrouserPage> {
   @override
   void initState() {
     super.initState();
-    _calculate();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _calculate();
+    });
   }
 
   @override
