@@ -194,4 +194,97 @@ void main() {
 
     expect(() => builder.lineLineTransition(first, second), throwsArgumentError);
   });
+
+  test('curveLineTransition returns first finite curve hit on infinite line', () {
+    final curve = BezierSegment(
+      start: const PatternPoint(0.0, 0.0),
+      control1: const PatternPoint(1.0, 1.0),
+      control2: const PatternPoint(3.0, 3.0),
+      end: const PatternPoint(4.0, 4.0),
+      role: 'test_curve',
+    );
+    final line = LineSegment(
+      const PatternPoint(2.0, -5.0),
+      const PatternPoint(2.0, -1.0),
+    );
+    final curvePart = TrouserOffsetPart(
+      source: curve,
+      allowanceCm: 1.0,
+      points: const [
+        PatternPoint(0.0, 0.0),
+        PatternPoint(4.0, 4.0),
+      ],
+    );
+    final linePart = TrouserOffsetPart(
+      source: line,
+      allowanceCm: 1.0,
+      points: const [
+        PatternPoint(2.0, -5.0),
+        PatternPoint(2.0, -1.0),
+      ],
+    );
+
+    final transition = builder.curveLineTransition(curvePart, linePart);
+
+    expect(transition.x, closeTo(2.0, tolerance));
+    expect(transition.y, closeTo(2.0, tolerance));
+  });
+
+  test('curveLineTransition rejects wrong part order', () {
+    final line = LineSegment(
+      const PatternPoint(0.0, 0.0),
+      const PatternPoint(0.0, 5.0),
+    );
+    final curve = BezierSegment(
+      start: const PatternPoint(0.0, 5.0),
+      control1: const PatternPoint(1.0, 5.0),
+      control2: const PatternPoint(2.0, 6.0),
+      end: const PatternPoint(3.0, 6.0),
+      role: 'test_curve',
+    );
+    final linePart = TrouserOffsetPart(
+      source: line,
+      allowanceCm: 1.0,
+      points: const [PatternPoint(1.0, 0.0), PatternPoint(1.0, 5.0)],
+    );
+    final curvePart = TrouserOffsetPart(
+      source: curve,
+      allowanceCm: 1.0,
+      points: const [PatternPoint(1.0, 5.0), PatternPoint(4.0, 6.0)],
+    );
+
+    expect(
+      () => builder.curveLineTransition(linePart, curvePart),
+      throwsArgumentError,
+    );
+  });
+
+  test('curveLineTransition rejects missing finite curve intersection', () {
+    final curve = BezierSegment(
+      start: const PatternPoint(0.0, 0.0),
+      control1: const PatternPoint(1.0, 0.0),
+      control2: const PatternPoint(2.0, 1.0),
+      end: const PatternPoint(3.0, 1.0),
+      role: 'test_curve',
+    );
+    final line = LineSegment(
+      const PatternPoint(5.0, -2.0),
+      const PatternPoint(5.0, 2.0),
+    );
+    final curvePart = TrouserOffsetPart(
+      source: curve,
+      allowanceCm: 1.0,
+      points: const [PatternPoint(0.0, 0.0), PatternPoint(3.0, 1.0)],
+    );
+    final linePart = TrouserOffsetPart(
+      source: line,
+      allowanceCm: 1.0,
+      points: const [PatternPoint(5.0, -2.0), PatternPoint(5.0, 2.0)],
+    );
+
+    expect(
+      () => builder.curveLineTransition(curvePart, linePart),
+      throwsStateError,
+    );
+  });
 }
