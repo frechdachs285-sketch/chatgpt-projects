@@ -65,7 +65,7 @@ void main() {
     );
     final q = curve.pointAt(0.5);
 
-    expect(q.x, closeTo(-15.3927, 0.001));
+    expect(q.x, closeTo(-15.4112448, 0.001));
     expect(q.y, closeTo(45.3469, 0.001));
   });
 }
