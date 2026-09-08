@@ -100,6 +100,11 @@ class _TrouserPreviewPainter extends CustomPainter {
       ..strokeWidth = 1.1
       ..strokeCap = StrokeCap.round;
 
+    final grainPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..strokeCap = StrokeCap.round;
+
     final path = Path();
     var started = false;
     for (final segment in piece.outline.segments) {
@@ -131,6 +136,43 @@ class _TrouserPreviewPainter extends CustomPainter {
         ..lineTo(leg2.dx, leg2.dy);
       canvas.drawPath(dartPath, dartPaint);
     }
+
+    final grain = piece.grainline;
+    if (grain != null) {
+      final start = map(grain.start);
+      final end = map(grain.end);
+      canvas.drawLine(start, end, grainPaint);
+      _drawArrowHead(canvas, start, end, grainPaint);
+      _drawArrowHead(canvas, end, start, grainPaint);
+    }
+  }
+
+  void _drawArrowHead(Canvas canvas, Offset tip, Offset other, Paint paint) {
+    final dx = other.dx - tip.dx;
+    final dy = other.dy - tip.dy;
+    final length = math.sqrt(dx * dx + dy * dy);
+    if (length <= 0.0) return;
+
+    final ux = dx / length;
+    final uy = dy / length;
+    final px = -uy;
+    final py = ux;
+    const arrowLength = 6.0;
+    const arrowHalfWidth = 2.5;
+    final base = Offset(
+      tip.dx + ux * arrowLength,
+      tip.dy + uy * arrowLength,
+    );
+    canvas.drawLine(
+      tip,
+      Offset(base.dx + px * arrowHalfWidth, base.dy + py * arrowHalfWidth),
+      paint,
+    );
+    canvas.drawLine(
+      tip,
+      Offset(base.dx - px * arrowHalfWidth, base.dy - py * arrowHalfWidth),
+      paint,
+    );
   }
 
   Rect _pieceBounds(PatternPiece piece) {
@@ -145,6 +187,10 @@ class _TrouserPreviewPainter extends CustomPainter {
     }
     for (final dart in piece.darts) {
       points.addAll([dart.leg1, dart.leg2, dart.apex]);
+    }
+    final grain = piece.grainline;
+    if (grain != null) {
+      points.addAll([grain.start, grain.end]);
     }
     return _boundsOf(points);
   }
