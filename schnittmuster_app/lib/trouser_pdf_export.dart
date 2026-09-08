@@ -143,6 +143,12 @@ class TrouserPdfExporter {
                         originX - tileX,
                         originY - tileY,
                       ),
+                      if (piece.grainline != null)
+                        _grainlineWidget(
+                          piece.grainline!,
+                          originX - tileX,
+                          originY - tileY,
+                        ),
                     ],
                   ),
                 ),
@@ -228,6 +234,61 @@ class TrouserPdfExporter {
     ];
   }
 
+  pw.Widget _grainlineWidget(Grainline grain, double ox, double oy) {
+    return pw.Positioned(
+      left: 0,
+      top: 0,
+      child: pw.ClipRect(
+        child: pw.CustomPaint(
+          size: PdfPoint(mm(_tileWidthMm), mm(_tileHeightMm)),
+          painter: (canvas, size) {
+            final start = _local(grain.start, ox, oy);
+            final end = _local(grain.end, ox, oy);
+            final dx = end.x - start.x;
+            final dy = end.y - start.y;
+            final length = math.sqrt(dx * dx + dy * dy);
+            if (length <= 0.0) return;
+
+            final ux = dx / length;
+            final uy = dy / length;
+            final px = -uy;
+            final py = ux;
+            const arrowLengthMm = 7.0;
+            const arrowHalfWidthMm = 3.0;
+
+            canvas
+              ..setStrokeColor(PdfColors.black)
+              ..setLineWidth(mm(0.30))
+              ..setLineJoin(PdfLineJoin.round)
+              ..setLineCap(PdfLineCap.round)
+              ..moveTo(mm(start.x), size.y - mm(start.y))
+              ..lineTo(mm(end.x), size.y - mm(end.y));
+
+            void addArrow(_LocalPoint tip, double direction) {
+              final baseX = tip.x + ux * arrowLengthMm * direction;
+              final baseY = tip.y + uy * arrowLengthMm * direction;
+              canvas
+                ..moveTo(mm(tip.x), size.y - mm(tip.y))
+                ..lineTo(
+                  mm(baseX + px * arrowHalfWidthMm),
+                  size.y - mm(baseY + py * arrowHalfWidthMm),
+                )
+                ..moveTo(mm(tip.x), size.y - mm(tip.y))
+                ..lineTo(
+                  mm(baseX - px * arrowHalfWidthMm),
+                  size.y - mm(baseY - py * arrowHalfWidthMm),
+                );
+            }
+
+            addArrow(start, 1.0);
+            addArrow(end, -1.0);
+            canvas.strokePath();
+          },
+        ),
+      ),
+    );
+  }
+
   _LocalPoint _local(PatternPoint point, double ox, double oy) =>
       _LocalPoint(ox + point.x * 10.0, oy + point.y * 10.0);
 
@@ -243,6 +304,10 @@ class TrouserPdfExporter {
     }
     for (final dart in piece.darts) {
       points.addAll([dart.leg1, dart.leg2, dart.apex]);
+    }
+    final grain = piece.grainline;
+    if (grain != null) {
+      points.addAll([grain.start, grain.end]);
     }
 
     var minX = points.first.x;
