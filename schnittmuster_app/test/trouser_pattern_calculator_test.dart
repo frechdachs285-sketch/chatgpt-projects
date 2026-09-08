@@ -11,7 +11,7 @@ void main() {
     trouserBottomWidth: 22.0,
   );
 
-  test('Aldrich size 14 reference points P0-P31', () {
+  test('Aldrich size 14 reference points P0-P31 with Hose v1 hem lowering', () {
     final d = TrouserPatternCalculator.calculateReferencePoints(size14);
 
     void point(int n, double x, double y, {double eps = 0.001}) {
@@ -22,7 +22,7 @@ void main() {
     point(0, 0.000, 0.000);
     point(1, 0.000, 28.700);
     point(2, 0.000, 20.900);
-    point(3, 0.000, 105.000);
+    point(3, 0.000, 106.000);
     point(4, 0.000, 61.850);
     point(5, -9.833, 28.700);
     point(6, -9.833, 20.900);
@@ -51,6 +51,17 @@ void main() {
     point(29, -12.800, 61.850);
     point(30, 2.346, -1.333, eps: 0.002);
     point(31, 10.068, -0.667, eps: 0.002);
+  });
+
+  test('Hose v1 hem anchors keep exact 1 cm P3 lowering', () {
+    final d = TrouserPatternCalculator.calculateReferencePoints(size14);
+
+    expect(d[3].y - d[12].y, closeTo(1.0, 1e-9));
+    expect(d[3].y - d[14].y, closeTo(1.0, 1e-9));
+    expect(d[12].y, closeTo(size14.waistToFloor, 1e-9));
+    expect(d[14].y, closeTo(size14.waistToFloor, 1e-9));
+    expect(d[26].y, closeTo(size14.waistToFloor, 1e-9));
+    expect(d[28].y, closeTo(size14.waistToFloor, 1e-9));
   });
 
   test('size 14 independent construction relations', () {
