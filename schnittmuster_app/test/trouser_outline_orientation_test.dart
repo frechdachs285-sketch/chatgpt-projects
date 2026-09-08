@@ -12,7 +12,6 @@ void main() {
     waistToFloor: 105.0,
     trouserBottomWidth: 22.0,
   );
-  const calculator = TrouserPatternCalculator();
   const outlines = TrouserOutlineBuilder();
 
   List<PatternPoint> sampledContour(PatternPath path) {
@@ -48,7 +47,7 @@ void main() {
   }
 
   test('front and back confirmed contours have positive signed area in y-down coordinates', () {
-    final draft = calculator.calculate(measurements);
+    final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
     final front = sampledContour(outlines.frontLowerContour(draft));
     final back = sampledContour(outlines.backLowerContour(draft));
 
@@ -59,7 +58,6 @@ void main() {
   });
 
   test('positive signed area in y-down means piece interior is on directed right side', () {
-    // A screen-clockwise rectangle in the app coordinate system (y down).
     const rectangle = [
       PatternPoint(0.0, 0.0),
       PatternPoint(2.0, 0.0),
