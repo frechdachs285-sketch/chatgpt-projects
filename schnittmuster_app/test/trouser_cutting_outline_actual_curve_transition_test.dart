@@ -111,6 +111,30 @@ void main() {
     expect(actual.distanceTo(expected), lessThan(tolerance));
   });
 
+  test('actual front upper inseam and crotch finite offsets meet naturally', () {
+    final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
+    final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
+    final inseamIndex = _roleIndex(parts, 'front_inseam');
+    final inseam = parts[inseamIndex];
+    final crotch = parts[inseamIndex + 1];
+    expect((crotch.source as BezierSegment).role, 'front_crotch');
+    expect(inseam.allowanceCm, crotch.allowanceCm);
+    final hit = _firstIntersection(inseam.points, crotch.points);
+    expect(hit.x.isFinite && hit.y.isFinite, isTrue);
+  });
+
+  test('actual back upper inseam and crotch finite offsets meet naturally', () {
+    final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
+    final parts = prepareParts(outlineBuilder.backLowerContour(draft), draft);
+    final inseamIndex = _roleIndex(parts, 'back_inseam');
+    final inseam = parts[inseamIndex];
+    final crotch = parts[inseamIndex + 1];
+    expect((crotch.source as BezierSegment).role, 'back_crotch');
+    expect(inseam.allowanceCm, crotch.allowanceCm);
+    final hit = _firstIntersection(inseam.points, crotch.points);
+    expect(hit.x.isFinite && hit.y.isFinite, isTrue);
+  });
+
   test('sideHemTransition rejects reversed part order', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
     final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
@@ -136,6 +160,12 @@ void main() {
 int _hemIndex(List<TrouserOffsetPart> parts, String role) {
   final index = parts.indexWhere((part) => part.source is BezierSegment && (part.source as BezierSegment).role == role);
   expect(index, greaterThan(0));
+  return index;
+}
+
+int _roleIndex(List<TrouserOffsetPart> parts, String role) {
+  final index = parts.indexWhere((part) => part.source is BezierSegment && (part.source as BezierSegment).role == role);
+  expect(index, greaterThanOrEqualTo(0));
   return index;
 }
 
