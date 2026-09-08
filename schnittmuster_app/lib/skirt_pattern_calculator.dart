@@ -173,6 +173,12 @@ class SkirtPatternCalculator {
     final grainEndX = seamAllowance + finishedLength * 0.88;
     final arrowLength = math.min(1.2, finishedLength * 0.025);
     final arrowHalfWidth = math.min(0.55, finishedWidth * 0.18);
+    final quarterLength = finishedLength / 4;
+    final notchXs = <double>[
+      seamAllowance + quarterLength,
+      seamAllowance + 2 * quarterLength,
+      seamAllowance + 3 * quarterLength,
+    ];
 
     return PatternPiece(
       id: 'skirt_waistband',
@@ -199,6 +205,11 @@ class SkirtPatternCalculator {
         LineSegment(c2, c3),
         LineSegment(c3, c0),
       ]),
+      notches: [
+        PatternNotch(position: PatternPoint(notchXs[0], 0), role: 'waistband_side_1'),
+        PatternNotch(position: PatternPoint(notchXs[1], 0), role: 'waistband_center_front'),
+        PatternNotch(position: PatternPoint(notchXs[2], 0), role: 'waistband_side_2'),
+      ],
       guideLines: [
         LineSegment(PatternPoint(0, foldY), PatternPoint(cutLength, foldY)),
         LineSegment(PatternPoint(grainStartX, grainY), PatternPoint(grainEndX, grainY)),
