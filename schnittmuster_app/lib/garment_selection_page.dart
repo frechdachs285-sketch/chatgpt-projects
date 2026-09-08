@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 
 class GarmentSelectionPage extends StatelessWidget {
   final VoidCallback onOpenSkirt;
+  final VoidCallback? onOpenTrouser;
 
-  const GarmentSelectionPage({super.key, required this.onOpenSkirt});
+  const GarmentSelectionPage({
+    super.key,
+    required this.onOpenSkirt,
+    this.onOpenTrouser,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +32,23 @@ class GarmentSelectionPage extends StatelessWidget {
                 subtitle: const Text('Individueller Grundrock nach Körpermaßen'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: onOpenSkirt,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.checkroom_outlined, size: 34),
+                title: const Text('Hose'),
+                subtitle: Text(
+                  onOpenTrouser == null
+                      ? 'Grundschnitt wird vorbereitet'
+                      : 'Individueller Grundschnitt nach Körpermaßen',
+                ),
+                trailing: onOpenTrouser == null
+                    ? null
+                    : const Icon(Icons.chevron_right),
+                enabled: onOpenTrouser != null,
+                onTap: onOpenTrouser,
               ),
             ),
             const SizedBox(height: 8),
