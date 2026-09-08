@@ -174,13 +174,19 @@ class SkirtPatternCalculator {
     final arrowLength = math.min(1.2, finishedLength * 0.025);
     final arrowHalfWidth = math.min(0.55, finishedWidth * 0.18);
     final quarterLength = finishedLength / 4;
-    final notchXs = <double>[
+    final sideNotchXs = <double>[
       seamAllowance + quarterLength,
-      seamAllowance + 2 * quarterLength,
       seamAllowance + 3 * quarterLength,
     ];
+    final centerFrontX = seamAllowance + 2 * quarterLength;
+    const centerFrontNotchOffset = 0.7;
     const notchDepth = 0.8;
     const notchHalfWidth = 0.45;
+
+    List<LineSegment> notchLines(double x) => [
+          LineSegment(PatternPoint(x, 0), PatternPoint(x - notchHalfWidth, notchDepth)),
+          LineSegment(PatternPoint(x, 0), PatternPoint(x + notchHalfWidth, notchDepth)),
+        ];
 
     return PatternPiece(
       id: 'skirt_waistband',
@@ -209,10 +215,10 @@ class SkirtPatternCalculator {
       ]),
       guideLines: [
         LineSegment(PatternPoint(0, foldY), PatternPoint(cutLength, foldY)),
-        for (final x in notchXs) ...[
-          LineSegment(PatternPoint(x, 0), PatternPoint(x - notchHalfWidth, notchDepth)),
-          LineSegment(PatternPoint(x, 0), PatternPoint(x + notchHalfWidth, notchDepth)),
-        ],
+        ...notchLines(sideNotchXs[0]),
+        ...notchLines(centerFrontX - centerFrontNotchOffset),
+        ...notchLines(centerFrontX + centerFrontNotchOffset),
+        ...notchLines(sideNotchXs[1]),
         LineSegment(PatternPoint(grainStartX, grainY), PatternPoint(grainEndX, grainY)),
         LineSegment(PatternPoint(grainStartX, grainY), PatternPoint(grainStartX + arrowLength, grainY - arrowHalfWidth)),
         LineSegment(PatternPoint(grainStartX, grainY), PatternPoint(grainStartX + arrowLength, grainY + arrowHalfWidth)),
