@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'trouser_page.dart';
+
 class GarmentSelectionPage extends StatelessWidget {
   final VoidCallback onOpenSkirt;
   final VoidCallback? onOpenTrouser;
@@ -12,6 +14,16 @@ class GarmentSelectionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void openTrouser() {
+      if (onOpenTrouser != null) {
+        onOpenTrouser!();
+        return;
+      }
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const TrouserPage()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Schnittmuster')),
       body: SafeArea(
@@ -39,16 +51,9 @@ class GarmentSelectionPage extends StatelessWidget {
               child: ListTile(
                 leading: const Icon(Icons.checkroom_outlined, size: 34),
                 title: const Text('Hose'),
-                subtitle: Text(
-                  onOpenTrouser == null
-                      ? 'Grundschnitt wird vorbereitet'
-                      : 'Individueller Grundschnitt nach Körpermaßen',
-                ),
-                trailing: onOpenTrouser == null
-                    ? null
-                    : const Icon(Icons.chevron_right),
-                enabled: onOpenTrouser != null,
-                onTap: onOpenTrouser,
+                subtitle: const Text('Individueller Grundschnitt nach Körpermaßen'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: openTrouser,
               ),
             ),
             const SizedBox(height: 8),
