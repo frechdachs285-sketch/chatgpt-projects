@@ -173,6 +173,60 @@ class TrouserCurveBuilder {
     );
   }
 
+  /// Exact symmetric Hose-v1 hem parabola.
+  ///
+  /// [left] and [right] lie on the original Aldrich hem line. [center] is
+  /// exactly midway between them in x and is the lowered P3. A quadratic
+  /// parabola is represented exactly as a cubic Bezier curve.
+  CubicBezierCurve symmetricHemParabola({
+    required PatternPoint left,
+    required PatternPoint center,
+    required PatternPoint right,
+  }) {
+    const tolerance = 1e-9;
+    if ((left.y - right.y).abs() > tolerance) {
+      throw ArgumentError('Die Saum-Endpunkte muessen auf gleicher Hoehe liegen.');
+    }
+    if ((center.x - (left.x + right.x) / 2.0).abs() > tolerance) {
+      throw ArgumentError('P3 muss horizontal exakt in der Saummitte liegen.');
+    }
+    if (center.y <= left.y) {
+      throw ArgumentError('P3 muss unterhalb der Saum-Endpunkte liegen.');
+    }
+
+    final quadraticControl = PatternPoint(
+      2.0 * center.x - 0.5 * (left.x + right.x),
+      2.0 * center.y - 0.5 * (left.y + right.y),
+    );
+
+    return CubicBezierCurve(
+      start: left,
+      control1: PatternPoint(
+        left.x + (2.0 / 3.0) * (quadraticControl.x - left.x),
+        left.y + (2.0 / 3.0) * (quadraticControl.y - left.y),
+      ),
+      control2: PatternPoint(
+        right.x + (2.0 / 3.0) * (quadraticControl.x - right.x),
+        right.y + (2.0 / 3.0) * (quadraticControl.y - right.y),
+      ),
+      end: right,
+    );
+  }
+
+  CubicBezierCurve frontHem({
+    required PatternPoint p14,
+    required PatternPoint p3,
+    required PatternPoint p12,
+  }) =>
+      symmetricHemParabola(left: p14, center: p3, right: p12);
+
+  CubicBezierCurve backHem({
+    required PatternPoint p28,
+    required PatternPoint p3,
+    required PatternPoint p26,
+  }) =>
+      symmetricHemParabola(left: p28, center: p3, right: p26);
+
   /// Aldrich size 10-14 front crotch control point: 3.0 cm from P5 along
   /// the 45-degree construction line shown in the source drawing.
   PatternPoint frontCrotchGuide(PatternPoint p5) {
