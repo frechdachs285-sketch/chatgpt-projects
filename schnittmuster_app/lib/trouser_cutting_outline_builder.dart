@@ -82,8 +82,18 @@ class TrouserCuttingOutlineBuilder {
     if (lowerPart.points.length != 2 || upperPart.points.length < 2) {
       throw StateError('Inseam offset parts do not contain enough points.');
     }
+
+    // adaptiveBezierOffset starts with the exact normal offset at t=0.
+    // The offset curve has the same endpoint tangent direction as the source
+    // cubic there. Use that exact source tangent, not the first polyline chord.
+    final tangent = upper.control1 - upper.start;
+    final tangentLengthSquared = tangent.x * tangent.x + tangent.y * tangent.y;
+    if (tangentLengthSquared <= 1e-24) {
+      throw StateError('Upper inseam Bezier has zero start tangent.');
+    }
+    final offsetStart = upperPart.points.first;
     final lowerLine = LineSegment(lowerPart.points[0], lowerPart.points[1]);
-    final upperTangent = LineSegment(upperPart.points[0], upperPart.points[1]);
+    final upperTangent = LineSegment(offsetStart, offsetStart + tangent);
     return geometry.intersectLines(lowerLine, upperTangent);
   }
 
