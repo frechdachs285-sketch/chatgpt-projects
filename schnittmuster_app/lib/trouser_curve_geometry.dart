@@ -85,6 +85,66 @@ class TrouserCurveBuilder {
     );
   }
 
+  /// App digitization for an Aldrich "curve inwards" instruction.
+  ///
+  /// The Aldrich depth remains exact. Because the source does not numerically
+  /// locate the maximum shaping along the seam, Hose v1 places it at 50% of
+  /// the chord and offsets it exactly [depth] perpendicular to the chord.
+  /// For the left-hand inseams in the current construction, inward is the
+  /// normal with positive x.
+  CubicBezierCurve inwardMidpointCurve({
+    required PatternPoint start,
+    required PatternPoint end,
+    required double depth,
+  }) {
+    if (!depth.isFinite || depth <= 0.0) {
+      throw ArgumentError('Die Einformung muss endlich und groesser als 0 sein.');
+    }
+
+    final dx = end.x - start.x;
+    final dy = end.y - start.y;
+    final length = math.sqrt(dx * dx + dy * dy);
+    if (!length.isFinite || length <= 1e-9) {
+      throw ArgumentError('Start- und Endpunkt muessen verschieden sein.');
+    }
+
+    var nx = -dy / length;
+    var ny = dx / length;
+    if (nx < 0.0) {
+      nx = -nx;
+      ny = -ny;
+    }
+
+    final midpoint = PatternPoint(
+      (start.x + end.x) / 2.0,
+      (start.y + end.y) / 2.0,
+    );
+    final formPoint = PatternPoint(
+      midpoint.x + nx * depth,
+      midpoint.y + ny * depth,
+    );
+
+    // Exact quadratic Bezier through start, formPoint at t=.5 and end.
+    final quadraticControl = PatternPoint(
+      2.0 * formPoint.x - 0.5 * (start.x + end.x),
+      2.0 * formPoint.y - 0.5 * (start.y + end.y),
+    );
+
+    // Convert the quadratic exactly to the CubicBezierCurve used elsewhere.
+    return CubicBezierCurve(
+      start: start,
+      control1: PatternPoint(
+        start.x + (2.0 / 3.0) * (quadraticControl.x - start.x),
+        start.y + (2.0 / 3.0) * (quadraticControl.y - start.y),
+      ),
+      control2: PatternPoint(
+        end.x + (2.0 / 3.0) * (quadraticControl.x - end.x),
+        end.y + (2.0 / 3.0) * (quadraticControl.y - end.y),
+      ),
+      end: end,
+    );
+  }
+
   /// Aldrich size 10-14 front crotch control point: 3.0 cm from P5 along
   /// the 45-degree construction line shown in the source drawing.
   PatternPoint frontCrotchGuide(PatternPoint p5) {
