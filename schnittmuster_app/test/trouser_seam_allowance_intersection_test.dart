@@ -7,13 +7,13 @@ void main() {
   const tolerance = 1e-9;
 
   test('intersects perpendicular infinite lines exactly', () {
-    const horizontal = LineSegment(
-      PatternPoint(0.0, 2.0),
-      PatternPoint(4.0, 2.0),
+    final horizontal = LineSegment(
+      const PatternPoint(0.0, 2.0),
+      const PatternPoint(4.0, 2.0),
     );
-    const vertical = LineSegment(
-      PatternPoint(3.0, 0.0),
-      PatternPoint(3.0, 1.0),
+    final vertical = LineSegment(
+      const PatternPoint(3.0, 0.0),
+      const PatternPoint(3.0, 1.0),
     );
 
     final p = geometry.intersectLines(horizontal, vertical);
@@ -22,13 +22,13 @@ void main() {
   });
 
   test('uses mathematical line extensions beyond segment endpoints', () {
-    const first = LineSegment(
-      PatternPoint(0.0, 0.0),
-      PatternPoint(1.0, 0.0),
+    final first = LineSegment(
+      const PatternPoint(0.0, 0.0),
+      const PatternPoint(1.0, 0.0),
     );
-    const second = LineSegment(
-      PatternPoint(2.0, 1.0),
-      PatternPoint(2.0, 2.0),
+    final second = LineSegment(
+      const PatternPoint(2.0, 1.0),
+      const PatternPoint(2.0, 2.0),
     );
 
     final p = geometry.intersectLines(first, second);
@@ -37,13 +37,13 @@ void main() {
   });
 
   test('different seam allowances meet at exact offset-line corner', () {
-    const sideSeam = LineSegment(
-      PatternPoint(5.0, 0.0),
-      PatternPoint(5.0, 10.0),
+    final sideSeam = LineSegment(
+      const PatternPoint(5.0, 0.0),
+      const PatternPoint(5.0, 10.0),
     );
-    const hem = LineSegment(
-      PatternPoint(5.0, 10.0),
-      PatternPoint(0.0, 10.0),
+    final hem = LineSegment(
+      const PatternPoint(5.0, 10.0),
+      const PatternPoint(0.0, 10.0),
     );
 
     final sideOffset = geometry.offsetLine(
@@ -63,13 +63,13 @@ void main() {
   });
 
   test('parallel lines are rejected instead of inventing a corner', () {
-    const first = LineSegment(
-      PatternPoint(0.0, 0.0),
-      PatternPoint(5.0, 0.0),
+    final first = LineSegment(
+      const PatternPoint(0.0, 0.0),
+      const PatternPoint(5.0, 0.0),
     );
-    const second = LineSegment(
-      PatternPoint(0.0, 2.0),
-      PatternPoint(5.0, 2.0),
+    final second = LineSegment(
+      const PatternPoint(0.0, 2.0),
+      const PatternPoint(5.0, 2.0),
     );
 
     expect(
