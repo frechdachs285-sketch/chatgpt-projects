@@ -25,9 +25,22 @@ void main() {
   const cuttingBuilder = TrouserCuttingOutlineBuilder();
   const tolerance = 1e-9;
 
+  List<TrouserOffsetPart> prepareParts(
+    PatternPath outline,
+    TrouserReferenceDraft draft,
+  ) =>
+      cuttingBuilder.prepareOffsetParts(
+        outline,
+        settings: settings,
+        frontP10: draft[10],
+        frontP11: draft[11],
+        backP21: draft[21],
+        backP22: draft[22],
+      );
+
   test('actual front side-seam to hem transition uses finite offset crossing', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
-    final parts = _parts(outlineBuilder.frontLowerContour(draft), draft);
+    final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'front_hem');
     final sidePart = parts[hemIndex - 1];
     final hemPart = parts[hemIndex];
@@ -39,7 +52,7 @@ void main() {
 
   test('actual back side-seam to hem transition uses finite offset crossing', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
-    final parts = _parts(outlineBuilder.backLowerContour(draft), draft);
+    final parts = prepareParts(outlineBuilder.backLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'back_hem');
     final sidePart = parts[hemIndex - 1];
     final hemPart = parts[hemIndex];
@@ -51,7 +64,7 @@ void main() {
 
   test('actual front hem to lower inseam uses finite hem and infinite line', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
-    final parts = _parts(outlineBuilder.frontLowerContour(draft), draft);
+    final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'front_hem');
     final hemPart = parts[hemIndex];
     final lowerInseamPart = parts[hemIndex + 1];
@@ -63,7 +76,7 @@ void main() {
 
   test('actual back hem to lower inseam uses finite hem and infinite line', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
-    final parts = _parts(outlineBuilder.backLowerContour(draft), draft);
+    final parts = prepareParts(outlineBuilder.backLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'back_hem');
     final hemPart = parts[hemIndex];
     final lowerInseamPart = parts[hemIndex + 1];
@@ -75,27 +88,17 @@ void main() {
 
   test('sideHemTransition rejects reversed part order', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
-    final parts = _parts(outlineBuilder.frontLowerContour(draft), draft);
+    final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'front_hem');
     expect(() => cuttingBuilder.sideHemTransition(parts[hemIndex], parts[hemIndex - 1]), throwsArgumentError);
   });
 
   test('hemLowerInseamTransition rejects reversed part order', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
-    final parts = _parts(outlineBuilder.frontLowerContour(draft), draft);
+    final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'front_hem');
     expect(() => cuttingBuilder.hemLowerInseamTransition(parts[hemIndex + 1], parts[hemIndex]), throwsArgumentError);
   });
-
-  List<TrouserOffsetPart> _parts(PatternPath outline, Map<int, PatternPoint> draft) =>
-      cuttingBuilder.prepareOffsetParts(
-        outline,
-        settings: settings,
-        frontP10: draft[10]!,
-        frontP11: draft[11]!,
-        backP21: draft[21]!,
-        backP22: draft[22]!,
-      );
 }
 
 int _hemIndex(List<TrouserOffsetPart> parts, String role) {
