@@ -111,7 +111,7 @@ void main() {
     expect(actual.distanceTo(expected), lessThan(tolerance));
   });
 
-  test('actual front upper inseam and crotch finite offsets meet naturally', () {
+  test('actual front upper inseam to crotch production transition uses natural finite crossing', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
     final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
     final inseamIndex = _roleIndex(parts, 'front_inseam');
@@ -119,11 +119,12 @@ void main() {
     final crotch = parts[inseamIndex + 1];
     expect((crotch.source as BezierSegment).role, 'front_crotch');
     expect(inseam.allowanceCm, crotch.allowanceCm);
-    final hit = _firstIntersection(inseam.points, crotch.points);
-    expect(hit.x.isFinite && hit.y.isFinite, isTrue);
+    final expected = _firstIntersection(inseam.points, crotch.points);
+    final actual = cuttingBuilder.upperInseamCrotchTransition(inseam, crotch);
+    expect(actual.distanceTo(expected), lessThan(tolerance));
   });
 
-  test('actual back upper inseam and crotch finite offsets meet naturally', () {
+  test('actual back upper inseam to crotch production transition uses natural finite crossing', () {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
     final parts = prepareParts(outlineBuilder.backLowerContour(draft), draft);
     final inseamIndex = _roleIndex(parts, 'back_inseam');
@@ -131,8 +132,9 @@ void main() {
     final crotch = parts[inseamIndex + 1];
     expect((crotch.source as BezierSegment).role, 'back_crotch');
     expect(inseam.allowanceCm, crotch.allowanceCm);
-    final hit = _firstIntersection(inseam.points, crotch.points);
-    expect(hit.x.isFinite && hit.y.isFinite, isTrue);
+    final expected = _firstIntersection(inseam.points, crotch.points);
+    final actual = cuttingBuilder.upperInseamCrotchTransition(inseam, crotch);
+    expect(actual.distanceTo(expected), lessThan(tolerance));
   });
 
   test('sideHemTransition rejects reversed part order', () {
@@ -154,6 +156,13 @@ void main() {
     final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
     final hemIndex = _hemIndex(parts, 'front_hem');
     expect(() => cuttingBuilder.lowerUpperInseamTransition(parts[hemIndex + 2], parts[hemIndex + 1]), throwsArgumentError);
+  });
+
+  test('upperInseamCrotchTransition rejects reversed part order', () {
+    final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
+    final parts = prepareParts(outlineBuilder.frontLowerContour(draft), draft);
+    final inseamIndex = _roleIndex(parts, 'front_inseam');
+    expect(() => cuttingBuilder.upperInseamCrotchTransition(parts[inseamIndex + 1], parts[inseamIndex]), throwsArgumentError);
   });
 }
 
