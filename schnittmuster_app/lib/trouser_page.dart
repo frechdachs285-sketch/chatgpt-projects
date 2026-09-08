@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
 
 import 'pattern_models.dart';
 import 'trouser_pattern_calculator.dart';
 import 'trouser_pattern_piece_builder.dart';
+import 'trouser_pdf_export.dart';
 import 'trouser_preview.dart';
 
 class TrouserPage extends StatefulWidget {
@@ -23,6 +25,7 @@ class _TrouserPageState extends State<TrouserPage> {
   TrouserReferenceDraft? _draft;
   PatternPiece? _front;
   PatternPiece? _back;
+  TrouserMeasurements? _appliedMeasurements;
   String? _message;
 
   @override
@@ -92,10 +95,33 @@ class _TrouserPageState extends State<TrouserPage> {
         _draft = draft;
         _front = front;
         _back = back;
+        _appliedMeasurements = measurements;
         _message = null;
       });
     } on ArgumentError catch (error) {
       setState(() => _message = error.message?.toString() ?? 'Maße bitte prüfen.');
+    }
+  }
+
+  Future<void> _openPatternPdf() async {
+    final measurements = _appliedMeasurements;
+    if (measurements == null) return;
+
+    try {
+      final bytes = await TrouserPdfExporter().buildPatternPdf(
+        measurements: measurements,
+      );
+      await Printing.layoutPdf(
+        name: 'Hose_v1_Schnittmuster_1zu1.pdf',
+        onLayout: (_) async => bytes,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Hose-PDF konnte nicht erstellt werden. Bitte Maße prüfen.'),
+        ),
+      );
     }
   }
 
@@ -181,6 +207,15 @@ class _TrouserPageState extends State<TrouserPage> {
               ),
               const SizedBox(height: 8),
               TrouserPreview(front: front, back: back),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _openPatternPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('PDF 1:1 öffnen'),
+                ),
+              ),
             ],
           ],
         ),
