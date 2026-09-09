@@ -10,6 +10,8 @@ import 'trouser_pattern_calculator.dart';
 import 'trouser_pattern_piece_builder.dart';
 import 'trouser_seam_allowance.dart';
 import 'trouser_shaped_waistband_builder.dart';
+import 'trouser_shaped_waistband_facing_builder.dart';
+import 'trouser_shaped_waistband_facing_pattern_adapter.dart';
 import 'trouser_shaped_waistband_pattern_adapter.dart';
 import 'trouser_waistband_builder.dart';
 
@@ -28,6 +30,7 @@ class TrouserPdfExporter {
     TrouserSeamAllowanceSettings? seamAllowance,
     int sizeCode = 14,
     double? shapedWaistbandDepthCm,
+    double? facingDepthCm,
   }) async {
     final draft = TrouserPatternCalculator.calculateReferencePoints(
       measurements,
@@ -78,6 +81,26 @@ class TrouserPdfExporter {
       );
     }
 
+    PatternPiece? facingFront;
+    PatternPiece? facingBack;
+    if (shapedWaistbandDepthCm != null && facingDepthCm != null) {
+      final facingGeometry = const TrouserShapedWaistbandFacingBuilder().build(
+        draft: draft,
+        facingDepthCm: facingDepthCm,
+      );
+      const facingAdapter = TrouserShapedWaistbandFacingPatternAdapter();
+      facingFront = facingAdapter.front(
+        facingGeometry,
+        sizeCode: sizeCode,
+        seamAllowanceEnabled: seamAllowance?.enabled == true,
+      );
+      facingBack = facingAdapter.back(
+        facingGeometry,
+        sizeCode: sizeCode,
+        seamAllowanceEnabled: seamAllowance?.enabled == true,
+      );
+    }
+
     final doc = pw.Document();
     _addCalibrationPage(doc, measurements);
     _addPieceTiles(doc, leftFront, title: 'Hose v1 - Vorderhose links 1:1');
@@ -94,6 +117,18 @@ class TrouserPdfExporter {
         shapedWaistbandBack,
         title: 'Hose v1 - Geformter Bund hinten 1:1',
       );
+      if (facingFront != null && facingBack != null) {
+        _addPieceTiles(
+          doc,
+          facingFront,
+          title: 'Hose v1 - Beleg vorn 1:1',
+        );
+        _addPieceTiles(
+          doc,
+          facingBack,
+          title: 'Hose v1 - Beleg hinten 1:1',
+        );
+      }
     } else {
       _addPieceTiles(doc, waistband, title: 'Hose v1 - Gerader Bund 1:1');
     }
