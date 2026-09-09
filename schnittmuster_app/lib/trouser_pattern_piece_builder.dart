@@ -3,6 +3,7 @@ import 'trouser_cutting_outline_back.dart';
 import 'trouser_cutting_outline_builder.dart';
 import 'trouser_cutting_outline_front.dart';
 import 'trouser_dart_geometry.dart';
+import 'trouser_fly.dart';
 import 'trouser_outline_builder.dart';
 import 'trouser_pattern_calculator.dart';
 import 'trouser_seam_allowance.dart';
@@ -19,10 +20,88 @@ class TrouserPatternPieceBuilder {
     this.cuttingOutlines = const TrouserCuttingOutlineBuilder(),
   });
 
+  /// Legacy/base front used by existing preview/PDF callers.
+  ///
+  /// It intentionally remains the confirmed Aldrich-derived seam contour.
+  /// Use [leftFront] and [rightFront] when physical front-side distinction is
+  /// required for the asymmetric Hose-v1 fly.
   PatternPiece front(
     TrouserReferenceDraft draft, {
     TrouserSeamAllowanceSettings? seamAllowance,
     int sizeCode = 14,
+  }) =>
+      _frontPiece(
+        draft,
+        id: 'trouser_front',
+        name: 'Vorderhose',
+        label: 'Vorderhose',
+        seamAllowance: seamAllowance,
+        sizeCode: sizeCode,
+      );
+
+  PatternPiece leftFront(
+    TrouserReferenceDraft draft, {
+    TrouserSeamAllowanceSettings? seamAllowance,
+    int sizeCode = 14,
+  }) =>
+      _frontPiece(
+        draft,
+        id: 'trouser_front_left',
+        name: 'Vorderhose links',
+        label: 'Vorderhose links',
+        seamAllowance: seamAllowance,
+        sizeCode: sizeCode,
+      );
+
+  PatternPiece rightFront(
+    TrouserReferenceDraft draft, {
+    TrouserSeamAllowanceSettings? seamAllowance,
+    int sizeCode = 14,
+  }) {
+    final base = _frontPiece(
+      draft,
+      id: 'trouser_front_right',
+      name: 'Vorderhose rechts',
+      label: 'Vorderhose rechts',
+      seamAllowance: seamAllowance,
+      sizeCode: sizeCode,
+    );
+    final fly = const TrouserFlyBuilder().build(draft);
+
+    // Keep the confirmed Aldrich seam outline untouched. The asymmetric,
+    // cut-on fly extension is exposed as guide geometry on the right front
+    // only until it is deliberately integrated into the cutting contour.
+    return PatternPiece(
+      id: base.id,
+      name: base.name,
+      points: Map.unmodifiable({
+        ...base.points,
+        'FlyExtensionWaist': fly.extensionWaist,
+        'FlyExtensionLower': fly.extensionLower,
+      }),
+      outline: base.outline,
+      cuttingOutline: base.cuttingOutline,
+      guideLines: [
+        ...base.guideLines,
+        LineSegment(fly.waistCenterFront, fly.extensionWaist),
+        LineSegment(fly.extensionWaist, fly.extensionLower),
+        LineSegment(fly.extensionLower, fly.lowerEnd),
+      ],
+      darts: base.darts,
+      grainline: base.grainline,
+      notches: base.notches,
+      dartNotches: base.dartNotches,
+      labels: base.labels,
+    );
+  }
+
+  PatternPiece _frontPiece(
+    TrouserReferenceDraft draft, {
+    required String id,
+    required String name,
+    required String label,
+    TrouserSeamAllowanceSettings? seamAllowance,
+    required int sizeCode,
   }) {
     final frontDart = dartGeometry.front(draft);
     final outline = outlines.frontLowerContour(draft, sizeCode: sizeCode);
@@ -35,8 +114,8 @@ class TrouserPatternPieceBuilder {
         : null;
 
     return PatternPiece(
-      id: 'trouser_front',
-      name: 'Vorderhose',
+      id: id,
+      name: name,
       points: _points(draft),
       outline: outline,
       cuttingOutline: cuttingOutline,
@@ -45,7 +124,7 @@ class TrouserPatternPieceBuilder {
       labels: [
         PatternLabel(
           position: _midpoint(draft[0], draft[3]),
-          text: 'Vorderhose',
+          text: label,
         ),
       ],
     );
