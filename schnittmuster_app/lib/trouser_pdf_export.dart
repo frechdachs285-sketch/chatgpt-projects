@@ -8,6 +8,7 @@ import 'pattern_models.dart';
 import 'trouser_pattern_calculator.dart';
 import 'trouser_pattern_piece_builder.dart';
 import 'trouser_seam_allowance.dart';
+import 'trouser_waistband_builder.dart';
 
 class TrouserPdfExporter {
   static const _mmToPt = 72.0 / 25.4;
@@ -25,13 +26,19 @@ class TrouserPdfExporter {
   }) async {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
     const builder = TrouserPatternPieceBuilder();
+    const waistbandBuilder = TrouserWaistbandBuilder();
     final front = builder.front(draft, seamAllowance: seamAllowance);
     final back = builder.back(draft, seamAllowance: seamAllowance);
+    final waistband = waistbandBuilder.build(
+      draft: draft,
+      measurements: measurements,
+    );
 
     final doc = pw.Document();
     _addCalibrationPage(doc, measurements);
     _addPieceTiles(doc, front, title: 'Hose v1 - Vorderhose 1:1');
     _addPieceTiles(doc, back, title: 'Hose v1 - Hinterhose 1:1');
+    _addPieceTiles(doc, waistband, title: 'Hose v1 - Gerader Bund 1:1');
     return doc.save();
   }
 
@@ -148,6 +155,13 @@ class TrouserPdfExporter {
                         originY - tileY,
                         lineWidthMm: 0.25,
                       ),
+                      if (piece.guideLines.isNotEmpty)
+                        _pathWidget(
+                          PatternPath(piece.guideLines),
+                          originX - tileX,
+                          originY - tileY,
+                          lineWidthMm: 0.20,
+                        ),
                       ..._dartWidgets(
                         piece,
                         originX - tileX,
@@ -382,6 +396,9 @@ class TrouserPdfExporter {
     _addPathPoints(points, piece.outline);
     if (piece.cuttingOutline != null) {
       _addPathPoints(points, piece.cuttingOutline!);
+    }
+    for (final guideLine in piece.guideLines) {
+      points.addAll([guideLine.start, guideLine.end]);
     }
     for (final dart in piece.darts) {
       points.addAll([dart.leg1, dart.leg2, dart.apex]);
