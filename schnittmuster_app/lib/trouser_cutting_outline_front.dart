@@ -3,6 +3,7 @@ import 'trouser_cutting_outline_builder.dart';
 import 'trouser_cutting_outline_p10_transition.dart';
 import 'trouser_cutting_outline_p11_transition.dart';
 import 'trouser_cutting_outline_p6_transition.dart';
+import 'trouser_fly.dart';
 import 'trouser_pattern_calculator.dart';
 import 'trouser_seam_allowance.dart';
 
@@ -11,10 +12,17 @@ extension TrouserFrontCuttingOutline on TrouserCuttingOutlineBuilder {
   /// Hose-v1 seam contour and transition rules. The accepted adaptive offset
   /// samples are preserved as a polyline; no Bezier refit or new construction
   /// value is introduced.
+  ///
+  /// For the asymmetric Hose-v1 right front, [fly] identifies the confirmed
+  /// 4.0 cm cut-on extension. Its upper edge belongs to the waist edge and
+  /// therefore uses [TrouserSeamAllowanceSettings.waistCm]. The outer long
+  /// edge and lower return use the normal allowance. No separate fly allowance
+  /// value is introduced.
   PatternPath buildFrontCuttingOutline({
     required PatternPath outline,
     required TrouserReferenceDraft draft,
     required TrouserSeamAllowanceSettings settings,
+    TrouserFlyGeometry? fly,
   }) {
     if (!settings.enabled) {
       throw ArgumentError('Hose-v1 seam allowance is disabled.');
@@ -38,11 +46,46 @@ extension TrouserFrontCuttingOutline on TrouserCuttingOutlineBuilder {
     final lastCrotchIndex = _lastRoleIndex(parts, 'front_crotch');
     final topIndex = parts.length - 2;
     final waistIndex = parts.length - 1;
+    final flyLowerIndex = fly == null ? null : lastCrotchIndex + 1;
+    final flyOuterIndex = fly == null ? null : lastCrotchIndex + 2;
+
+    if (fly != null) {
+      if (topIndex != lastCrotchIndex + 3 ||
+          flyLowerIndex == null ||
+          flyOuterIndex == null ||
+          !_matchesLine(
+            parts[flyLowerIndex].source,
+            fly.lowerEnd,
+            fly.extensionLower,
+          ) ||
+          !_matchesLine(
+            parts[flyOuterIndex].source,
+            fly.extensionLower,
+            fly.extensionWaist,
+          ) ||
+          !_matchesLine(
+            parts[topIndex].source,
+            fly.extensionWaist,
+            fly.waistCenterFront,
+          )) {
+        throw StateError('Unexpected Hose-v1 right-front fly contour order.');
+      }
+
+      final flyTop = parts[topIndex];
+      parts[topIndex] = TrouserOffsetPart(
+        source: flyTop.source,
+        allowanceCm: settings.waistCm,
+        points: offsetSegment(
+          flyTop.source,
+          distanceCm: settings.waistCm,
+        ),
+      );
+    }
 
     if (hemIndex <= 0 ||
         hemIndex + 2 != inseamIndex ||
         inseamIndex + 1 != firstCrotchIndex ||
-        lastCrotchIndex + 1 != topIndex) {
+        (fly == null && lastCrotchIndex + 1 != topIndex)) {
       throw StateError('Unexpected confirmed front contour order.');
     }
 
@@ -59,6 +102,9 @@ extension TrouserFrontCuttingOutline on TrouserCuttingOutlineBuilder {
         joins.add(upperInseamCrotchTransition(parts[i], parts[next]));
       } else if (i == lastCrotchIndex) {
         joins.add(frontCrotchTopTransition(parts[i], parts[next]));
+      } else if (fly != null &&
+          (i == flyLowerIndex || i == flyOuterIndex)) {
+        joins.add(lineLineTransition(parts[i], parts[next]));
       } else if (i == topIndex) {
         joins.add(frontP10Transition(parts[i], parts[next]));
       } else if (i == waistIndex) {
@@ -92,6 +138,15 @@ extension TrouserFrontCuttingOutline on TrouserCuttingOutlineBuilder {
     ]);
   }
 }
+
+bool _matchesLine(
+  PathSegment segment,
+  PatternPoint expectedStart,
+  PatternPoint expectedEnd,
+) =>
+    segment is LineSegment &&
+    segment.start.distanceTo(expectedStart) <= 1e-9 &&
+    segment.end.distanceTo(expectedEnd) <= 1e-9;
 
 int _roleIndex(List<TrouserOffsetPart> parts, String role) {
   final index = parts.indexWhere(
