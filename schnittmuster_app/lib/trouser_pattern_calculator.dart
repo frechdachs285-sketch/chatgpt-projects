@@ -12,7 +12,8 @@ class TrouserMeasurements {
   final double bodyRise;
   final double waistToFloor;
   final double trouserBottomWidth;
-
+final double alternativeLegShapingCm;
+  
   const TrouserMeasurements({
     required this.waist,
     required this.hip,
@@ -20,6 +21,7 @@ class TrouserMeasurements {
     required this.bodyRise,
     required this.waistToFloor,
     required this.trouserBottomWidth,
+    this.alternativeLegShapingCm = 0.0,
   });
 }
 
