@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'pattern_models.dart';
 import 'trouser_shaped_waistband_builder.dart';
+import 'trouser_shaped_waistband_pattern_adapter.dart';
 
 /// Isolated preview for the shaped-waistband extension.
 ///
@@ -11,10 +12,12 @@ import 'trouser_shaped_waistband_builder.dart';
 /// trouser and straight-waistband preview remains untouched.
 class TrouserShapedWaistbandPreview extends StatelessWidget {
   final TrouserShapedWaistbandGeometry geometry;
+  final bool seamAllowanceEnabled;
 
   const TrouserShapedWaistbandPreview({
     super.key,
     required this.geometry,
+    this.seamAllowanceEnabled = false,
   });
 
   @override
@@ -30,7 +33,10 @@ class TrouserShapedWaistbandPreview extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: CustomPaint(
-            painter: _ShapedWaistbandPainter(geometry),
+            painter: _ShapedWaistbandPainter(
+              geometry,
+              seamAllowanceEnabled: seamAllowanceEnabled,
+            ),
           ),
         ),
       ),
@@ -40,14 +46,28 @@ class TrouserShapedWaistbandPreview extends StatelessWidget {
 
 class _ShapedWaistbandPainter extends CustomPainter {
   final TrouserShapedWaistbandGeometry geometry;
+  final bool seamAllowanceEnabled;
 
-  _ShapedWaistbandPainter(this.geometry);
+  _ShapedWaistbandPainter(
+    this.geometry, {
+    required this.seamAllowanceEnabled,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     const gapCm = 6.0;
-    final frontBounds = _pieceBounds(geometry.front);
-    final backBounds = _pieceBounds(geometry.back);
+    const adapter = TrouserShapedWaistbandPatternAdapter();
+    final frontPattern = adapter.front(
+      geometry,
+      seamAllowanceEnabled: seamAllowanceEnabled,
+    );
+    final backPattern = adapter.back(
+      geometry,
+      seamAllowanceEnabled: seamAllowanceEnabled,
+    );
+
+    final frontBounds = _pieceBounds(geometry.front, frontPattern.cuttingOutline);
+    final backBounds = _pieceBounds(geometry.back, backPattern.cuttingOutline);
     final totalWidth = frontBounds.width + gapCm + backBounds.width;
     final totalHeight = math.max(frontBounds.height, backBounds.height);
     if (totalWidth <= 0 || totalHeight <= 0) return;
@@ -63,6 +83,7 @@ class _ShapedWaistbandPainter extends CustomPainter {
     _drawPiece(
       canvas,
       geometry.front,
+      cuttingOutline: frontPattern.cuttingOutline,
       origin: origin,
       bounds: frontBounds,
       scale: scale,
@@ -71,6 +92,7 @@ class _ShapedWaistbandPainter extends CustomPainter {
     _drawPiece(
       canvas,
       geometry.back,
+      cuttingOutline: backPattern.cuttingOutline,
       origin: Offset(origin.dx + (frontBounds.width + gapCm) * scale, origin.dy),
       bounds: backBounds,
       scale: scale,
@@ -81,6 +103,7 @@ class _ShapedWaistbandPainter extends CustomPainter {
   void _drawPiece(
     Canvas canvas,
     ShapedWaistbandPieceGeometry piece, {
+    required PatternPath? cuttingOutline,
     required Offset origin,
     required Rect bounds,
     required double scale,
@@ -91,7 +114,7 @@ class _ShapedWaistbandPainter extends CustomPainter {
           origin.dy + (p.y - bounds.top) * scale,
         );
 
-    final paint = Paint()
+    final sewingPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round
@@ -106,7 +129,7 @@ class _ShapedWaistbandPainter extends CustomPainter {
       final upperPath = Path()
         ..moveTo(start.dx, start.dy)
         ..cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
-      canvas.drawPath(upperPath, paint);
+      canvas.drawPath(upperPath, sewingPaint);
 
       final lower = piece.lowerSegments[i];
       if (lower.isNotEmpty) {
@@ -117,7 +140,7 @@ class _ShapedWaistbandPainter extends CustomPainter {
           final p = map(point);
           lowerPath.lineTo(p.dx, p.dy);
         }
-        canvas.drawPath(lowerPath, paint);
+        canvas.drawPath(lowerPath, sewingPaint);
       }
     }
 
@@ -125,13 +148,22 @@ class _ShapedWaistbandPainter extends CustomPainter {
       canvas.drawLine(
         map(piece.upperSegments.first.start),
         map(piece.lowerSegments.first.first),
-        paint,
+        sewingPaint,
       );
       canvas.drawLine(
         map(piece.upperSegments.last.end),
         map(piece.lowerSegments.last.last),
-        paint,
+        sewingPaint,
       );
+    }
+
+    if (cuttingOutline != null) {
+      final cuttingPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
+      _drawPatternPath(canvas, cuttingOutline, map, cuttingPaint);
     }
 
     final painter = TextPainter(
@@ -155,7 +187,35 @@ class _ShapedWaistbandPainter extends CustomPainter {
     );
   }
 
-  Rect _pieceBounds(ShapedWaistbandPieceGeometry piece) {
+  void _drawPatternPath(
+    Canvas canvas,
+    PatternPath path,
+    Offset Function(PatternPoint) map,
+    Paint paint,
+  ) {
+    if (path.segments.isEmpty) return;
+    final drawing = Path();
+    final first = map(path.segments.first.start);
+    drawing.moveTo(first.dx, first.dy);
+
+    for (final segment in path.segments) {
+      if (segment is LineSegment) {
+        final end = map(segment.end);
+        drawing.lineTo(end.dx, end.dy);
+      } else if (segment is BezierSegment) {
+        final c1 = map(segment.control1);
+        final c2 = map(segment.control2);
+        final end = map(segment.end);
+        drawing.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
+      }
+    }
+    canvas.drawPath(drawing, paint);
+  }
+
+  Rect _pieceBounds(
+    ShapedWaistbandPieceGeometry piece,
+    PatternPath? cuttingOutline,
+  ) {
     final points = <PatternPoint>[];
     for (final curve in piece.upperSegments) {
       points.addAll([
@@ -167,6 +227,16 @@ class _ShapedWaistbandPainter extends CustomPainter {
     }
     for (final segment in piece.lowerSegments) {
       points.addAll(segment);
+    }
+    if (cuttingOutline != null) {
+      for (final segment in cuttingOutline.segments) {
+        points.add(segment.start);
+        points.add(segment.end);
+        if (segment is BezierSegment) {
+          points.add(segment.control1);
+          points.add(segment.control2);
+        }
+      }
     }
     if (points.isEmpty) return Rect.zero;
 
@@ -185,5 +255,6 @@ class _ShapedWaistbandPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ShapedWaistbandPainter oldDelegate) =>
-      oldDelegate.geometry != geometry;
+      oldDelegate.geometry != geometry ||
+      oldDelegate.seamAllowanceEnabled != seamAllowanceEnabled;
 }
