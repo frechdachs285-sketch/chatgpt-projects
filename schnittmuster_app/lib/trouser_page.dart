@@ -42,6 +42,7 @@ class _TrouserPageState extends State<TrouserPage> {
   TrouserMeasurements? _appliedMeasurements;
   TrouserSeamAllowanceSettings? _appliedSeamAllowance;
   double? _appliedShapedWaistbandDepth;
+  double? _appliedFacingDepth;
   String? _message;
 
   @override void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) { if (mounted) _calculate(); }); }
@@ -70,14 +71,14 @@ class _TrouserPageState extends State<TrouserPage> {
       final shapedWaistband = shapedWaistbandDepth == null ? null : shapedWaistbandBuilder.build(draft: draft, waistbandDepthCm: shapedWaistbandDepth);
       final shapedWaistbandFacing = facingDepth == null ? null : facingBuilder.build(draft: draft, facingDepthCm: facingDepth);
       final fly = flyBuilder.build(draft);
-      setState(() { _draft = draft; _leftFront = leftFront; _rightFront = rightFront; _back = back; _waistband = waistband; _shapedWaistband = shapedWaistband; _shapedWaistbandFacing = shapedWaistbandFacing; _fly = fly; _appliedMeasurements = measurements; _appliedSeamAllowance = seamAllowance; _appliedShapedWaistbandDepth = shapedWaistbandDepth; _appliedSizeCode = _selectedSizeCode; _message = null; });
+      setState(() { _draft = draft; _leftFront = leftFront; _rightFront = rightFront; _back = back; _waistband = waistband; _shapedWaistband = shapedWaistband; _shapedWaistbandFacing = shapedWaistbandFacing; _fly = fly; _appliedMeasurements = measurements; _appliedSeamAllowance = seamAllowance; _appliedShapedWaistbandDepth = shapedWaistbandDepth; _appliedFacingDepth = facingDepth; _appliedSizeCode = _selectedSizeCode; _message = null; });
     } on ArgumentError catch (e) { setState(() => _message = e.message?.toString() ?? 'Maße bitte prüfen.'); } on StateError catch (e) { setState(() => _message = e.message); }
   }
 
   Future<void> _openPatternPdf() async {
     final m = _appliedMeasurements; if (m == null) return;
     try {
-      final bytes = await TrouserPdfExporter().buildPatternPdf(measurements: m, seamAllowance: _appliedSeamAllowance, sizeCode: _appliedSizeCode, shapedWaistbandDepthCm: _appliedShapedWaistbandDepth);
+      final bytes = await TrouserPdfExporter().buildPatternPdf(measurements: m, seamAllowance: _appliedSeamAllowance, sizeCode: _appliedSizeCode, shapedWaistbandDepthCm: _appliedShapedWaistbandDepth, facingDepthCm: _appliedFacingDepth);
       await Printing.layoutPdf(name: 'Hose_v1_Schnittmuster_1zu1.pdf', onLayout: (_) async => bytes);
     } catch (_) { if (!mounted) return; ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hose-PDF konnte nicht erstellt werden. Bitte Maße prüfen.'))); }
   }
