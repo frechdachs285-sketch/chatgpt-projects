@@ -29,7 +29,7 @@ class _TrouserPageState extends State<TrouserPage> {
   bool _seamAllowanceEnabled = true;
   int _selectedSizeCode = 14, _appliedSizeCode = 14;
   TrouserReferenceDraft? _draft;
-  PatternPiece? _front, _back, _waistband;
+  PatternPiece? _leftFront, _rightFront, _back, _waistband;
   TrouserFlyGeometry? _fly;
   TrouserMeasurements? _appliedMeasurements;
   TrouserSeamAllowanceSettings? _appliedSeamAllowance;
@@ -50,11 +50,12 @@ class _TrouserPageState extends State<TrouserPage> {
     try {
       final draft = TrouserPatternCalculator.calculateReferencePoints(measurements, sizeCode: _selectedSizeCode);
       const pieceBuilder = TrouserPatternPieceBuilder(), waistbandBuilder = TrouserWaistbandBuilder(), flyBuilder = TrouserFlyBuilder();
-      final front = pieceBuilder.front(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
+      final leftFront = pieceBuilder.leftFront(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
+      final rightFront = pieceBuilder.rightFront(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
       final back = pieceBuilder.back(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
       final waistband = waistbandBuilder.build(draft: draft, measurements: measurements);
       final fly = flyBuilder.build(draft);
-      setState(() { _draft = draft; _front = front; _back = back; _waistband = waistband; _fly = fly; _appliedMeasurements = measurements; _appliedSeamAllowance = seamAllowance; _appliedSizeCode = _selectedSizeCode; _message = null; });
+      setState(() { _draft = draft; _leftFront = leftFront; _rightFront = rightFront; _back = back; _waistband = waistband; _fly = fly; _appliedMeasurements = measurements; _appliedSeamAllowance = seamAllowance; _appliedSizeCode = _selectedSizeCode; _message = null; });
     } on ArgumentError catch (e) { setState(() => _message = e.message?.toString() ?? 'Maße bitte prüfen.'); } on StateError catch (e) { setState(() => _message = e.message); }
   }
 
@@ -70,7 +71,7 @@ class _TrouserPageState extends State<TrouserPage> {
   Widget _seamField(String label, TextEditingController c) => Padding(padding: const EdgeInsets.only(bottom: 10), child: TextField(controller: c, enabled: _seamAllowanceEnabled, keyboardType: const TextInputType.numberWithOptions(decimal: true), textInputAction: TextInputAction.next, decoration: InputDecoration(labelText: label, suffixText: 'cm', border: const OutlineInputBorder(), isDense: true)));
 
   @override Widget build(BuildContext context) {
-    final draft = _draft, front = _front, back = _back, waistband = _waistband, fly = _fly;
+    final draft = _draft, leftFront = _leftFront, rightFront = _rightFront, back = _back, waistband = _waistband, fly = _fly;
     return Scaffold(appBar: AppBar(title: const Text('Hose v1')), body: SafeArea(child: ListView(padding: const EdgeInsets.all(16), children: [
       Text('Körper- und Konstruktionsmaße', style: Theme.of(context).textTheme.titleLarge), const SizedBox(height: 12),
       DropdownButtonFormField<int>(initialValue: _selectedSizeCode, decoration: const InputDecoration(labelText: 'Aldrich-Konstruktionsgröße', border: OutlineInputBorder(), isDense: true, helperText: 'Wird ausdrücklich gewählt und nicht aus Körpermaßen geschätzt.'), items: [for (final size in TrouserSizeRules.supportedSizeCodes) DropdownMenuItem(value: size, child: Text('Größe $size'))], onChanged: (value) { if (value != null) setState(() => _selectedSizeCode = value); }),
@@ -78,7 +79,7 @@ class _TrouserPageState extends State<TrouserPage> {
       const SizedBox(height: 8), Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Nahtzugabe'), value: _seamAllowanceEnabled, onChanged: (v) { setState(() => _seamAllowanceEnabled = v); _calculate(); }), _seamField('Seitennähte, Innenbein und Schritt', _normalSeamController), _seamField('Taille', _waistSeamController), _seamField('Saum', _hemSeamController)]))),
       const SizedBox(height: 8), SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: _calculate, icon: const Icon(Icons.calculate_outlined), label: const Text('Hose berechnen'))),
       if (_message != null) ...[const SizedBox(height: 12), Text(_message!, style: TextStyle(color: Theme.of(context).colorScheme.error))],
-      if (draft != null && front != null && back != null && waistband != null && fly != null) ...[const SizedBox(height: 16), Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Berechnung erfolgreich'), const SizedBox(height: 6), Text('Konstruktionsgröße: $_appliedSizeCode'), Text('Referenzpunkte: ${draft.points.length}'), Text('Vorderhose: ${front.outline.segments.length} Kontursegmente, ${front.darts.length} Abnäher'), Text('Hinterhose: ${back.outline.segments.length} Kontursegmente, ${back.darts.length} Abnäher'), Text('Bund: ${waistband.outline.segments.length} Kontursegmente, ${waistband.guideLines.length} Markierungs-/Bruchlinien'), Text('Vorderer Schlitz: P10–P6, Breite ${fly.widthCm.toStringAsFixed(1)} cm'), Text(_appliedSeamAllowance?.enabled == true ? 'Nahtzugabe: an' : 'Nahtzugabe: aus')]))), const SizedBox(height: 16), Text('Vorschau', style: Theme.of(context).textTheme.titleLarge), const SizedBox(height: 8), TrouserPreview(front: front, back: back, waistband: waistband, fly: fly), const SizedBox(height: 16), SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: _openPatternPdf, icon: const Icon(Icons.picture_as_pdf_outlined), label: const Text('PDF 1:1 öffnen')))],
+      if (draft != null && leftFront != null && rightFront != null && back != null && waistband != null && fly != null) ...[const SizedBox(height: 16), Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Berechnung erfolgreich'), const SizedBox(height: 6), Text('Konstruktionsgröße: $_appliedSizeCode'), Text('Referenzpunkte: ${draft.points.length}'), Text('Vorderhose links: ${leftFront.outline.segments.length} Kontursegmente, ${leftFront.darts.length} Abnäher'), Text('Vorderhose rechts: ${rightFront.outline.segments.length} Kontursegmente, ${rightFront.darts.length} Abnäher'), Text('Hinterhose: ${back.outline.segments.length} Kontursegmente, ${back.darts.length} Abnäher'), Text('Bund: ${waistband.outline.segments.length} Kontursegmente, ${waistband.guideLines.length} Markierungs-/Bruchlinien'), Text('Vorderer Schlitz rechts: P10–P6, Breite ${fly.widthCm.toStringAsFixed(1)} cm'), Text(_appliedSeamAllowance?.enabled == true ? 'Nahtzugabe: an' : 'Nahtzugabe: aus')]))), const SizedBox(height: 16), Text('Vorschau', style: Theme.of(context).textTheme.titleLarge), const SizedBox(height: 8), TrouserPreview(leftFront: leftFront, rightFront: rightFront, back: back, waistband: waistband, fly: fly), const SizedBox(height: 16), SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: _openPatternPdf, icon: const Icon(Icons.picture_as_pdf_outlined), label: const Text('PDF 1:1 öffnen')))],
     ])));
   }
 }
