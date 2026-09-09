@@ -51,6 +51,7 @@ class TrouserPdfExporter {
       draft: draft,
       measurements: measurements,
       sizeCode: sizeCode,
+      seamAllowanceEnabled: seamAllowance?.enabled == true,
     );
     final fly = const TrouserFlyBuilder().build(draft);
 
