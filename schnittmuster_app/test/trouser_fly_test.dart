@@ -22,23 +22,23 @@ void main() {
     expect(fly.lengthCm, greaterThan(0.0));
   });
 
-  test('fly length follows the actual draft instead of a fixed constant', () {
-    const tallerRise = TrouserMeasurements(
+  test('fly length follows the actual P10-P6 draft geometry', () {
+    const deeperHip = TrouserMeasurements(
       waist: 76.0,
       hip: 100.0,
-      hipDepth: 20.9,
-      bodyRise: 31.0,
+      hipDepth: 23.0,
+      bodyRise: 28.7,
       waistToFloor: 105.0,
       trouserBottomWidth: 22.0,
     );
 
-    final first = const TrouserFlyBuilder().build(
-      TrouserPatternCalculator.calculateReferencePoints(measurements),
-    );
-    final second = const TrouserFlyBuilder().build(
-      TrouserPatternCalculator.calculateReferencePoints(tallerRise),
-    );
+    final firstDraft = TrouserPatternCalculator.calculateReferencePoints(measurements);
+    final secondDraft = TrouserPatternCalculator.calculateReferencePoints(deeperHip);
+    final first = const TrouserFlyBuilder().build(firstDraft);
+    final second = const TrouserFlyBuilder().build(secondDraft);
 
+    expect(first.lengthCm, closeTo(firstDraft[10].distanceTo(firstDraft[6]), 1e-9));
+    expect(second.lengthCm, closeTo(secondDraft[10].distanceTo(secondDraft[6]), 1e-9));
     expect(second.lengthCm, isNot(closeTo(first.lengthCm, 1e-9)));
   });
 }
