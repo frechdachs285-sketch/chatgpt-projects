@@ -100,7 +100,8 @@ class TrouserWaistbandBuilder {
       ],
       labels: [
         PatternLabel(
-          position: PatternPoint(total / 2.0, foldY),
+          // Keep the product label clear of the mathematical fold line.
+          position: PatternPoint(total / 2.0, foldY / 2.0),
           text: 'Gerader Bund',
         ),
       ],
