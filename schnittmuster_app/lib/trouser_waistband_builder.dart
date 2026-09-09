@@ -8,36 +8,50 @@ import 'trouser_waistband.dart';
 /// Confirmed rules used here:
 /// - finished width: 4.0 cm (Hose-v1 decision)
 /// - cut width before seam allowance: 8.0 cm
-/// - waistband length follows the finished trouser waist after darts
-/// - 4.0 cm underlap/extension
+/// - the trouser waistline contains 1.0 cm ease and is eased onto the waistband
+/// - waistband length therefore equals the entered waist measurement exactly
+/// - 4.0 cm underwrap/extension
 /// - centre-back, side-seam and centre-front positions are marked
 /// - fold line lies halfway across the 8.0 cm strip
 ///
 /// No waistband seam allowance is added here because that value has not yet
 /// been separately confirmed for Hose v1.
 class TrouserWaistbandBuilder {
+  static const double trouserWaistEaseCm = 1.0;
+  static const double _toleranceCm = 1e-9;
+
   final TrouserWaistLengthCalculator waistLengths;
 
   const TrouserWaistbandBuilder({
     this.waistLengths = const TrouserWaistLengthCalculator(),
   });
 
-  PatternPiece build(TrouserReferenceDraft draft) {
+  PatternPiece build({
+    required TrouserReferenceDraft draft,
+    required TrouserMeasurements measurements,
+  }) {
     final lengths = waistLengths.calculate(draft);
-    final front = lengths.frontCm;
-    final back = lengths.backCm;
-    final garment = lengths.fullGarmentCm;
-    final total = garment + TrouserWaistbandSettings.underlapCm;
+    final expectedTrouserWaist = measurements.waist + trouserWaistEaseCm;
+
+    if ((lengths.fullGarmentCm - expectedTrouserWaist).abs() > _toleranceCm) {
+      throw StateError(
+        'Finished trouser waist must equal waist measurement plus 1.0 cm ease.',
+      );
+    }
+
+    final waistband = measurements.waist;
+    final quarter = waistband / 4.0;
+    final total = waistband + TrouserWaistbandSettings.underlapCm;
     const height = TrouserWaistbandSettings.cutWidthWithoutSeamAllowanceCm;
     const foldY = TrouserWaistbandSettings.finishedWidthCm;
 
-    // One-piece waistband sequence starting at centre front:
-    // CF -> side -> CB -> side -> CF -> 4 cm extension.
+    // The four trouser waist sections each contain 0.25 cm ease and are
+    // eased to the quarter-waist marks on this one-piece straight waistband.
     final leftCfX = 0.0;
-    final leftSideX = front;
-    final cbX = front + back;
-    final rightSideX = front + 2.0 * back;
-    final rightCfX = garment;
+    final leftSideX = quarter;
+    final cbX = quarter * 2.0;
+    final rightSideX = quarter * 3.0;
+    final rightCfX = waistband;
     final extensionEndX = total;
 
     final p0 = PatternPoint(leftCfX, 0.0);
