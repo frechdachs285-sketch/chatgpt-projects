@@ -149,11 +149,10 @@ Bestätigter Hose-v1-Stand:
 - 4,0 cm Untertritt/Verlängerung
 - Markierungen für vordere Mitte, Seitennähte und hintere Mitte
 - Bruchlinie in der Mitte der 8,0-cm-Breite
+- Nahtzugabe: 1,5 cm rundherum bei aktivierter Nahtzugabe
+- bei deaktivierter Nahtzugabe bleibt nur die bestätigte Bund-Nähkontur
 
-Weiterhin offen und deshalb bewusst nicht programmiert:
-- Nahtzugabe des geraden Bundes
-
-Grund: Für den geraden Bund ist in Hose v1 weiterhin keine eigene konkrete Nahtzugabenregel festgelegt. Es wird nichts geschätzt.
+Die 1,5-cm-Nahtzugabe des geraden Bundes ist eine bestätigte Hose-v1-Digitalregel und wird nicht als Aldrich-Regel ausgegeben.
 
 ## 8. Geformter Bund und Beleg
 Quelle für die fachliche Grundidee: Aldrich, Seite 98.
@@ -208,7 +207,7 @@ Vorhanden sind außerdem:
 - Größenbeschriftung
 - Nahtkontur
 - Schneidekontur bei aktivierter Nahtzugabe für Vorder- und Hinterhose
-- Schneidekontur bei aktivierter Nahtzugabe für geformten Bund und Beleg
+- Schneidekontur bei aktivierter Nahtzugabe für geraden Bund, geformten Bund und Beleg
 
 Zusätzliche unbestätigte Passzeichen/Knipse werden nicht ergänzt.
 
@@ -219,11 +218,9 @@ Für Vorder- und Hinterhose sind getrennte Nahtzugabenwerte vorhanden für:
 - Saum
 
 Zusätzlich bestätigte feste Hose-v1-Digitalregeln:
+- gerader Bund: 1,5 cm rundherum
 - geformter Bund: 1,5 cm rundherum
 - Beleg geformter Bund: 1,5 cm rundherum
-
-Weiterhin offen:
-- Nahtzugabe des geraden Bundes
 
 Die Nahtzugabe kann global ein- und ausgeschaltet werden.
 
@@ -237,7 +234,7 @@ Bestätigter Stand:
 - geformter Bund vorn/hinten wird separat dargestellt, wenn eine Bundtiefe eingegeben wurde
 - Beleg vorn/hinten wird separat dargestellt, wenn eine Belegtiefe eingegeben wurde
 - Nahtkontur und Schneidekontur sind unterscheidbar
-- Nahtzugabe AN/AUS funktioniert auch für geformten Bund und Beleg
+- Nahtzugabe AN/AUS funktioniert für den geraden Bund technisch und für geformten Bund und Beleg praktisch bestätigt
 - Fadenlauf und Abnäher sind sichtbar
 - Größenbeschriftung ist für die drei Hosenteile zweizeilig dargestellt, um Überlappungen zu vermeiden
 - Referenztest Größe 14 auf Android erfolgreich geprüft
@@ -247,10 +244,11 @@ Bestätigter Stand:
 - getrennte PDF-Ausgabe für Vorderhose links, Vorderhose rechts und Hinterhose
 - rechte Vorderhose enthält die Schlitzerweiterung
 - bei geradem Bund: gerader Bund wird ausgegeben
+- gerader Bund besitzt technisch die bestätigte 1,5-cm-Schneidekontur bei Nahtzugabe AN
 - bei geformtem Bund: geformter Bund vorn + hinten ersetzt den geraden Bund
 - bei zusätzlicher Belegtiefe: Beleg vorn + hinten wird zusätzlich ausgegeben
 - geformter Bund und Beleg übernehmen die bestätigte 1,5-cm-Schneidekontur bei Nahtzugabe AN
-- bei Nahtzugabe AUS wird für geformten Bund und Beleg nur die Nähkontur ausgegeben
+- bei Nahtzugabe AUS wird für Bundteile und Beleg nur die Nähkontur ausgegeben
 - 1:1-Geometrie wird in Millimeter/PDF-Punkte umgerechnet
 - automatische A4-Kachelung
 - Seitenkoordinaten wie A1, B1, C1 usw.
@@ -290,6 +288,9 @@ Geprüft und bestätigt:
 - Beleg-PDF mit Nahtzugabe AN/AUS praktisch bestätigt
 - A4-Kachelung und Seitenkennzeichnung sind sichtbar vorhanden
 
+Technisch bestätigt, aber für diesen neuen Regelentscheid noch nicht erneut separat praktisch gegengeprüft:
+- gerader Bund: 1,5 cm Nahtzugabe rundherum mit globalem AN/AUS-Schalter
+
 Noch nicht physisch bestätigt:
 - tatsächliche Druckmaßhaltigkeit auf Papier
 
@@ -297,7 +298,6 @@ Dafür ist später das 100 × 100-mm-Kontrollquadrat bei 100 % / „Tatsächlich
 
 ## 14. Bewusst offene bzw. gesperrte Punkte
 - Größe 26 bleibt gesperrt.
-- Nahtzugabe des geraden Bundes bleibt offen, bis eine bestätigte Regel vorliegt.
 - zusätzliche Passzeichen/Knipse werden ohne bestätigte Grundlage nicht ergänzt.
 - Taschen und weitere Modellierungsdetails gehören nicht automatisch zum klassischen Hosengrundschnitt und werden nicht ohne eigene geprüfte Regeln hinzugefügt.
 - physischer 1:1-Drucktest steht noch aus.
@@ -324,10 +324,14 @@ Vorheriger zugehöriger PDF-Commit:
 - `399369aee1f1a3a93c1137197dc4b4f26e2fce32`
 - Änderung: Beleg vorn + hinten als 1:1-PDF-Schnittteile integriert
 
+Gerader Bund:
+- 1,5-cm-Nahtzugabe rundherum ist im bestehenden `TrouserWaistbandBuilder` bereits implementiert und wurde am 9. September 2026 ausdrücklich als Hose-v1-Digitalregel bestätigt.
+- Für diese Bestätigung war keine Codeänderung erforderlich.
+
 Dazu erfolgreich:
 - Schnittmuster App Check #504
 - Schnittmuster APK #343
 
-Die praktische Vorschau- und PDF-Kontrolle auf Android wurde anschließend für geformten Bund und Beleg sowohl mit Nahtzugabe AN als auch AUS erfolgreich durchgeführt.
+Die praktische Vorschau- und PDF-Kontrolle auf Android wurde für geformten Bund und Beleg sowohl mit Nahtzugabe AN als auch AUS erfolgreich durchgeführt.
 
 Diese Datei dokumentiert den aktuell bestätigten Quellen- und Entwicklungsstand für „Hose v1“ der Schnittmuster-App. Sie ist als Arbeits- und Referenzquelle für die weitere Entwicklung gedacht und ersetzt keine vollständige Wiedergabe des urheberrechtlich geschützten Buches.
