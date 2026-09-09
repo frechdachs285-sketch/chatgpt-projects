@@ -89,9 +89,15 @@ class _TrouserPreviewPainter extends CustomPainter {
           origin.dy + (p.y - bounds.top) * scale,
         );
 
+    final cuttingPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
     final outlinePaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
+      ..strokeWidth = 1.2
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
@@ -105,26 +111,11 @@ class _TrouserPreviewPainter extends CustomPainter {
       ..strokeWidth = 1.0
       ..strokeCap = StrokeCap.round;
 
-    final path = Path();
-    var started = false;
-    for (final segment in piece.outline.segments) {
-      if (!started) {
-        final start = map(segment.start);
-        path.moveTo(start.dx, start.dy);
-        started = true;
-      }
-
-      if (segment is BezierSegment) {
-        final c1 = map(segment.control1);
-        final c2 = map(segment.control2);
-        final end = map(segment.end);
-        path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
-      } else {
-        final end = map(segment.end);
-        path.lineTo(end.dx, end.dy);
-      }
+    final cuttingOutline = piece.cuttingOutline;
+    if (cuttingOutline != null) {
+      canvas.drawPath(_canvasPath(cuttingOutline, map), cuttingPaint);
     }
-    canvas.drawPath(path, outlinePaint);
+    canvas.drawPath(_canvasPath(piece.outline, map), outlinePaint);
 
     for (final dart in piece.darts) {
       final leg1 = map(dart.leg1);
@@ -166,6 +157,32 @@ class _TrouserPreviewPainter extends CustomPainter {
     }
   }
 
+  Path _canvasPath(
+    PatternPath patternPath,
+    Offset Function(PatternPoint point) map,
+  ) {
+    final path = Path();
+    var started = false;
+    for (final segment in patternPath.segments) {
+      if (!started) {
+        final start = map(segment.start);
+        path.moveTo(start.dx, start.dy);
+        started = true;
+      }
+
+      if (segment is BezierSegment) {
+        final c1 = map(segment.control1);
+        final c2 = map(segment.control2);
+        final end = map(segment.end);
+        path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
+      } else {
+        final end = map(segment.end);
+        path.lineTo(end.dx, end.dy);
+      }
+    }
+    return path;
+  }
+
   void _drawArrowHead(Canvas canvas, Offset tip, Offset other, Paint paint) {
     final dx = other.dx - tip.dx;
     final dy = other.dy - tip.dy;
@@ -196,13 +213,10 @@ class _TrouserPreviewPainter extends CustomPainter {
 
   Rect _pieceBounds(PatternPiece piece) {
     final points = <PatternPoint>[];
-    for (final segment in piece.outline.segments) {
-      points.add(segment.start);
-      points.add(segment.end);
-      if (segment is BezierSegment) {
-        points.add(segment.control1);
-        points.add(segment.control2);
-      }
+    _addPathPoints(points, piece.outline);
+    final cuttingOutline = piece.cuttingOutline;
+    if (cuttingOutline != null) {
+      _addPathPoints(points, cuttingOutline);
     }
     for (final dart in piece.darts) {
       points.addAll([dart.leg1, dart.leg2, dart.apex]);
@@ -215,6 +229,17 @@ class _TrouserPreviewPainter extends CustomPainter {
       points.add(label.position);
     }
     return _boundsOf(points);
+  }
+
+  void _addPathPoints(List<PatternPoint> points, PatternPath path) {
+    for (final segment in path.segments) {
+      points.add(segment.start);
+      points.add(segment.end);
+      if (segment is BezierSegment) {
+        points.add(segment.control1);
+        points.add(segment.control2);
+      }
+    }
   }
 
   Rect _combinedBounds(PatternPiece a, PatternPiece b) {
