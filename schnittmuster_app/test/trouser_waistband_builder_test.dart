@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:schnittmuster_app/pattern_models.dart';
 import 'package:schnittmuster_app/trouser_pattern_calculator.dart';
 import 'package:schnittmuster_app/trouser_waist_length.dart';
 import 'package:schnittmuster_app/trouser_waistband.dart';
