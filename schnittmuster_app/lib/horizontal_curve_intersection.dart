@@ -1,12 +1,26 @@
 import 'pattern_geometry.dart';
 import 'pattern_models.dart';
 
+class HorizontalCurveHit {
+  final CubicBezierCurve curve;
+  final int curveIndex;
+  final double t;
+  final PatternPoint point;
+
+  const HorizontalCurveHit({
+    required this.curve,
+    required this.curveIndex,
+    required this.t,
+    required this.point,
+  });
+}
+
 /// App-specific geometry helper for intersecting confirmed digital curves
 /// with a horizontal construction line y = targetY.
 class HorizontalCurveIntersection {
   const HorizontalCurveIntersection();
 
-  List<PatternPoint> intersections(
+  List<HorizontalCurveHit> detailedIntersections(
     Iterable<CubicBezierCurve> curves,
     double targetY, {
     double tolerance = 1e-9,
@@ -22,15 +36,26 @@ class HorizontalCurveIntersection {
       throw ArgumentError('samplesPerCurve must be at least 8.');
     }
 
-    final hits = <PatternPoint>[];
+    final list = curves.toList(growable: false);
+    final hits = <HorizontalCurveHit>[];
 
-    for (final curve in curves) {
+    for (var curveIndex = 0; curveIndex < list.length; curveIndex++) {
+      final curve = list[curveIndex];
       var previousT = 0.0;
       var previous = curve.pointAt(previousT);
       var previousDelta = previous.y - targetY;
 
       if (previousDelta.abs() <= tolerance) {
-        _addUnique(hits, previous, tolerance);
+        _addUniqueHit(
+          hits,
+          HorizontalCurveHit(
+            curve: curve,
+            curveIndex: curveIndex,
+            t: previousT,
+            point: previous,
+          ),
+          tolerance,
+        );
       }
 
       for (var i = 1; i <= samplesPerCurve; i++) {
@@ -39,16 +64,34 @@ class HorizontalCurveIntersection {
         final currentDelta = current.y - targetY;
 
         if (currentDelta.abs() <= tolerance) {
-          _addUnique(hits, current, tolerance);
+          _addUniqueHit(
+            hits,
+            HorizontalCurveHit(
+              curve: curve,
+              curveIndex: curveIndex,
+              t: currentT,
+              point: current,
+            ),
+            tolerance,
+          );
         } else if (previousDelta == 0.0 || currentDelta.sign != previousDelta.sign) {
-          final hit = _bisect(
+          final t = _bisectT(
             curve,
             targetY,
             previousT,
             currentT,
             tolerance,
           );
-          _addUnique(hits, hit, tolerance);
+          _addUniqueHit(
+            hits,
+            HorizontalCurveHit(
+              curve: curve,
+              curveIndex: curveIndex,
+              t: t,
+              point: curve.pointAt(t),
+            ),
+            tolerance,
+          );
         }
 
         previousT = currentT;
@@ -57,16 +100,16 @@ class HorizontalCurveIntersection {
       }
     }
 
-    return List<PatternPoint>.unmodifiable(hits);
+    return List<HorizontalCurveHit>.unmodifiable(hits);
   }
 
-  PatternPoint singleIntersection(
+  HorizontalCurveHit singleDetailedIntersection(
     Iterable<CubicBezierCurve> curves,
     double targetY, {
     double tolerance = 1e-9,
     int samplesPerCurve = 512,
   }) {
-    final hits = intersections(
+    final hits = detailedIntersections(
       curves,
       targetY,
       tolerance: tolerance,
@@ -80,7 +123,35 @@ class HorizontalCurveIntersection {
     return hits.single;
   }
 
-  PatternPoint _bisect(
+  List<PatternPoint> intersections(
+    Iterable<CubicBezierCurve> curves,
+    double targetY, {
+    double tolerance = 1e-9,
+    int samplesPerCurve = 512,
+  }) =>
+      List<PatternPoint>.unmodifiable(
+        detailedIntersections(
+          curves,
+          targetY,
+          tolerance: tolerance,
+          samplesPerCurve: samplesPerCurve,
+        ).map((hit) => hit.point),
+      );
+
+  PatternPoint singleIntersection(
+    Iterable<CubicBezierCurve> curves,
+    double targetY, {
+    double tolerance = 1e-9,
+    int samplesPerCurve = 512,
+  }) =>
+      singleDetailedIntersection(
+        curves,
+        targetY,
+        tolerance: tolerance,
+        samplesPerCurve: samplesPerCurve,
+      ).point;
+
+  double _bisectT(
     CubicBezierCurve curve,
     double targetY,
     double lowT,
@@ -96,7 +167,7 @@ class HorizontalCurveIntersection {
       final point = curve.pointAt(mid);
       final delta = point.y - targetY;
       if (delta.abs() <= tolerance) {
-        return point;
+        return mid;
       }
       if (delta.sign == lowDelta.sign) {
         low = mid;
@@ -106,17 +177,17 @@ class HorizontalCurveIntersection {
       }
     }
 
-    return curve.pointAt((low + high) * 0.5);
+    return (low + high) * 0.5;
   }
 
-  void _addUnique(
-    List<PatternPoint> points,
-    PatternPoint candidate,
+  void _addUniqueHit(
+    List<HorizontalCurveHit> hits,
+    HorizontalCurveHit candidate,
     double tolerance,
   ) {
-    if (points.any((point) => point.distanceTo(candidate) <= tolerance * 10.0)) {
+    if (hits.any((hit) => hit.point.distanceTo(candidate.point) <= tolerance * 10.0)) {
       return;
     }
-    points.add(candidate);
+    hits.add(candidate);
   }
 }
