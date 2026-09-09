@@ -6,6 +6,7 @@ import 'trouser_pattern_calculator.dart';
 import 'trouser_pattern_piece_builder.dart';
 import 'trouser_pdf_export.dart';
 import 'trouser_preview.dart';
+import 'trouser_seam_allowance.dart';
 
 class TrouserPage extends StatefulWidget {
   const TrouserPage({super.key});
@@ -22,10 +23,16 @@ class _TrouserPageState extends State<TrouserPage> {
   final _waistToFloorController = TextEditingController(text: '105');
   final _bottomWidthController = TextEditingController(text: '22');
 
+  final _normalSeamController = TextEditingController(text: '1.5');
+  final _waistSeamController = TextEditingController(text: '1.0');
+  final _hemSeamController = TextEditingController(text: '3.0');
+  bool _seamAllowanceEnabled = true;
+
   TrouserReferenceDraft? _draft;
   PatternPiece? _front;
   PatternPiece? _back;
   TrouserMeasurements? _appliedMeasurements;
+  TrouserSeamAllowanceSettings? _appliedSeamAllowance;
   String? _message;
 
   @override
@@ -44,12 +51,21 @@ class _TrouserPageState extends State<TrouserPage> {
     _bodyRiseController.dispose();
     _waistToFloorController.dispose();
     _bottomWidthController.dispose();
+    _normalSeamController.dispose();
+    _waistSeamController.dispose();
+    _hemSeamController.dispose();
     super.dispose();
   }
 
   double? _read(TextEditingController controller) {
     final value = double.tryParse(controller.text.trim().replaceAll(',', '.'));
     if (value == null || !value.isFinite || value <= 0.0) return null;
+    return value;
+  }
+
+  double? _readNonNegative(TextEditingController controller) {
+    final value = double.tryParse(controller.text.trim().replaceAll(',', '.'));
+    if (value == null || !value.isFinite || value < 0.0) return null;
     return value;
   }
 
@@ -80,28 +96,51 @@ class _TrouserPageState extends State<TrouserPage> {
     );
   }
 
+  TrouserSeamAllowanceSettings? get _seamAllowance {
+    final normal = _readNonNegative(_normalSeamController);
+    final waist = _readNonNegative(_waistSeamController);
+    final hem = _readNonNegative(_hemSeamController);
+    if (normal == null || waist == null || hem == null) return null;
+
+    final settings = TrouserSeamAllowanceSettings(
+      enabled: _seamAllowanceEnabled,
+      normalCm: normal,
+      waistCm: waist,
+      hemCm: hem,
+    );
+    return settings.isValid ? settings : null;
+  }
+
   void _calculate() {
     FocusScope.of(context).unfocus();
     final measurements = _measurements;
+    final seamAllowance = _seamAllowance;
     if (measurements == null) {
       setState(() => _message = 'Bitte alle sechs Maße als positive Zahl eingeben.');
+      return;
+    }
+    if (seamAllowance == null) {
+      setState(() => _message = 'Bitte gültige Nahtzugaben ab 0 cm eingeben.');
       return;
     }
 
     try {
       final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
       const pieceBuilder = TrouserPatternPieceBuilder();
-      final front = pieceBuilder.front(draft);
-      final back = pieceBuilder.back(draft);
+      final front = pieceBuilder.front(draft, seamAllowance: seamAllowance);
+      final back = pieceBuilder.back(draft, seamAllowance: seamAllowance);
       setState(() {
         _draft = draft;
         _front = front;
         _back = back;
         _appliedMeasurements = measurements;
+        _appliedSeamAllowance = seamAllowance;
         _message = null;
       });
     } on ArgumentError catch (error) {
       setState(() => _message = error.message?.toString() ?? 'Maße bitte prüfen.');
+    } on StateError catch (error) {
+      setState(() => _message = error.message);
     }
   }
 
@@ -142,6 +181,22 @@ class _TrouserPageState extends State<TrouserPage> {
         ),
       );
 
+  Widget _seamField(String label, TextEditingController controller) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: TextField(
+          controller: controller,
+          enabled: _seamAllowanceEnabled,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: label,
+            suffixText: 'cm',
+            border: const OutlineInputBorder(),
+            isDense: true,
+          ),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final draft = _draft;
@@ -165,7 +220,32 @@ class _TrouserPageState extends State<TrouserPage> {
             _field('Sitzhöhe', _bodyRiseController),
             _field('Taille bis Boden', _waistToFloorController),
             _field('Fertige Saumweite je Hosenbein', _bottomWidthController),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Nahtzugabe'),
+                      value: _seamAllowanceEnabled,
+                      onChanged: (value) {
+                        setState(() => _seamAllowanceEnabled = value);
+                        _calculate();
+                      },
+                    ),
+                    _seamField(
+                      'Seitennähte, Innenbein und Schritt',
+                      _normalSeamController,
+                    ),
+                    _seamField('Taille', _waistSeamController),
+                    _seamField('Saum', _hemSeamController),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
@@ -197,6 +277,11 @@ class _TrouserPageState extends State<TrouserPage> {
                       ),
                       Text(
                         'Hinterhose: ${back.outline.segments.length} Kontursegmente, ${back.darts.length} Abnäher',
+                      ),
+                      Text(
+                        _appliedSeamAllowance?.enabled == true
+                            ? 'Nahtzugabe: an'
+                            : 'Nahtzugabe: aus',
                       ),
                     ],
                   ),
