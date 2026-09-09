@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'pattern_models.dart';
 import 'trouser_pattern_calculator.dart';
 
@@ -30,6 +32,8 @@ enum TrouserFlyArchitecture {
 class TrouserFlyGeometry {
   final PatternPoint waistCenterFront;
   final PatternPoint lowerEnd;
+  final PatternPoint extensionWaist;
+  final PatternPoint extensionLower;
   final double widthCm;
   final TrouserFlySide side;
   final TrouserFlyArchitecture architecture;
@@ -37,12 +41,20 @@ class TrouserFlyGeometry {
   const TrouserFlyGeometry({
     required this.waistCenterFront,
     required this.lowerEnd,
+    required this.extensionWaist,
+    required this.extensionLower,
     required this.widthCm,
     required this.side,
     required this.architecture,
   });
 
   double get lengthCm => waistCenterFront.distanceTo(lowerEnd);
+
+  PatternPath get extensionOutline => PatternPath([
+        LineSegment(waistCenterFront, extensionWaist),
+        LineSegment(extensionWaist, extensionLower),
+        LineSegment(extensionLower, lowerEnd),
+      ]);
 }
 
 class TrouserFlyBuilder {
@@ -52,9 +64,35 @@ class TrouserFlyBuilder {
     // P10 is the centre-front waist point. P6 is the confirmed junction
     // between the straight centre-front section and the front crotch curve.
     // Therefore the fly length follows the actual draft geometry.
+    final waistCenterFront = draft[10];
+    final lowerEnd = draft[6];
+
+    final dx = lowerEnd.x - waistCenterFront.x;
+    final dy = lowerEnd.y - waistCenterFront.y;
+    final length = math.sqrt(dx * dx + dy * dy);
+    if (length == 0) {
+      throw StateError('Hose-v1 fly requires distinct P10 and P6 points.');
+    }
+
+    // Build the cut-on edge at an exact 4.0 cm perpendicular distance from
+    // the P10-P6 centre-front line. The sign is kept as an explicit digital
+    // convention for the already confirmed wearer's-right-front piece.
+    final offsetX = -dy / length * TrouserFlySettings.widthCm;
+    final offsetY = dx / length * TrouserFlySettings.widthCm;
+    final extensionWaist = PatternPoint(
+      waistCenterFront.x + offsetX,
+      waistCenterFront.y + offsetY,
+    );
+    final extensionLower = PatternPoint(
+      lowerEnd.x + offsetX,
+      lowerEnd.y + offsetY,
+    );
+
     return TrouserFlyGeometry(
-      waistCenterFront: draft[10],
-      lowerEnd: draft[6],
+      waistCenterFront: waistCenterFront,
+      lowerEnd: lowerEnd,
+      extensionWaist: extensionWaist,
+      extensionLower: extensionLower,
       widthCm: TrouserFlySettings.widthCm,
       side: TrouserFlySettings.side,
       architecture: TrouserFlySettings.architecture,
