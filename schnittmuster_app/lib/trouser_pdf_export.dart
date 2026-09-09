@@ -9,6 +9,8 @@ import 'trouser_fly.dart';
 import 'trouser_pattern_calculator.dart';
 import 'trouser_pattern_piece_builder.dart';
 import 'trouser_seam_allowance.dart';
+import 'trouser_shaped_waistband_builder.dart';
+import 'trouser_shaped_waistband_pattern_adapter.dart';
 import 'trouser_waistband_builder.dart';
 
 class TrouserPdfExporter {
@@ -25,6 +27,7 @@ class TrouserPdfExporter {
     required TrouserMeasurements measurements,
     TrouserSeamAllowanceSettings? seamAllowance,
     int sizeCode = 14,
+    double? shapedWaistbandDepthCm,
   }) async {
     final draft = TrouserPatternCalculator.calculateReferencePoints(
       measurements,
@@ -55,12 +58,44 @@ class TrouserPdfExporter {
     );
     final fly = const TrouserFlyBuilder().build(draft);
 
+    PatternPiece? shapedWaistbandFront;
+    PatternPiece? shapedWaistbandBack;
+    if (shapedWaistbandDepthCm != null) {
+      final geometry = const TrouserShapedWaistbandBuilder().build(
+        draft: draft,
+        waistbandDepthCm: shapedWaistbandDepthCm,
+      );
+      const adapter = TrouserShapedWaistbandPatternAdapter();
+      shapedWaistbandFront = adapter.front(
+        geometry,
+        sizeCode: sizeCode,
+        seamAllowanceEnabled: seamAllowance?.enabled == true,
+      );
+      shapedWaistbandBack = adapter.back(
+        geometry,
+        sizeCode: sizeCode,
+        seamAllowanceEnabled: seamAllowance?.enabled == true,
+      );
+    }
+
     final doc = pw.Document();
     _addCalibrationPage(doc, measurements);
     _addPieceTiles(doc, leftFront, title: 'Hose v1 - Vorderhose links 1:1');
     _addPieceTiles(doc, rightFront, title: 'Hose v1 - Vorderhose rechts 1:1', fly: fly);
     _addPieceTiles(doc, back, title: 'Hose v1 - Hinterhose 1:1');
     _addPieceTiles(doc, waistband, title: 'Hose v1 - Gerader Bund 1:1');
+    if (shapedWaistbandFront != null && shapedWaistbandBack != null) {
+      _addPieceTiles(
+        doc,
+        shapedWaistbandFront,
+        title: 'Hose v1 - Geformter Bund vorn 1:1',
+      );
+      _addPieceTiles(
+        doc,
+        shapedWaistbandBack,
+        title: 'Hose v1 - Geformter Bund hinten 1:1',
+      );
+    }
     return doc.save();
   }
 
