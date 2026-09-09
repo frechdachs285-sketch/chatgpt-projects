@@ -106,7 +106,39 @@ class TrouserPatternCalculator {
     p[30] = p[21]! + waistVector * (1.0 / 3.0);
     p[31] = p[21]! + waistVector * (2.0 / 3.0);
 
-    return TrouserReferenceDraft(Map.unmodifiable(p));
+    final activePoints = _alternativeLegPoints(
+      p,
+      m.alternativeLegShapingCm,
+    );
+
+    return TrouserReferenceDraft(Map.unmodifiable(activePoints));
+  }
+
+  static Map<int, PatternPoint> _alternativeLegPoints(
+    Map<int, PatternPoint> original,
+    double delta,
+  ) {
+    if (delta == 0.0) {
+      return original;
+    }
+
+    final result = Map<int, PatternPoint>.from(original);
+
+    PatternPoint shift(int number, double dx) {
+      final point = original[number]!;
+      return PatternPoint(point.x + dx, point.y);
+    }
+
+    result[12] = shift(12, delta);
+    result[13] = shift(13, delta);
+    result[14] = shift(14, -delta);
+    result[15] = shift(15, -delta);
+    result[26] = shift(26, delta);
+    result[27] = shift(27, delta);
+    result[28] = shift(28, -delta);
+    result[29] = shift(29, -delta);
+
+    return result;
   }
 
   static void _validate(TrouserMeasurements m) {
