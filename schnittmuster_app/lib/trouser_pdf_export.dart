@@ -5,6 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import 'pattern_models.dart';
+import 'trouser_fly.dart';
 import 'trouser_pattern_calculator.dart';
 import 'trouser_pattern_piece_builder.dart';
 import 'trouser_seam_allowance.dart';
@@ -45,10 +46,16 @@ class TrouserPdfExporter {
       draft: draft,
       measurements: measurements,
     );
+    final fly = const TrouserFlyBuilder().build(draft);
 
     final doc = pw.Document();
     _addCalibrationPage(doc, measurements);
-    _addPieceTiles(doc, front, title: 'Hose v1 - Vorderhose 1:1');
+    _addPieceTiles(
+      doc,
+      front,
+      title: 'Hose v1 - Vorderhose 1:1',
+      fly: fly,
+    );
     _addPieceTiles(doc, back, title: 'Hose v1 - Hinterhose 1:1');
     _addPieceTiles(doc, waistband, title: 'Hose v1 - Gerader Bund 1:1');
     return doc.save();
@@ -65,7 +72,12 @@ class TrouserPdfExporter {
     ])));
   }
 
-  void _addPieceTiles(pw.Document doc, PatternPiece piece, {required String title}) {
+  void _addPieceTiles(
+    pw.Document doc,
+    PatternPiece piece, {
+    required String title,
+    TrouserFlyGeometry? fly,
+  }) {
     final bounds = _pieceBounds(piece); final pieceWidthMm = bounds.width * 10.0; final pieceHeightMm = bounds.height * 10.0;
     final canvasWidthMm = pieceWidthMm + 2 * _piecePaddingMm; final canvasHeightMm = pieceHeightMm + 2 * _piecePaddingMm;
     final originX = _piecePaddingMm - bounds.minX * 10.0; final originY = _piecePaddingMm - bounds.minY * 10.0;
@@ -80,6 +92,12 @@ class TrouserPdfExporter {
           if (piece.cuttingOutline != null) _pathWidget(piece.cuttingOutline!, originX - tileX, originY - tileY, lineWidthMm: 0.45),
           _pathWidget(piece.outline, originX - tileX, originY - tileY, lineWidthMm: 0.25),
           if (piece.guideLines.isNotEmpty) _pathWidget(PatternPath(piece.guideLines), originX - tileX, originY - tileY, lineWidthMm: 0.20),
+          if (fly != null) _pathWidget(
+            PatternPath([LineSegment(fly.waistCenterFront, fly.lowerEnd)]),
+            originX - tileX,
+            originY - tileY,
+            lineWidthMm: 0.30,
+          ),
           ..._dartWidgets(piece, originX - tileX, originY - tileY), if (piece.grainline != null) _grainlineWidget(piece.grainline!, originX - tileX, originY - tileY),
           ..._labelWidgets(piece, originX: originX, originY: originY, tileX: tileX, tileY: tileY, row: row, col: col, rows: rows, cols: cols),
         ])),
