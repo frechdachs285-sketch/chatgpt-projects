@@ -93,42 +93,27 @@ class _TrouserPreviewPainter extends CustomPainter {
     );
     final trouserX = origin.dx + (totalWidth - trouserWidth) * scale / 2.0;
 
-    _drawPiece(
-      canvas,
-      leftFront,
-      origin: Offset(trouserX, origin.dy),
-      bounds: leftFrontBounds,
-      scale: scale,
-    );
-
+    _drawPiece(canvas, leftFront,
+        origin: Offset(trouserX, origin.dy), bounds: leftFrontBounds, scale: scale);
     _drawPiece(
       canvas,
       rightFront,
-      origin: Offset(
-        trouserX + (leftFrontBounds.width + gapCm) * scale,
-        origin.dy,
-      ),
+      origin: Offset(trouserX + (leftFrontBounds.width + gapCm) * scale, origin.dy),
       bounds: rightFrontBounds,
       scale: scale,
       fly: fly,
     );
-
     _drawPiece(
       canvas,
       back,
       origin: Offset(
         trouserX +
-            (leftFrontBounds.width +
-                    gapCm +
-                    rightFrontBounds.width +
-                    gapCm) *
-                scale,
+            (leftFrontBounds.width + gapCm + rightFrontBounds.width + gapCm) * scale,
         origin.dy,
       ),
       bounds: backBounds,
       scale: scale,
     );
-
     _drawPiece(
       canvas,
       waistband,
@@ -190,11 +175,9 @@ class _TrouserPreviewPainter extends CustomPainter {
     for (final guide in piece.guideLines) {
       canvas.drawLine(map(guide.start), map(guide.end), guidePaint);
     }
-
     if (fly != null) {
       canvas.drawLine(map(fly.waistCenterFront), map(fly.lowerEnd), flyPaint);
     }
-
     for (final dart in piece.darts) {
       final leg1 = map(dart.leg1);
       final apex = map(dart.apex);
@@ -217,15 +200,21 @@ class _TrouserPreviewPainter extends CustomPainter {
 
     for (final label in piece.labels) {
       final position = map(label.position);
+      final isTrouserPiece = label.text.startsWith('Vorderhose ') ||
+          label.text.startsWith('Hinterhose');
+      final previewText = isTrouserPiece
+          ? label.text.replaceFirst(' - Größe ', '\nGröße ')
+          : label.text;
       final painter = TextPainter(
         text: TextSpan(
-          text: label.text,
+          text: previewText,
           style: const TextStyle(
             color: Colors.black,
             fontSize: 11,
             fontWeight: FontWeight.w600,
           ),
         ),
+        textAlign: TextAlign.center,
         textDirection: TextDirection.ltr,
       )..layout();
       painter.paint(
@@ -235,10 +224,7 @@ class _TrouserPreviewPainter extends CustomPainter {
     }
   }
 
-  Path _canvasPath(
-    PatternPath patternPath,
-    Offset Function(PatternPoint point) map,
-  ) {
+  Path _canvasPath(PatternPath patternPath, Offset Function(PatternPoint point) map) {
     final path = Path();
     var started = false;
     for (final segment in patternPath.segments) {
@@ -272,16 +258,8 @@ class _TrouserPreviewPainter extends CustomPainter {
     const arrowLength = 6.0;
     const arrowHalfWidth = 2.5;
     final base = Offset(tip.dx + ux * arrowLength, tip.dy + uy * arrowLength);
-    canvas.drawLine(
-      tip,
-      Offset(base.dx + px * arrowHalfWidth, base.dy + py * arrowHalfWidth),
-      paint,
-    );
-    canvas.drawLine(
-      tip,
-      Offset(base.dx - px * arrowHalfWidth, base.dy - py * arrowHalfWidth),
-      paint,
-    );
+    canvas.drawLine(tip, Offset(base.dx + px * arrowHalfWidth, base.dy + py * arrowHalfWidth), paint);
+    canvas.drawLine(tip, Offset(base.dx - px * arrowHalfWidth, base.dy - py * arrowHalfWidth), paint);
   }
 
   Rect _pieceBounds(PatternPiece piece) {
