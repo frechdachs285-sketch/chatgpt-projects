@@ -83,15 +83,15 @@ class TrouserShapedWaistbandBuilder {
     final lowerSegments = <List<PatternPoint>>[];
 
     for (final upper in closedWaist.segments) {
-      // Upper segments run from centre toward side. Reversing the curve makes
-      // the positive left-hand normal point into the trouser body (downward in
-      // the app coordinate system), which is the below-waist direction.
-      final reversed = _reverse(upper);
-      final offsetReversed = SeamAllowanceGeometry.offsetBezierAdaptive(
-        reversed,
+      // Upper segments run from centre toward side. For the confirmed trouser
+      // draft orientation, the positive left-hand normal of this direction
+      // points toward the trouser body. The previous reversal selected the
+      // opposite normal and was caught by the explicit P8/P25 direction test.
+      final offset = SeamAllowanceGeometry.offsetBezierAdaptive(
+        upper,
         waistbandDepthCm,
       );
-      lowerSegments.add(offsetReversed.reversed.toList(growable: false));
+      lowerSegments.add(offset);
     }
 
     return ShapedWaistbandPieceGeometry(
@@ -107,13 +107,6 @@ class TrouserShapedWaistbandBuilder {
         leg2: dart.leg2,
         width: dart.leg1.distanceTo(dart.leg2),
         length: dart.center.distanceTo(dart.apex),
-      );
-
-  CubicBezierCurve _reverse(CubicBezierCurve curve) => CubicBezierCurve(
-        start: curve.end,
-        control1: curve.control2,
-        control2: curve.control1,
-        end: curve.start,
       );
 }
 
