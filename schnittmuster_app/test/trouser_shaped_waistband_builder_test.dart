@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:schnittmuster_app/pattern_models.dart';
 import 'package:schnittmuster_app/trouser_pattern_calculator.dart';
 import 'package:schnittmuster_app/trouser_shaped_waistband_builder.dart';
 
@@ -61,6 +62,58 @@ void main() {
 
     verifyPiece(result.front);
     verifyPiece(result.back);
+  });
+
+  test('size 14 shaped waistband lower edge points toward trouser body', () {
+    final draft = TrouserPatternCalculator.calculateReferencePoints(
+      size14,
+      sizeCode: 14,
+    );
+
+    const builder = TrouserShapedWaistbandBuilder();
+    final result = builder.build(
+      draft: draft,
+      waistbandDepthCm: 4.0,
+    );
+
+    // The trouser draft itself supplies the interior direction: P8 is the
+    // front hip reference below the front waist, and P25 is the corresponding
+    // back hip reference below the back waist. No screen-coordinate assumption
+    // is needed here.
+    void verifyTowardHip(
+      ShapedWaistbandPieceGeometry piece,
+      PatternPoint hipPoint,
+      String name,
+    ) {
+      for (var i = 0; i < piece.upperSegments.length; i++) {
+        final upper = piece.upperSegments[i];
+        final lower = piece.lowerSegments[i];
+
+        final upperStartToHip = upper.start.distanceTo(hipPoint);
+        final lowerStartToHip = lower.first.distanceTo(hipPoint);
+        final upperEndToHip = upper.end.distanceTo(hipPoint);
+        final lowerEndToHip = lower.last.distanceTo(hipPoint);
+
+        expect(
+          lowerStartToHip,
+          lessThan(upperStartToHip),
+          reason: '$name segment $i start must move toward hip/interior',
+        );
+        expect(
+          lowerEndToHip,
+          lessThan(upperEndToHip),
+          reason: '$name segment $i end must move toward hip/interior',
+        );
+
+        for (final point in lower) {
+          expect(point.x.isFinite, isTrue, reason: '$name segment $i finite x');
+          expect(point.y.isFinite, isTrue, reason: '$name segment $i finite y');
+        }
+      }
+    }
+
+    verifyTowardHip(result.front, draft[8], 'front');
+    verifyTowardHip(result.back, draft[25], 'back');
   });
 
   test('shaped waistband rejects non-positive depth', () {
