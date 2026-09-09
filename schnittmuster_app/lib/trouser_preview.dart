@@ -3,17 +3,20 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'pattern_models.dart';
+import 'trouser_fly.dart';
 
 class TrouserPreview extends StatelessWidget {
   final PatternPiece front;
   final PatternPiece back;
   final PatternPiece waistband;
+  final TrouserFlyGeometry? fly;
 
   const TrouserPreview({
     super.key,
     required this.front,
     required this.back,
     required this.waistband,
+    this.fly,
   });
 
   @override
@@ -33,6 +36,7 @@ class TrouserPreview extends StatelessWidget {
               front: front,
               back: back,
               waistband: waistband,
+              fly: fly,
             ),
           ),
         ),
@@ -45,11 +49,13 @@ class _TrouserPreviewPainter extends CustomPainter {
   final PatternPiece front;
   final PatternPiece back;
   final PatternPiece waistband;
+  final TrouserFlyGeometry? fly;
 
   _TrouserPreviewPainter({
     required this.front,
     required this.back,
     required this.waistband,
+    required this.fly,
   });
 
   @override
@@ -79,6 +85,7 @@ class _TrouserPreviewPainter extends CustomPainter {
       origin: Offset(trouserX, origin.dy),
       bounds: frontBounds,
       scale: scale,
+      fly: fly,
     );
 
     _drawPiece(
@@ -110,6 +117,7 @@ class _TrouserPreviewPainter extends CustomPainter {
     required Offset origin,
     required Rect bounds,
     required double scale,
+    TrouserFlyGeometry? fly,
   }) {
     Offset map(PatternPoint p) => Offset(
           origin.dx + (p.x - bounds.left) * scale,
@@ -138,6 +146,10 @@ class _TrouserPreviewPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
       ..strokeCap = StrokeCap.round;
+    final flyPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..strokeCap = StrokeCap.round;
 
     final cuttingOutline = piece.cuttingOutline;
     if (cuttingOutline != null) {
@@ -147,6 +159,10 @@ class _TrouserPreviewPainter extends CustomPainter {
 
     for (final guide in piece.guideLines) {
       canvas.drawLine(map(guide.start), map(guide.end), guidePaint);
+    }
+
+    if (fly != null) {
+      canvas.drawLine(map(fly.waistCenterFront), map(fly.lowerEnd), flyPaint);
     }
 
     for (final dart in piece.darts) {
@@ -287,5 +303,6 @@ class _TrouserPreviewPainter extends CustomPainter {
   bool shouldRepaint(covariant _TrouserPreviewPainter oldDelegate) =>
       oldDelegate.front != front ||
       oldDelegate.back != back ||
-      oldDelegate.waistband != waistband;
+      oldDelegate.waistband != waistband ||
+      oldDelegate.fly != fly;
 }
