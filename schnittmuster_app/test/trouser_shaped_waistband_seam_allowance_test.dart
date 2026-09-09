@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:schnittmuster_app/pattern_geometry.dart';
 import 'package:schnittmuster_app/pattern_models.dart';
+import 'package:schnittmuster_app/seam_allowance_geometry.dart';
 import 'package:schnittmuster_app/trouser_pattern_calculator.dart';
 import 'package:schnittmuster_app/trouser_shaped_waistband_builder.dart';
 import 'package:schnittmuster_app/trouser_shaped_waistband_pattern_adapter.dart';
@@ -60,37 +62,51 @@ void main() {
     verifyClosed(adapter.back(geometry, seamAllowanceEnabled: true));
   });
 
-  test('upper cutting edge stays 1.5 cm outside the sewing edge', () {
+  test('upper cutting edge keeps 1.5 cm normal-offset geometry between miters', () {
     void verifyUpperDistance(
       PatternPiece piece,
       ShapedWaistbandPieceGeometry section,
       String name,
     ) {
-      final cutting = piece.cuttingOutline!;
-      final upperStart = section.upperSegments.first.start;
-      final upperEnd = section.upperSegments.last.end;
-
-      final distancesFromStart = <double>[];
-      final distancesFromEnd = <double>[];
-      for (final segment in cutting.segments) {
-        distancesFromStart.add(segment.start.distanceTo(upperStart));
-        distancesFromStart.add(segment.end.distanceTo(upperStart));
-        distancesFromEnd.add(segment.start.distanceTo(upperEnd));
-        distancesFromEnd.add(segment.end.distanceTo(upperEnd));
+      final cuttingVertices = <PatternPoint>[];
+      for (final segment in piece.cuttingOutline!.segments) {
+        cuttingVertices.add(segment.start);
+        cuttingVertices.add(segment.end);
       }
 
-      distancesFromStart.sort();
-      distancesFromEnd.sort();
+      var checkedInteriorPoint = false;
+      for (var curveIndex = 0;
+          curveIndex < section.upperSegments.length;
+          curveIndex++) {
+        final curve = section.upperSegments[curveIndex];
+        final expected = _offsetCurveRight(
+          curve,
+          TrouserShapedWaistbandPatternAdapter.seamAllowanceCm,
+        );
+
+        // The first/last offset vertices may be replaced by exact miter
+        // intersections at corners. A miter is correctly farther than 1.5 cm
+        // from the original corner point, so only unchanged interior normal-
+        // offset vertices are suitable for this distance/integration check.
+        if (expected.length < 3) continue;
+
+        final probe = expected[expected.length ~/ 2];
+        final nearest = cuttingVertices
+            .map((point) => point.distanceTo(probe))
+            .reduce((a, b) => a < b ? a : b);
+
+        expect(
+          nearest,
+          closeTo(0.0, 1e-9),
+          reason: '$name upper curve $curveIndex must retain its 1.5 cm offset',
+        );
+        checkedInteriorPoint = true;
+      }
 
       expect(
-        distancesFromStart.first,
-        closeTo(TrouserShapedWaistbandPatternAdapter.seamAllowanceCm, 0.03),
-        reason: '$name upper centre seam allowance',
-      );
-      expect(
-        distancesFromEnd.first,
-        closeTo(TrouserShapedWaistbandPatternAdapter.seamAllowanceCm, 0.03),
-        reason: '$name upper side seam allowance',
+        checkedInteriorPoint,
+        isTrue,
+        reason: '$name needs at least one interior upper offset point',
       );
     }
 
@@ -126,6 +142,22 @@ void main() {
       'back',
     );
   });
+}
+
+List<PatternPoint> _offsetCurveRight(
+  CubicBezierCurve curve,
+  double distance,
+) {
+  final reversed = CubicBezierCurve(
+    start: curve.end,
+    control1: curve.control2,
+    control2: curve.control1,
+    end: curve.start,
+  );
+  return SeamAllowanceGeometry.offsetBezierAdaptive(
+    reversed,
+    distance,
+  ).reversed.toList();
 }
 
 _Bounds _bounds(PatternPath path) {
