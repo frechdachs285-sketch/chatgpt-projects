@@ -13,11 +13,13 @@ import 'trouser_waistband.dart';
 /// - 4.0 cm underwrap/extension
 /// - centre-back, side-seam and centre-front positions are marked
 /// - fold line lies halfway across the 8.0 cm strip
+/// - waistband seam allowance: 1.5 cm when seam allowance is enabled
 ///
-/// No waistband seam allowance is added here because that value has not yet
-/// been separately confirmed for Hose v1.
+/// The 1.5 cm waistband seam allowance is an app-specific digital rule,
+/// not an Aldrich rule. The confirmed waistband seam line remains unchanged.
 class TrouserWaistbandBuilder {
   static const double trouserWaistEaseCm = 1.0;
+  static const double waistbandSeamAllowanceCm = 1.5;
   static const double _toleranceCm = 1e-9;
 
   final TrouserWaistLengthCalculator waistLengths;
@@ -30,6 +32,7 @@ class TrouserWaistbandBuilder {
     required TrouserReferenceDraft draft,
     required TrouserMeasurements measurements,
     int sizeCode = 14,
+    bool seamAllowanceEnabled = false,
   }) {
     final lengths = waistLengths.calculate(draft);
     final expectedTrouserWaist = measurements.waist + trouserWaistEaseCm;
@@ -58,6 +61,44 @@ class TrouserWaistbandBuilder {
     final p2 = PatternPoint(extensionEndX, height);
     final p3 = PatternPoint(leftCfX, height);
 
+    final cuttingOutline = seamAllowanceEnabled
+        ? PatternPath([
+            const LineSegment(
+              PatternPoint(-waistbandSeamAllowanceCm, -waistbandSeamAllowanceCm),
+              PatternPoint(0.0, 0.0),
+            ),
+          ])
+        : null;
+
+    final actualCuttingOutline = seamAllowanceEnabled
+        ? PatternPath([
+            LineSegment(
+              PatternPoint(p0.x - waistbandSeamAllowanceCm,
+                  p0.y - waistbandSeamAllowanceCm),
+              PatternPoint(p1.x + waistbandSeamAllowanceCm,
+                  p1.y - waistbandSeamAllowanceCm),
+            ),
+            LineSegment(
+              PatternPoint(p1.x + waistbandSeamAllowanceCm,
+                  p1.y - waistbandSeamAllowanceCm),
+              PatternPoint(p2.x + waistbandSeamAllowanceCm,
+                  p2.y + waistbandSeamAllowanceCm),
+            ),
+            LineSegment(
+              PatternPoint(p2.x + waistbandSeamAllowanceCm,
+                  p2.y + waistbandSeamAllowanceCm),
+              PatternPoint(p3.x - waistbandSeamAllowanceCm,
+                  p3.y + waistbandSeamAllowanceCm),
+            ),
+            LineSegment(
+              PatternPoint(p3.x - waistbandSeamAllowanceCm,
+                  p3.y + waistbandSeamAllowanceCm),
+              PatternPoint(p0.x - waistbandSeamAllowanceCm,
+                  p0.y - waistbandSeamAllowanceCm),
+            ),
+          ])
+        : null;
+
     return PatternPiece(
       id: 'trouser_waistband',
       name: 'Gerader Bund',
@@ -75,6 +116,7 @@ class TrouserWaistbandBuilder {
         LineSegment(p2, p3),
         LineSegment(p3, p0),
       ]),
+      cuttingOutline: actualCuttingOutline,
       guideLines: [
         LineSegment(
           PatternPoint(leftCfX, foldY),
