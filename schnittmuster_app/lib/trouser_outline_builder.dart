@@ -2,6 +2,7 @@ import 'pattern_geometry.dart';
 import 'pattern_models.dart';
 import 'trouser_curve_geometry.dart';
 import 'trouser_pattern_calculator.dart';
+import 'trouser_size_rules.dart';
 
 /// Builds only contour sections whose Hose-v1 geometry is already fixed and
 /// tested. No new construction values are introduced here.
@@ -10,11 +11,12 @@ class TrouserOutlineBuilder {
 
   const TrouserOutlineBuilder({this.curves = const TrouserCurveBuilder()});
 
-  /// Closed confirmed front contour:
-  /// P11..P12 side seam -> reversed hem P12..P14 -> P14-P15 ->
-  /// reversed 0.75 cm inseam P15..P9 -> reversed crotch P9..P6 ->
-  /// straight Aldrich upper lines P6-P10-P11.
-  PatternPath frontLowerContour(TrouserReferenceDraft d) {
+  /// Closed confirmed front contour. Size 14 remains the Hose-v1 reference.
+  PatternPath frontLowerContour(
+    TrouserReferenceDraft d, {
+    int sizeCode = 14,
+  }) {
+    final sizeRules = TrouserSizeRules.forSizeCode(sizeCode);
     final side = curves.frontSideSeam(
       p11: d[11],
       p8: d[8],
@@ -29,7 +31,10 @@ class TrouserOutlineBuilder {
     );
     final frontCrotch = curves.naturalSplineThrough([
       d[6],
-      curves.frontCrotchGuide(d[5]),
+      curves.frontCrotchGuide(
+        d[5],
+        distanceCm: sizeRules.frontCrotchGuideCm,
+      ),
       d[9],
     ]);
 
@@ -45,11 +50,12 @@ class TrouserOutlineBuilder {
     ]);
   }
 
-  /// Closed confirmed back contour:
-  /// P22..P26 side seam -> reversed hem P26..P28 -> P28-P29 ->
-  /// reversed 1.25 cm inseam P29..P24 -> reversed crotch P24..P21 ->
-  /// straight Aldrich upper line P21-P22.
-  PatternPath backLowerContour(TrouserReferenceDraft d) {
+  /// Closed confirmed back contour. Size 14 remains the Hose-v1 reference.
+  PatternPath backLowerContour(
+    TrouserReferenceDraft d, {
+    int sizeCode = 14,
+  }) {
+    final sizeRules = TrouserSizeRules.forSizeCode(sizeCode);
     final side = curves.backSideSeam(
       p22: d[22],
       p25: d[25],
@@ -65,7 +71,10 @@ class TrouserOutlineBuilder {
     final backCrotch = curves.naturalSplineThrough([
       d[21],
       d[19],
-      curves.backCrotchGuide(d[16]),
+      curves.backCrotchGuide(
+        d[16],
+        distanceCm: sizeRules.backCrotchGuideCm,
+      ),
       d[24],
     ]);
 
