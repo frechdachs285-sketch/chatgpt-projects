@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'pattern_models.dart';
+import 'trouser_size_rules.dart';
 
 /// Body and design values needed by the Aldrich 5th ed. classic tailored
 /// trouser block. Units are centimetres.
@@ -38,9 +39,11 @@ class TrouserReferenceDraft {
 /// digital curve interpolation is kept separate.
 class TrouserPatternCalculator {
   static TrouserReferenceDraft calculateReferencePoints(
-    TrouserMeasurements m,
-  ) {
+    TrouserMeasurements m, {
+    int sizeCode = 14,
+  }) {
     _validate(m);
+    final sizeRules = TrouserSizeRules.forSizeCode(sizeCode);
 
     final p = <int, PatternPoint>{};
     p[0] = const PatternPoint(0.0, 0.0);
@@ -67,8 +70,10 @@ class TrouserPatternCalculator {
     final halfBottomMinusHalf = m.trouserBottomWidth / 2.0 - 0.5;
     final aldRichHemY = m.waistToFloor;
     p[12] = PatternPoint(halfBottomMinusHalf, aldRichHemY);
-    // Size-14 reference rule: 4-13 = 3-12 + 1.3 cm.
-    p[13] = PatternPoint(halfBottomMinusHalf + 1.3, p[4]!.y);
+    p[13] = PatternPoint(
+      halfBottomMinusHalf + sizeRules.kneeOuterIncrementCm,
+      p[4]!.y,
+    );
     p[14] = PatternPoint(-halfBottomMinusHalf, aldRichHemY);
     p[15] = PatternPoint(-p[13]!.x, p[4]!.y);
 
