@@ -29,6 +29,7 @@ class TrouserWaistbandBuilder {
   PatternPiece build({
     required TrouserReferenceDraft draft,
     required TrouserMeasurements measurements,
+    int sizeCode = 14,
   }) {
     final lengths = waistLengths.calculate(draft);
     final expectedTrouserWaist = measurements.waist + trouserWaistEaseCm;
@@ -45,8 +46,6 @@ class TrouserWaistbandBuilder {
     const height = TrouserWaistbandSettings.cutWidthWithoutSeamAllowanceCm;
     const foldY = TrouserWaistbandSettings.finishedWidthCm;
 
-    // The four trouser waist sections each contain 0.25 cm ease and are
-    // eased to the quarter-waist marks on this one-piece straight waistband.
     final leftCfX = 0.0;
     final leftSideX = quarter;
     final cbX = quarter * 2.0;
@@ -100,9 +99,8 @@ class TrouserWaistbandBuilder {
       ],
       labels: [
         PatternLabel(
-          // Keep the product label clear of the mathematical fold line.
           position: PatternPoint(total / 2.0, foldY / 2.0),
-          text: 'Gerader Bund',
+          text: 'Gerader Bund - Größe $sizeCode',
         ),
       ],
     );
