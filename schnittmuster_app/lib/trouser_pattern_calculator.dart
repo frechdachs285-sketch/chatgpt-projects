@@ -12,8 +12,8 @@ class TrouserMeasurements {
   final double bodyRise;
   final double waistToFloor;
   final double trouserBottomWidth;
-final double alternativeLegShapingCm;
-  
+  final double alternativeLegShapingCm;
+
   const TrouserMeasurements({
     required this.waist,
     required this.hip,
@@ -120,6 +120,9 @@ class TrouserPatternCalculator {
     ];
     if (values.any((v) => !v.isFinite || v <= 0.0)) {
       throw ArgumentError('Trouser measurements must be finite and > 0.');
+    }
+    if (!m.alternativeLegShapingCm.isFinite) {
+      throw ArgumentError('alternativeLegShapingCm must be finite.');
     }
     if (m.hipDepth >= m.waistToFloor || m.bodyRise >= m.waistToFloor) {
       throw ArgumentError('Hip depth and body rise must be below waist-to-floor.');
