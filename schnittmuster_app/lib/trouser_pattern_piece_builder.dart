@@ -58,8 +58,6 @@ class TrouserPatternPieceBuilder {
     TrouserSeamAllowanceSettings? seamAllowance,
     int sizeCode = 14,
   }) {
-    // The right-front fly is asymmetric. Build its seam/cut-on outline from
-    // the confirmed base contour without changing the Aldrich-derived base.
     final base = _frontPiece(
       draft,
       id: 'trouser_front_right',
@@ -117,8 +115,6 @@ class TrouserPatternPieceBuilder {
         continue;
       }
 
-      // Existing contour order reaches P6 from the crotch and then P10.
-      // Route the physical right-front edge around the 4 cm cut-on extension.
       result.add(LineSegment(fly.lowerEnd, fly.extensionLower));
       result.add(LineSegment(fly.extensionLower, fly.extensionWaist));
       result.add(LineSegment(fly.extensionWaist, fly.waistCenterFront));
@@ -160,7 +156,7 @@ class TrouserPatternPieceBuilder {
       labels: [
         PatternLabel(
           position: _midpoint(draft[0], draft[3]),
-          text: label,
+          text: '$label - Größe $sizeCode',
         ),
       ],
     );
@@ -196,7 +192,7 @@ class TrouserPatternPieceBuilder {
       labels: [
         PatternLabel(
           position: _midpoint(draft[0], draft[3]),
-          text: 'Hinterhose',
+          text: 'Hinterhose - Größe $sizeCode',
         ),
       ],
     );
