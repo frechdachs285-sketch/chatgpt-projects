@@ -71,6 +71,26 @@ void main() {
     expect(back.outline.segments, isNotEmpty);
   });
 
+  test('both pieces use the P0-P3 centre-leg axis as the digital grainline', () {
+    final front = builder.front(draft);
+    final back = builder.back(draft);
+
+    expect(front.grainline, isNotNull);
+    expect(back.grainline, isNotNull);
+    expect(front.grainline!.start.distanceTo(draft[0]), lessThan(1e-9));
+    expect(front.grainline!.end.distanceTo(draft[3]), lessThan(1e-9));
+    expect(back.grainline!.start.distanceTo(draft[0]), lessThan(1e-9));
+    expect(back.grainline!.end.distanceTo(draft[3]), lessThan(1e-9));
+  });
+
+  test('classic tailored trouser block adds no unconfirmed seam notches', () {
+    final front = builder.front(draft);
+    final back = builder.back(draft);
+
+    expect(front.notches, isEmpty);
+    expect(back.notches, isEmpty);
+  });
+
   test('enabled seam allowance attaches cutting outlines to both pieces', () {
     final front = builder.front(
       draft,
