@@ -1,25 +1,44 @@
 import 'pattern_models.dart';
+import 'trouser_cutting_outline_back.dart';
+import 'trouser_cutting_outline_builder.dart';
+import 'trouser_cutting_outline_front.dart';
 import 'trouser_dart_geometry.dart';
 import 'trouser_outline_builder.dart';
 import 'trouser_pattern_calculator.dart';
+import 'trouser_seam_allowance.dart';
 
 /// Builds Hose-v1 pattern pieces only from already confirmed geometry.
 class TrouserPatternPieceBuilder {
   final TrouserOutlineBuilder outlines;
   final TrouserDartGeometry dartGeometry;
+  final TrouserCuttingOutlineBuilder cuttingOutlines;
 
   const TrouserPatternPieceBuilder({
     this.outlines = const TrouserOutlineBuilder(),
     this.dartGeometry = const TrouserDartGeometry(),
+    this.cuttingOutlines = const TrouserCuttingOutlineBuilder(),
   });
 
-  PatternPiece front(TrouserReferenceDraft draft) {
+  PatternPiece front(
+    TrouserReferenceDraft draft, {
+    TrouserSeamAllowanceSettings? seamAllowance,
+  }) {
     final frontDart = dartGeometry.front(draft);
+    final outline = outlines.frontLowerContour(draft);
+    final cuttingOutline = seamAllowance != null && seamAllowance.enabled
+        ? cuttingOutlines.buildFrontCuttingOutline(
+            outline: outline,
+            draft: draft,
+            settings: seamAllowance,
+          )
+        : null;
+
     return PatternPiece(
       id: 'trouser_front',
       name: 'Vorderhose',
       points: _points(draft),
-      outline: outlines.frontLowerContour(draft),
+      outline: outline,
+      cuttingOutline: cuttingOutline,
       darts: [_toDart(frontDart, width: 2.0, length: 10.0)],
       grainline: Grainline(start: draft[0], end: draft[3]),
       labels: [
@@ -31,14 +50,27 @@ class TrouserPatternPieceBuilder {
     );
   }
 
-  PatternPiece back(TrouserReferenceDraft draft) {
+  PatternPiece back(
+    TrouserReferenceDraft draft, {
+    TrouserSeamAllowanceSettings? seamAllowance,
+  }) {
     final dart30 = dartGeometry.back30(draft);
     final dart31 = dartGeometry.back31(draft);
+    final outline = outlines.backLowerContour(draft);
+    final cuttingOutline = seamAllowance != null && seamAllowance.enabled
+        ? cuttingOutlines.buildBackCuttingOutline(
+            outline: outline,
+            draft: draft,
+            settings: seamAllowance,
+          )
+        : null;
+
     return PatternPiece(
       id: 'trouser_back',
       name: 'Hinterhose',
       points: _points(draft),
-      outline: outlines.backLowerContour(draft),
+      outline: outline,
+      cuttingOutline: cuttingOutline,
       darts: [
         _toDart(dart30, width: 2.0, length: 12.0),
         _toDart(dart31, width: 2.0, length: 10.0),
