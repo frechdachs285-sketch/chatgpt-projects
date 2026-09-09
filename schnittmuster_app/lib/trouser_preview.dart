@@ -7,11 +7,13 @@ import 'pattern_models.dart';
 class TrouserPreview extends StatelessWidget {
   final PatternPiece front;
   final PatternPiece back;
+  final PatternPiece waistband;
 
   const TrouserPreview({
     super.key,
     required this.front,
     required this.back,
+    required this.waistband,
   });
 
   @override
@@ -27,7 +29,11 @@ class TrouserPreview extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: CustomPaint(
-            painter: _TrouserPreviewPainter(front: front, back: back),
+            painter: _TrouserPreviewPainter(
+              front: front,
+              back: back,
+              waistband: waistband,
+            ),
           ),
         ),
       ),
@@ -38,19 +44,25 @@ class TrouserPreview extends StatelessWidget {
 class _TrouserPreviewPainter extends CustomPainter {
   final PatternPiece front;
   final PatternPiece back;
+  final PatternPiece waistband;
 
-  _TrouserPreviewPainter({required this.front, required this.back});
+  _TrouserPreviewPainter({
+    required this.front,
+    required this.back,
+    required this.waistband,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final bounds = _combinedBounds(front, back);
-    if (bounds.width <= 0 || bounds.height <= 0) return;
-
     const gapCm = 8.0;
     final frontBounds = _pieceBounds(front);
     final backBounds = _pieceBounds(back);
-    final totalWidth = frontBounds.width + gapCm + backBounds.width;
-    final totalHeight = math.max(frontBounds.height, backBounds.height);
+    final waistbandBounds = _pieceBounds(waistband);
+    final trouserWidth = frontBounds.width + gapCm + backBounds.width;
+    final trouserHeight = math.max(frontBounds.height, backBounds.height);
+    final totalWidth = math.max(trouserWidth, waistbandBounds.width);
+    final totalHeight = trouserHeight + gapCm + waistbandBounds.height;
+    if (totalWidth <= 0 || totalHeight <= 0) return;
 
     final scale = math.min(size.width / totalWidth, size.height / totalHeight);
     final drawWidth = totalWidth * scale;
@@ -59,11 +71,12 @@ class _TrouserPreviewPainter extends CustomPainter {
       (size.width - drawWidth) / 2.0,
       (size.height - drawHeight) / 2.0,
     );
+    final trouserX = origin.dx + (totalWidth - trouserWidth) * scale / 2.0;
 
     _drawPiece(
       canvas,
       front,
-      origin: origin,
+      origin: Offset(trouserX, origin.dy),
       bounds: frontBounds,
       scale: scale,
     );
@@ -71,8 +84,22 @@ class _TrouserPreviewPainter extends CustomPainter {
     _drawPiece(
       canvas,
       back,
-      origin: Offset(origin.dx + (frontBounds.width + gapCm) * scale, origin.dy),
+      origin: Offset(
+        trouserX + (frontBounds.width + gapCm) * scale,
+        origin.dy,
+      ),
       bounds: backBounds,
+      scale: scale,
+    );
+
+    _drawPiece(
+      canvas,
+      waistband,
+      origin: Offset(
+        origin.dx + (totalWidth - waistbandBounds.width) * scale / 2.0,
+        origin.dy + (trouserHeight + gapCm) * scale,
+      ),
+      bounds: waistbandBounds,
       scale: scale,
     );
   }
@@ -94,18 +121,19 @@ class _TrouserPreviewPainter extends CustomPainter {
       ..strokeWidth = 2.2
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
-
     final outlinePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
-
+    final guidePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.9
+      ..strokeCap = StrokeCap.round;
     final dartPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.1
       ..strokeCap = StrokeCap.round;
-
     final grainPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
@@ -116,6 +144,10 @@ class _TrouserPreviewPainter extends CustomPainter {
       canvas.drawPath(_canvasPath(cuttingOutline, map), cuttingPaint);
     }
     canvas.drawPath(_canvasPath(piece.outline, map), outlinePaint);
+
+    for (final guide in piece.guideLines) {
+      canvas.drawLine(map(guide.start), map(guide.end), guidePaint);
+    }
 
     for (final dart in piece.darts) {
       final leg1 = map(dart.leg1);
@@ -169,7 +201,6 @@ class _TrouserPreviewPainter extends CustomPainter {
         path.moveTo(start.dx, start.dy);
         started = true;
       }
-
       if (segment is BezierSegment) {
         final c1 = map(segment.control1);
         final c2 = map(segment.control2);
@@ -188,17 +219,13 @@ class _TrouserPreviewPainter extends CustomPainter {
     final dy = other.dy - tip.dy;
     final length = math.sqrt(dx * dx + dy * dy);
     if (length <= 0.0) return;
-
     final ux = dx / length;
     final uy = dy / length;
     final px = -uy;
     final py = ux;
     const arrowLength = 6.0;
     const arrowHalfWidth = 2.5;
-    final base = Offset(
-      tip.dx + ux * arrowLength,
-      tip.dy + uy * arrowLength,
-    );
+    final base = Offset(tip.dx + ux * arrowLength, tip.dy + uy * arrowLength);
     canvas.drawLine(
       tip,
       Offset(base.dx + px * arrowHalfWidth, base.dy + py * arrowHalfWidth),
@@ -215,16 +242,15 @@ class _TrouserPreviewPainter extends CustomPainter {
     final points = <PatternPoint>[];
     _addPathPoints(points, piece.outline);
     final cuttingOutline = piece.cuttingOutline;
-    if (cuttingOutline != null) {
-      _addPathPoints(points, cuttingOutline);
+    if (cuttingOutline != null) _addPathPoints(points, cuttingOutline);
+    for (final guide in piece.guideLines) {
+      points.addAll([guide.start, guide.end]);
     }
     for (final dart in piece.darts) {
       points.addAll([dart.leg1, dart.leg2, dart.apex]);
     }
     final grain = piece.grainline;
-    if (grain != null) {
-      points.addAll([grain.start, grain.end]);
-    }
+    if (grain != null) points.addAll([grain.start, grain.end]);
     for (final label in piece.labels) {
       points.add(label.position);
     }
@@ -242,35 +268,24 @@ class _TrouserPreviewPainter extends CustomPainter {
     }
   }
 
-  Rect _combinedBounds(PatternPiece a, PatternPiece b) {
-    final ra = _pieceBounds(a);
-    final rb = _pieceBounds(b);
-    return Rect.fromLTRB(
-      math.min(ra.left, rb.left),
-      math.min(ra.top, rb.top),
-      math.max(ra.right, rb.right),
-      math.max(ra.bottom, rb.bottom),
-    );
-  }
-
   Rect _boundsOf(List<PatternPoint> points) {
     if (points.isEmpty) return Rect.zero;
     var minX = points.first.x;
     var maxX = points.first.x;
     var minY = points.first.y;
     var maxY = points.first.y;
-
     for (final p in points.skip(1)) {
       minX = math.min(minX, p.x);
       maxX = math.max(maxX, p.x);
       minY = math.min(minY, p.y);
       maxY = math.max(maxY, p.y);
     }
-
     return Rect.fromLTRB(minX, minY, maxX, maxY);
   }
 
   @override
   bool shouldRepaint(covariant _TrouserPreviewPainter oldDelegate) =>
-      oldDelegate.front != front || oldDelegate.back != back;
+      oldDelegate.front != front ||
+      oldDelegate.back != back ||
+      oldDelegate.waistband != waistband;
 }
