@@ -1,4 +1,5 @@
 import 'pattern_models.dart';
+import 'trouser_pattern_calculator.dart';
 
 /// Digital product rule for the Hose-v1 classic front fly.
 ///
@@ -30,19 +31,13 @@ class TrouserFlyGeometry {
 class TrouserFlyBuilder {
   const TrouserFlyBuilder();
 
-  TrouserFlyGeometry build(Map<int, PatternPoint> draft) {
-    final p6 = draft[6];
-    final p10 = draft[10];
-    if (p6 == null || p10 == null) {
-      throw ArgumentError('Trouser fly requires draft points P6 and P10.');
-    }
-
+  TrouserFlyGeometry build(TrouserReferenceDraft draft) {
     // P10 is the centre-front waist point. P6 is the confirmed junction
     // between the straight centre-front section and the front crotch curve.
     // Therefore the fly length follows the actual draft geometry.
     return TrouserFlyGeometry(
-      waistCenterFront: p10,
-      lowerEnd: p6,
+      waistCenterFront: draft[10],
+      lowerEnd: draft[6],
       widthCm: TrouserFlySettings.widthCm,
     );
   }
