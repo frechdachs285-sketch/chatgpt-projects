@@ -7,15 +7,18 @@ import 'trouser_fly.dart';
 import 'trouser_outline_builder.dart';
 import 'trouser_pattern_calculator.dart';
 import 'trouser_seam_allowance.dart';
+import 'trouser_shorts_outline_builder.dart';
 
 /// Builds Hose-v1 pattern pieces only from already confirmed geometry.
 class TrouserPatternPieceBuilder {
   final TrouserOutlineBuilder outlines;
+  final TrouserShortsOutlineBuilder shortsOutlines;
   final TrouserDartGeometry dartGeometry;
   final TrouserCuttingOutlineBuilder cuttingOutlines;
 
   const TrouserPatternPieceBuilder({
     this.outlines = const TrouserOutlineBuilder(),
+    this.shortsOutlines = const TrouserShortsOutlineBuilder(),
     this.dartGeometry = const TrouserDartGeometry(),
     this.cuttingOutlines = const TrouserCuttingOutlineBuilder(),
   });
@@ -99,6 +102,109 @@ class TrouserPatternPieceBuilder {
     );
   }
 
+  /// True Tailored-Shorts left-front seam piece.
+  ///
+  /// Seam allowance is intentionally not attached yet. The matching shorts
+  /// cutting outline is a separate next step so the long-trouser production
+  /// outline remains untouched.
+  PatternPiece shortsLeftFront(
+    TrouserReferenceDraft draft, {
+    required double shortsDepthY,
+    int sizeCode = 14,
+  }) {
+    final outline = shortsOutlines.front(
+      draft,
+      shortsDepthY: shortsDepthY,
+      sizeCode: sizeCode,
+    );
+    return _frontPieceFromOutline(
+      draft,
+      outline: outline,
+      id: 'trouser_shorts_front_left',
+      name: 'Shorts Vorderhose links',
+      label: 'Shorts Vorderhose links',
+      sizeCode: sizeCode,
+    );
+  }
+
+  /// True Tailored-Shorts right-front seam piece including the confirmed fly.
+  PatternPiece shortsRightFront(
+    TrouserReferenceDraft draft, {
+    required double shortsDepthY,
+    int sizeCode = 14,
+  }) {
+    final fly = const TrouserFlyBuilder().build(draft);
+    final baseOutline = shortsOutlines.front(
+      draft,
+      shortsDepthY: shortsDepthY,
+      sizeCode: sizeCode,
+    );
+    final outline = _withCutOnFly(baseOutline, fly);
+    final base = _frontPieceFromOutline(
+      draft,
+      outline: outline,
+      id: 'trouser_shorts_front_right',
+      name: 'Shorts Vorderhose rechts',
+      label: 'Shorts Vorderhose rechts',
+      sizeCode: sizeCode,
+    );
+
+    return PatternPiece(
+      id: base.id,
+      name: base.name,
+      points: Map.unmodifiable({
+        ...base.points,
+        'FlyExtensionWaist': fly.extensionWaist,
+        'FlyExtensionLower': fly.extensionLower,
+      }),
+      outline: base.outline,
+      cuttingOutline: null,
+      guideLines: [
+        ...base.guideLines,
+        LineSegment(fly.waistCenterFront, fly.lowerEnd),
+      ],
+      darts: base.darts,
+      grainline: base.grainline,
+      notches: base.notches,
+      dartNotches: base.dartNotches,
+      labels: base.labels,
+    );
+  }
+
+  /// True Tailored-Shorts back seam piece.
+  PatternPiece shortsBack(
+    TrouserReferenceDraft draft, {
+    required double shortsDepthY,
+    int sizeCode = 14,
+  }) {
+    final dart30 = dartGeometry.back30(draft);
+    final dart31 = dartGeometry.back31(draft);
+    final outline = shortsOutlines.back(
+      draft,
+      shortsDepthY: shortsDepthY,
+      sizeCode: sizeCode,
+    );
+
+    return PatternPiece(
+      id: 'trouser_shorts_back',
+      name: 'Shorts Hinterhose',
+      points: _points(draft),
+      outline: outline,
+      cuttingOutline: null,
+      darts: [
+        _toDart(dart30, width: 2.0, length: 12.0),
+        _toDart(dart31, width: 2.0, length: 10.0),
+      ],
+      grainline: Grainline(start: draft[0], end: draft[3]),
+      labels: [
+        PatternLabel(
+          position: _midpoint(draft[0], draft[3]),
+          text: 'Shorts Hinterhose - Größe $sizeCode',
+        ),
+      ],
+    );
+  }
+
   PatternPath _withCutOnFly(
     PatternPath base,
     TrouserFlyGeometry fly,
@@ -135,8 +241,15 @@ class TrouserPatternPieceBuilder {
     TrouserSeamAllowanceSettings? seamAllowance,
     required int sizeCode,
   }) {
-    final frontDart = dartGeometry.front(draft);
     final outline = outlines.frontLowerContour(draft, sizeCode: sizeCode);
+    final piece = _frontPieceFromOutline(
+      draft,
+      outline: outline,
+      id: id,
+      name: name,
+      label: label,
+      sizeCode: sizeCode,
+    );
     final cuttingOutline = seamAllowance != null && seamAllowance.enabled
         ? cuttingOutlines.buildFrontCuttingOutline(
             outline: outline,
@@ -146,11 +259,35 @@ class TrouserPatternPieceBuilder {
         : null;
 
     return PatternPiece(
+      id: piece.id,
+      name: piece.name,
+      points: piece.points,
+      outline: piece.outline,
+      cuttingOutline: cuttingOutline,
+      guideLines: piece.guideLines,
+      darts: piece.darts,
+      grainline: piece.grainline,
+      notches: piece.notches,
+      dartNotches: piece.dartNotches,
+      labels: piece.labels,
+    );
+  }
+
+  PatternPiece _frontPieceFromOutline(
+    TrouserReferenceDraft draft, {
+    required PatternPath outline,
+    required String id,
+    required String name,
+    required String label,
+    required int sizeCode,
+  }) {
+    final frontDart = dartGeometry.front(draft);
+    return PatternPiece(
       id: id,
       name: name,
       points: _points(draft),
       outline: outline,
-      cuttingOutline: cuttingOutline,
+      cuttingOutline: null,
       darts: [_toDart(frontDart, width: 2.0, length: 10.0)],
       grainline: Grainline(start: draft[0], end: draft[3]),
       labels: [
