@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'pattern_models.dart';
 import 'trouser_pattern_calculator.dart';
 import 'trouser_pattern_piece_builder.dart';
+import 'trouser_seam_allowance.dart';
 
 class TrouserPdfExporter {
   static const _mmToPt = 72.0 / 25.4;
@@ -20,11 +21,12 @@ class TrouserPdfExporter {
 
   Future<Uint8List> buildPatternPdf({
     required TrouserMeasurements measurements,
+    TrouserSeamAllowanceSettings? seamAllowance,
   }) async {
     final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
     const builder = TrouserPatternPieceBuilder();
-    final front = builder.front(draft);
-    final back = builder.back(draft);
+    final front = builder.front(draft, seamAllowance: seamAllowance);
+    final back = builder.back(draft, seamAllowance: seamAllowance);
 
     final doc = pw.Document();
     _addCalibrationPage(doc, measurements);
@@ -133,10 +135,18 @@ class TrouserPdfExporter {
                   decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.25)),
                   child: pw.Stack(
                     children: [
+                      if (piece.cuttingOutline != null)
+                        _pathWidget(
+                          piece.cuttingOutline!,
+                          originX - tileX,
+                          originY - tileY,
+                          lineWidthMm: 0.45,
+                        ),
                       _pathWidget(
                         piece.outline,
                         originX - tileX,
                         originY - tileY,
+                        lineWidthMm: 0.25,
                       ),
                       ..._dartWidgets(
                         piece,
@@ -171,7 +181,12 @@ class TrouserPdfExporter {
     }
   }
 
-  pw.Widget _pathWidget(PatternPath path, double ox, double oy) {
+  pw.Widget _pathWidget(
+    PatternPath path,
+    double ox,
+    double oy, {
+    required double lineWidthMm,
+  }) {
     return pw.Positioned(
       left: 0,
       top: 0,
@@ -181,7 +196,7 @@ class TrouserPdfExporter {
           painter: (canvas, size) {
             canvas
               ..setStrokeColor(PdfColors.black)
-              ..setLineWidth(mm(0.30))
+              ..setLineWidth(mm(lineWidthMm))
               ..setLineJoin(PdfLineJoin.round)
               ..setLineCap(PdfLineCap.round);
 
@@ -364,13 +379,9 @@ class TrouserPdfExporter {
 
   _Bounds _pieceBounds(PatternPiece piece) {
     final points = <PatternPoint>[];
-    for (final segment in piece.outline.segments) {
-      points.add(segment.start);
-      points.add(segment.end);
-      if (segment is BezierSegment) {
-        points.add(segment.control1);
-        points.add(segment.control2);
-      }
+    _addPathPoints(points, piece.outline);
+    if (piece.cuttingOutline != null) {
+      _addPathPoints(points, piece.cuttingOutline!);
     }
     for (final dart in piece.darts) {
       points.addAll([dart.leg1, dart.leg2, dart.apex]);
@@ -394,6 +405,17 @@ class TrouserPdfExporter {
       maxY = math.max(maxY, point.y);
     }
     return _Bounds(minX, minY, maxX, maxY);
+  }
+
+  void _addPathPoints(List<PatternPoint> points, PatternPath path) {
+    for (final segment in path.segments) {
+      points.add(segment.start);
+      points.add(segment.end);
+      if (segment is BezierSegment) {
+        points.add(segment.control1);
+        points.add(segment.control2);
+      }
+    }
   }
 }
 
