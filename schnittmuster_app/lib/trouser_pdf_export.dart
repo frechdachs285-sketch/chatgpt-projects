@@ -83,7 +83,6 @@ class TrouserPdfExporter {
     _addPieceTiles(doc, leftFront, title: 'Hose v1 - Vorderhose links 1:1');
     _addPieceTiles(doc, rightFront, title: 'Hose v1 - Vorderhose rechts 1:1', fly: fly);
     _addPieceTiles(doc, back, title: 'Hose v1 - Hinterhose 1:1');
-    _addPieceTiles(doc, waistband, title: 'Hose v1 - Gerader Bund 1:1');
     if (shapedWaistbandFront != null && shapedWaistbandBack != null) {
       _addPieceTiles(
         doc,
@@ -95,6 +94,8 @@ class TrouserPdfExporter {
         shapedWaistbandBack,
         title: 'Hose v1 - Geformter Bund hinten 1:1',
       );
+    } else {
+      _addPieceTiles(doc, waistband, title: 'Hose v1 - Gerader Bund 1:1');
     }
     return doc.save();
   }
