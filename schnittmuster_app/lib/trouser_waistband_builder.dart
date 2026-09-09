@@ -63,15 +63,6 @@ class TrouserWaistbandBuilder {
 
     final cuttingOutline = seamAllowanceEnabled
         ? PatternPath([
-            const LineSegment(
-              PatternPoint(-waistbandSeamAllowanceCm, -waistbandSeamAllowanceCm),
-              PatternPoint(0.0, 0.0),
-            ),
-          ])
-        : null;
-
-    final actualCuttingOutline = seamAllowanceEnabled
-        ? PatternPath([
             LineSegment(
               PatternPoint(p0.x - waistbandSeamAllowanceCm,
                   p0.y - waistbandSeamAllowanceCm),
@@ -116,7 +107,7 @@ class TrouserWaistbandBuilder {
         LineSegment(p2, p3),
         LineSegment(p3, p0),
       ]),
-      cuttingOutline: actualCuttingOutline,
+      cuttingOutline: cuttingOutline,
       guideLines: [
         LineSegment(
           PatternPoint(leftCfX, foldY),
