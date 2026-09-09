@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:schnittmuster_app/trouser_pattern_calculator.dart';
 import 'package:schnittmuster_app/trouser_pattern_piece_builder.dart';
+import 'package:schnittmuster_app/trouser_seam_allowance.dart';
 
 void main() {
   const measurements = TrouserMeasurements(
@@ -10,6 +11,19 @@ void main() {
     bodyRise: 28.7,
     waistToFloor: 105.0,
     trouserBottomWidth: 22.0,
+  );
+
+  const enabledSeamAllowance = TrouserSeamAllowanceSettings(
+    enabled: true,
+    normalCm: 1.5,
+    waistCm: 1.0,
+    hemCm: 3.0,
+  );
+  const disabledSeamAllowance = TrouserSeamAllowanceSettings(
+    enabled: false,
+    normalCm: 1.5,
+    waistCm: 1.0,
+    hemCm: 3.0,
   );
 
   final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
@@ -55,5 +69,39 @@ void main() {
 
     expect(front.outline.segments, isNotEmpty);
     expect(back.outline.segments, isNotEmpty);
+  });
+
+  test('enabled seam allowance attaches cutting outlines to both pieces', () {
+    final front = builder.front(
+      draft,
+      seamAllowance: enabledSeamAllowance,
+    );
+    final back = builder.back(
+      draft,
+      seamAllowance: enabledSeamAllowance,
+    );
+
+    expect(front.cuttingOutline, isNotNull);
+    expect(back.cuttingOutline, isNotNull);
+    expect(front.cuttingOutline!.segments, isNotEmpty);
+    expect(back.cuttingOutline!.segments, isNotEmpty);
+  });
+
+  test('missing or disabled seam allowance leaves cuttingOutline null', () {
+    final frontWithout = builder.front(draft);
+    final backWithout = builder.back(draft);
+    final frontDisabled = builder.front(
+      draft,
+      seamAllowance: disabledSeamAllowance,
+    );
+    final backDisabled = builder.back(
+      draft,
+      seamAllowance: disabledSeamAllowance,
+    );
+
+    expect(frontWithout.cuttingOutline, isNull);
+    expect(backWithout.cuttingOutline, isNull);
+    expect(frontDisabled.cuttingOutline, isNull);
+    expect(backDisabled.cuttingOutline, isNull);
   });
 }
