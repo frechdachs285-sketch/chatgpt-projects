@@ -22,9 +22,10 @@ class TrouserPatternPieceBuilder {
   PatternPiece front(
     TrouserReferenceDraft draft, {
     TrouserSeamAllowanceSettings? seamAllowance,
+    int sizeCode = 14,
   }) {
     final frontDart = dartGeometry.front(draft);
-    final outline = outlines.frontLowerContour(draft);
+    final outline = outlines.frontLowerContour(draft, sizeCode: sizeCode);
     final cuttingOutline = seamAllowance != null && seamAllowance.enabled
         ? cuttingOutlines.buildFrontCuttingOutline(
             outline: outline,
@@ -53,10 +54,11 @@ class TrouserPatternPieceBuilder {
   PatternPiece back(
     TrouserReferenceDraft draft, {
     TrouserSeamAllowanceSettings? seamAllowance,
+    int sizeCode = 14,
   }) {
     final dart30 = dartGeometry.back30(draft);
     final dart31 = dartGeometry.back31(draft);
-    final outline = outlines.backLowerContour(draft);
+    final outline = outlines.backLowerContour(draft, sizeCode: sizeCode);
     final cuttingOutline = seamAllowance != null && seamAllowance.enabled
         ? cuttingOutlines.buildBackCuttingOutline(
             outline: outline,
