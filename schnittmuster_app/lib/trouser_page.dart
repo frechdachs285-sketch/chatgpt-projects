@@ -7,6 +7,7 @@ import 'trouser_pattern_piece_builder.dart';
 import 'trouser_pdf_export.dart';
 import 'trouser_preview.dart';
 import 'trouser_seam_allowance.dart';
+import 'trouser_waistband_builder.dart';
 
 class TrouserPage extends StatefulWidget {
   const TrouserPage({super.key});
@@ -31,6 +32,7 @@ class _TrouserPageState extends State<TrouserPage> {
   TrouserReferenceDraft? _draft;
   PatternPiece? _front;
   PatternPiece? _back;
+  PatternPiece? _waistband;
   TrouserMeasurements? _appliedMeasurements;
   TrouserSeamAllowanceSettings? _appliedSeamAllowance;
   String? _message;
@@ -127,12 +129,18 @@ class _TrouserPageState extends State<TrouserPage> {
     try {
       final draft = TrouserPatternCalculator.calculateReferencePoints(measurements);
       const pieceBuilder = TrouserPatternPieceBuilder();
+      const waistbandBuilder = TrouserWaistbandBuilder();
       final front = pieceBuilder.front(draft, seamAllowance: seamAllowance);
       final back = pieceBuilder.back(draft, seamAllowance: seamAllowance);
+      final waistband = waistbandBuilder.build(
+        draft: draft,
+        measurements: measurements,
+      );
       setState(() {
         _draft = draft;
         _front = front;
         _back = back;
+        _waistband = waistband;
         _appliedMeasurements = measurements;
         _appliedSeamAllowance = seamAllowance;
         _message = null;
@@ -203,6 +211,7 @@ class _TrouserPageState extends State<TrouserPage> {
     final draft = _draft;
     final front = _front;
     final back = _back;
+    final waistband = _waistband;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Hose v1')),
@@ -262,7 +271,7 @@ class _TrouserPageState extends State<TrouserPage> {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ],
-            if (draft != null && front != null && back != null) ...[
+            if (draft != null && front != null && back != null && waistband != null) ...[
               const SizedBox(height: 16),
               Card(
                 child: Padding(
@@ -278,6 +287,9 @@ class _TrouserPageState extends State<TrouserPage> {
                       ),
                       Text(
                         'Hinterhose: ${back.outline.segments.length} Kontursegmente, ${back.darts.length} Abnäher',
+                      ),
+                      Text(
+                        'Bund: ${waistband.outline.segments.length} Kontursegmente, ${waistband.guideLines.length} Markierungs-/Bruchlinien',
                       ),
                       Text(
                         _appliedSeamAllowance?.enabled == true
