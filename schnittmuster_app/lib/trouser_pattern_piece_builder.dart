@@ -70,10 +70,15 @@ class TrouserPatternPieceBuilder {
     );
     final fly = const TrouserFlyBuilder().build(draft);
     final rightOutline = _withCutOnFly(base.outline, fly);
+    final cuttingOutline = seamAllowance != null && seamAllowance.enabled
+        ? cuttingOutlines.buildFrontCuttingOutline(
+            outline: rightOutline,
+            draft: draft,
+            settings: seamAllowance,
+            fly: fly,
+          )
+        : null;
 
-    // Seam allowance around the new fly edge is deliberately not invented.
-    // Until that separate Hose-v1 rule is confirmed, the right-front piece
-    // exposes the exact cut-on contour but no derived allowance contour.
     return PatternPiece(
       id: base.id,
       name: base.name,
@@ -83,7 +88,7 @@ class TrouserPatternPieceBuilder {
         'FlyExtensionLower': fly.extensionLower,
       }),
       outline: rightOutline,
-      cuttingOutline: null,
+      cuttingOutline: cuttingOutline,
       guideLines: [
         ...base.guideLines,
         LineSegment(fly.waistCenterFront, fly.lowerEnd),
