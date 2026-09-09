@@ -32,7 +32,12 @@ class TrouserPdfExporter {
     );
     const builder = TrouserPatternPieceBuilder();
     const waistbandBuilder = TrouserWaistbandBuilder();
-    final front = builder.front(
+    final leftFront = builder.leftFront(
+      draft,
+      seamAllowance: seamAllowance,
+      sizeCode: sizeCode,
+    );
+    final rightFront = builder.rightFront(
       draft,
       seamAllowance: seamAllowance,
       sizeCode: sizeCode,
@@ -52,8 +57,13 @@ class TrouserPdfExporter {
     _addCalibrationPage(doc, measurements);
     _addPieceTiles(
       doc,
-      front,
-      title: 'Hose v1 - Vorderhose 1:1',
+      leftFront,
+      title: 'Hose v1 - Vorderhose links 1:1',
+    );
+    _addPieceTiles(
+      doc,
+      rightFront,
+      title: 'Hose v1 - Vorderhose rechts 1:1',
       fly: fly,
     );
     _addPieceTiles(doc, back, title: 'Hose v1 - Hinterhose 1:1');
