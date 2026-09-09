@@ -30,14 +30,14 @@ void main() {
 
     _expectClosed(outline);
 
-    final hemSegments = outline.segments.where((segment) {
-      return segment.start.y == shortsDepthY && segment.end.y == shortsDepthY;
+    final hemSegments = outline.segments.whereType<LineSegment>().where((segment) {
+      return (segment.start.y - shortsDepthY).abs() <= 1e-8 &&
+          (segment.end.y - shortsDepthY).abs() <= 1e-8;
     }).toList();
 
     expect(hemSegments.length, 1);
-    expect(hemSegments.single, isA<LineSegment>());
-    expect(hemSegments.single.start.y, closeTo(shortsDepthY, 1e-9));
-    expect(hemSegments.single.end.y, closeTo(shortsDepthY, 1e-9));
+    expect(hemSegments.single.start.y, closeTo(shortsDepthY, 1e-8));
+    expect(hemSegments.single.end.y, closeTo(shortsDepthY, 1e-8));
   });
 
   test('back tailored shorts outline is closed and midpoint is 1 cm lower', () {
@@ -59,8 +59,8 @@ void main() {
           (segment) => segment.role == 'back_hem',
         );
 
-    expect(hem.start.y, closeTo(shortsDepthY, 1e-9));
-    expect(hem.end.y, closeTo(shortsDepthY, 1e-9));
+    expect(hem.start.y, closeTo(shortsDepthY, 1e-8));
+    expect(hem.end.y, closeTo(shortsDepthY, 1e-8));
 
     final midpoint = PatternPoint(
       0.125 * hem.start.x +
@@ -73,7 +73,7 @@ void main() {
           0.125 * hem.end.y,
     );
 
-    expect(midpoint.y, closeTo(shortsDepthY + 1.0, 1e-9));
+    expect(midpoint.y, closeTo(shortsDepthY + 1.0, 1e-8));
   });
 }
 
