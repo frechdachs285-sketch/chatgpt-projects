@@ -46,7 +46,7 @@ void main() {
   });
 
   test('back side shaping is exactly 0.5 cm inward at chord midpoint', () {
-    final shaping = builder.inwardMidpointCurve(
+    final shaping = builder.backSideShapingCurve(
       start: draft[25],
       end: draft[27],
       depth: 0.5,
@@ -63,7 +63,7 @@ void main() {
   });
 
   test('back side seam interpolates all fixed points and shaping point', () {
-    final shaping = builder.inwardMidpointCurve(
+    final shaping = builder.backSideShapingCurve(
       start: draft[25],
       end: draft[27],
       depth: 0.5,

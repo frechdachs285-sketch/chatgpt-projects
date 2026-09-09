@@ -70,4 +70,43 @@ void main() {
       closeTo(draft[6].distanceTo(q) + q.distanceTo(draft[9]), 1e-10),
     );
   });
+
+  test('front hem is exact symmetric parabola through P14-P3-P12', () {
+    final hem = builder.frontHem(
+      p14: draft[14],
+      p3: draft[3],
+      p12: draft[12],
+    );
+
+    expect(hem.start.distanceTo(draft[14]), lessThan(1e-10));
+    expect(hem.end.distanceTo(draft[12]), lessThan(1e-10));
+    expect(hem.pointAt(0.5).distanceTo(draft[3]), lessThan(1e-10));
+
+    for (final t in [0.1, 0.2, 0.3, 0.4]) {
+      final left = hem.pointAt(t);
+      final right = hem.pointAt(1.0 - t);
+      expect(left.x, closeTo(-right.x, 1e-10));
+      expect(left.y, closeTo(right.y, 1e-10));
+    }
+  });
+
+  test('back hem is exact symmetric parabola through P28-P3-P26', () {
+    final hem = builder.backHem(
+      p28: draft[28],
+      p3: draft[3],
+      p26: draft[26],
+    );
+
+    expect(hem.start.distanceTo(draft[28]), lessThan(1e-10));
+    expect(hem.end.distanceTo(draft[26]), lessThan(1e-10));
+    expect(hem.pointAt(0.5).distanceTo(draft[3]), lessThan(1e-10));
+    expect(hem.pointAt(0.5).y - hem.start.y, closeTo(1.0, 1e-10));
+
+    for (final t in [0.1, 0.2, 0.3, 0.4]) {
+      final left = hem.pointAt(t);
+      final right = hem.pointAt(1.0 - t);
+      expect(left.x, closeTo(-right.x, 1e-10));
+      expect(left.y, closeTo(right.y, 1e-10));
+    }
+  });
 }
