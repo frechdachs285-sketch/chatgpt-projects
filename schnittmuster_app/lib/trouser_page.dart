@@ -53,7 +53,7 @@ class _TrouserPageState extends State<TrouserPage> {
       final leftFront = pieceBuilder.leftFront(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
       final rightFront = pieceBuilder.rightFront(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
       final back = pieceBuilder.back(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
-      final waistband = waistbandBuilder.build(draft: draft, measurements: measurements, sizeCode: _selectedSizeCode);
+      final waistband = waistbandBuilder.build(draft: draft, measurements: measurements, sizeCode: _selectedSizeCode, seamAllowanceEnabled: seamAllowance.enabled);
       final fly = flyBuilder.build(draft);
       setState(() { _draft = draft; _leftFront = leftFront; _rightFront = rightFront; _back = back; _waistband = waistband; _fly = fly; _appliedMeasurements = measurements; _appliedSeamAllowance = seamAllowance; _appliedSizeCode = _selectedSizeCode; _message = null; });
     } on ArgumentError catch (e) { setState(() => _message = e.message?.toString() ?? 'Maße bitte prüfen.'); } on StateError catch (e) { setState(() => _message = e.message); }
