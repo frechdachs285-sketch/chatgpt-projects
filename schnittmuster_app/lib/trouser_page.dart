@@ -151,6 +151,7 @@ class _TrouserPageState extends State<TrouserPage> {
     try {
       final bytes = await TrouserPdfExporter().buildPatternPdf(
         measurements: measurements,
+        seamAllowance: _appliedSeamAllowance,
       );
       await Printing.layoutPdf(
         name: 'Hose_v1_Schnittmuster_1zu1.pdf',
