@@ -58,19 +58,22 @@ class TrouserPatternPieceBuilder {
     TrouserSeamAllowanceSettings? seamAllowance,
     int sizeCode = 14,
   }) {
+    // The right-front fly is asymmetric. Build its seam/cut-on outline from
+    // the confirmed base contour without changing the Aldrich-derived base.
     final base = _frontPiece(
       draft,
       id: 'trouser_front_right',
       name: 'Vorderhose rechts',
       label: 'Vorderhose rechts',
-      seamAllowance: seamAllowance,
+      seamAllowance: null,
       sizeCode: sizeCode,
     );
     final fly = const TrouserFlyBuilder().build(draft);
+    final rightOutline = _withCutOnFly(base.outline, fly);
 
-    // Keep the confirmed Aldrich seam outline untouched. The asymmetric,
-    // cut-on fly extension is exposed as guide geometry on the right front
-    // only until it is deliberately integrated into the cutting contour.
+    // Seam allowance around the new fly edge is deliberately not invented.
+    // Until that separate Hose-v1 rule is confirmed, the right-front piece
+    // exposes the exact cut-on contour but no derived allowance contour.
     return PatternPiece(
       id: base.id,
       name: base.name,
@@ -79,13 +82,11 @@ class TrouserPatternPieceBuilder {
         'FlyExtensionWaist': fly.extensionWaist,
         'FlyExtensionLower': fly.extensionLower,
       }),
-      outline: base.outline,
-      cuttingOutline: base.cuttingOutline,
+      outline: rightOutline,
+      cuttingOutline: null,
       guideLines: [
         ...base.guideLines,
-        LineSegment(fly.waistCenterFront, fly.extensionWaist),
-        LineSegment(fly.extensionWaist, fly.extensionLower),
-        LineSegment(fly.extensionLower, fly.lowerEnd),
+        LineSegment(fly.waistCenterFront, fly.lowerEnd),
       ],
       darts: base.darts,
       grainline: base.grainline,
@@ -93,6 +94,36 @@ class TrouserPatternPieceBuilder {
       dartNotches: base.dartNotches,
       labels: base.labels,
     );
+  }
+
+  PatternPath _withCutOnFly(
+    PatternPath base,
+    TrouserFlyGeometry fly,
+  ) {
+    final result = <PathSegment>[];
+    var replacedCenterFront = false;
+
+    for (final segment in base.segments) {
+      final isCenterFront = segment is LineSegment &&
+          segment.start.distanceTo(fly.lowerEnd) <= 1e-9 &&
+          segment.end.distanceTo(fly.waistCenterFront) <= 1e-9;
+      if (!isCenterFront) {
+        result.add(segment);
+        continue;
+      }
+
+      // Existing contour order reaches P6 from the crotch and then P10.
+      // Route the physical right-front edge around the 4 cm cut-on extension.
+      result.add(LineSegment(fly.lowerEnd, fly.extensionLower));
+      result.add(LineSegment(fly.extensionLower, fly.extensionWaist));
+      result.add(LineSegment(fly.extensionWaist, fly.waistCenterFront));
+      replacedCenterFront = true;
+    }
+
+    if (!replacedCenterFront) {
+      throw StateError('Hose-v1 right front is missing the P6-P10 edge.');
+    }
+    return PatternPath(result);
   }
 
   PatternPiece _frontPiece(
