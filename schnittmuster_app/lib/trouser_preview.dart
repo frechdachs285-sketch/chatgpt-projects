@@ -6,14 +6,16 @@ import 'pattern_models.dart';
 import 'trouser_fly.dart';
 
 class TrouserPreview extends StatelessWidget {
-  final PatternPiece front;
+  final PatternPiece leftFront;
+  final PatternPiece rightFront;
   final PatternPiece back;
   final PatternPiece waistband;
   final TrouserFlyGeometry? fly;
 
   const TrouserPreview({
     super.key,
-    required this.front,
+    required this.leftFront,
+    required this.rightFront,
     required this.back,
     required this.waistband,
     this.fly,
@@ -33,7 +35,8 @@ class TrouserPreview extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: CustomPaint(
             painter: _TrouserPreviewPainter(
-              front: front,
+              leftFront: leftFront,
+              rightFront: rightFront,
               back: back,
               waistband: waistband,
               fly: fly,
@@ -46,13 +49,15 @@ class TrouserPreview extends StatelessWidget {
 }
 
 class _TrouserPreviewPainter extends CustomPainter {
-  final PatternPiece front;
+  final PatternPiece leftFront;
+  final PatternPiece rightFront;
   final PatternPiece back;
   final PatternPiece waistband;
   final TrouserFlyGeometry? fly;
 
   _TrouserPreviewPainter({
-    required this.front,
+    required this.leftFront,
+    required this.rightFront,
     required this.back,
     required this.waistband,
     required this.fly,
@@ -61,11 +66,20 @@ class _TrouserPreviewPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     const gapCm = 8.0;
-    final frontBounds = _pieceBounds(front);
+    final leftFrontBounds = _pieceBounds(leftFront);
+    final rightFrontBounds = _pieceBounds(rightFront);
     final backBounds = _pieceBounds(back);
     final waistbandBounds = _pieceBounds(waistband);
-    final trouserWidth = frontBounds.width + gapCm + backBounds.width;
-    final trouserHeight = math.max(frontBounds.height, backBounds.height);
+
+    final trouserWidth = leftFrontBounds.width +
+        gapCm +
+        rightFrontBounds.width +
+        gapCm +
+        backBounds.width;
+    final trouserHeight = math.max(
+      math.max(leftFrontBounds.height, rightFrontBounds.height),
+      backBounds.height,
+    );
     final totalWidth = math.max(trouserWidth, waistbandBounds.width);
     final totalHeight = trouserHeight + gapCm + waistbandBounds.height;
     if (totalWidth <= 0 || totalHeight <= 0) return;
@@ -81,9 +95,20 @@ class _TrouserPreviewPainter extends CustomPainter {
 
     _drawPiece(
       canvas,
-      front,
+      leftFront,
       origin: Offset(trouserX, origin.dy),
-      bounds: frontBounds,
+      bounds: leftFrontBounds,
+      scale: scale,
+    );
+
+    _drawPiece(
+      canvas,
+      rightFront,
+      origin: Offset(
+        trouserX + (leftFrontBounds.width + gapCm) * scale,
+        origin.dy,
+      ),
+      bounds: rightFrontBounds,
       scale: scale,
       fly: fly,
     );
@@ -92,7 +117,12 @@ class _TrouserPreviewPainter extends CustomPainter {
       canvas,
       back,
       origin: Offset(
-        trouserX + (frontBounds.width + gapCm) * scale,
+        trouserX +
+            (leftFrontBounds.width +
+                    gapCm +
+                    rightFrontBounds.width +
+                    gapCm) *
+                scale,
         origin.dy,
       ),
       bounds: backBounds,
@@ -301,7 +331,8 @@ class _TrouserPreviewPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _TrouserPreviewPainter oldDelegate) =>
-      oldDelegate.front != front ||
+      oldDelegate.leftFront != leftFront ||
+      oldDelegate.rightFront != rightFront ||
       oldDelegate.back != back ||
       oldDelegate.waistband != waistband ||
       oldDelegate.fly != fly;
