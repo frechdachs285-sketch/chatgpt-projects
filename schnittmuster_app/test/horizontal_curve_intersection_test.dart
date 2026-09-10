@@ -57,6 +57,26 @@ void main() {
     expect(hits.single.y, closeTo(1.0, 1e-9));
   });
 
+  test('finds a tangential touch between sampling positions', () {
+    // Exact polynomial y(t) = (t - 1/3)^2 represented as a cubic Bezier.
+    // The horizontal line y=0 only touches the curve at t=1/3; y does not
+    // change sign there. 1/3 is deliberately not one of the default 512
+    // sampling positions, so a sign-change-only search misses this contact.
+    const curve = CubicBezierCurve(
+      start: PatternPoint(0.0, 1.0 / 9.0),
+      control1: PatternPoint(1.0 / 3.0, -1.0 / 9.0),
+      control2: PatternPoint(2.0 / 3.0, 0.0),
+      end: PatternPoint(1.0, 4.0 / 9.0),
+    );
+
+    final hits = helper.detailedIntersections([curve], 0.0);
+
+    expect(hits.length, 1);
+    expect(hits.single.t, closeTo(1.0 / 3.0, 1e-8));
+    expect(hits.single.point.x, closeTo(1.0 / 3.0, 1e-8));
+    expect(hits.single.point.y, closeTo(0.0, 1e-9));
+  });
+
   test('singleIntersection rejects ambiguous and missing intersections', () {
     const multiple = CubicBezierCurve(
       start: PatternPoint(0.0, 0.0),
