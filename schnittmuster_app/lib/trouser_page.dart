@@ -36,6 +36,7 @@ class _TrouserPageState extends State<TrouserPage> {
   final _waistSeamController = TextEditingController(text: '1.0');
   final _hemSeamController = TextEditingController(text: '3.0');
   bool _seamAllowanceEnabled = true;
+  bool _hasCurrentCalculationError = false;
   int _selectedSizeCode = 14, _appliedSizeCode = 14;
   TrouserReferenceDraft? _draft;
   PatternPiece? _leftFront, _rightFront, _back, _waistband;
@@ -62,13 +63,20 @@ class _TrouserPageState extends State<TrouserPage> {
   double? get _facingDepth { final text = _facingDepthController.text.trim(); if (text.isEmpty) return null; return _read(_facingDepthController); }
   TrouserSeamAllowanceSettings? get _seamAllowance { final normal = _readNonNegative(_normalSeamController), waist = _readNonNegative(_waistSeamController), hem = _readNonNegative(_hemSeamController); if (normal == null || waist == null || hem == null) return null; final s = TrouserSeamAllowanceSettings(enabled: _seamAllowanceEnabled, normalCm: normal, waistCm: waist, hemCm: hem); return s.isValid ? s : null; }
 
+  void _showCalculationError(String message) {
+    setState(() {
+      _message = message;
+      _hasCurrentCalculationError = true;
+    });
+  }
+
   void _calculate() {
     FocusScope.of(context).unfocus(); final measurements = _measurements, seamAllowance = _seamAllowance, shortsLength = _shortsLength, shapedWaistbandDepth = _shapedWaistbandDepth, facingDepth = _facingDepth;
-    if (measurements == null) { setState(() => _message = 'Bitte Körpermaße als positive Zahlen und die alternative Beinform als gültige Zahl eingeben.'); return; }
-    if (_shortsLengthController.text.trim().isNotEmpty && shortsLength == null) { setState(() => _message = 'Bitte die Shorts-Länge ab Taille als positive Zahl eingeben.'); return; }
-    if (_shapedWaistbandDepthController.text.trim().isNotEmpty && shapedWaistbandDepth == null) { setState(() => _message = 'Bitte die Bundtiefe als positive Zahl eingeben.'); return; }
-    if (_facingDepthController.text.trim().isNotEmpty && facingDepth == null) { setState(() => _message = 'Bitte die Belegtiefe als positive Zahl eingeben.'); return; }
-    if (seamAllowance == null) { setState(() => _message = 'Bitte gültige Nahtzugaben ab 0 cm eingeben.'); return; }
+    if (measurements == null) { _showCalculationError('Bitte Körpermaße als positive Zahlen und die alternative Beinform als gültige Zahl eingeben.'); return; }
+    if (_shortsLengthController.text.trim().isNotEmpty && shortsLength == null) { _showCalculationError('Bitte die Shorts-Länge ab Taille als positive Zahl eingeben.'); return; }
+    if (_shapedWaistbandDepthController.text.trim().isNotEmpty && shapedWaistbandDepth == null) { _showCalculationError('Bitte die Bundtiefe als positive Zahl eingeben.'); return; }
+    if (_facingDepthController.text.trim().isNotEmpty && facingDepth == null) { _showCalculationError('Bitte die Belegtiefe als positive Zahl eingeben.'); return; }
+    if (seamAllowance == null) { _showCalculationError('Bitte gültige Nahtzugaben ab 0 cm eingeben.'); return; }
     try {
       final draft = TrouserPatternCalculator.calculateReferencePoints(measurements, sizeCode: _selectedSizeCode);
       const pieceBuilder = TrouserPatternPieceBuilder(), waistbandBuilder = TrouserWaistbandBuilder(), shapedWaistbandBuilder = TrouserShapedWaistbandBuilder(), facingBuilder = TrouserShapedWaistbandFacingBuilder(), shortsBuilder = TrouserShortsGeometryBuilder(), flyBuilder = TrouserFlyBuilder();
@@ -90,7 +98,7 @@ class _TrouserPageState extends State<TrouserPage> {
           back = pieceBuilder.shortsBack(draft, shortsDepthY: shortsLength, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
           shortsGeometry = shortsBuilder.build(draft: draft, shortsDepthY: shortsLength);
         } on StateError catch (_) {
-          setState(() => _message = 'Diese Shorts-Länge schneidet die bestätigte Hosenkontur nicht eindeutig. Bitte eine andere Länge wählen.');
+          _showCalculationError('Diese Shorts-Länge schneidet die bestätigte Hosenkontur nicht eindeutig. Bitte eine andere Länge wählen.');
           return;
         }
       }
@@ -99,12 +107,12 @@ class _TrouserPageState extends State<TrouserPage> {
       final shapedWaistband = shapedWaistbandDepth == null ? null : shapedWaistbandBuilder.build(draft: draft, waistbandDepthCm: shapedWaistbandDepth);
       final shapedWaistbandFacing = facingDepth == null ? null : facingBuilder.build(draft: draft, facingDepthCm: facingDepth);
       final fly = flyBuilder.build(draft);
-      setState(() { _draft = draft; _leftFront = leftFront; _rightFront = rightFront; _back = back; _waistband = waistband; _shortsGeometry = shortsGeometry; _shapedWaistband = shapedWaistband; _shapedWaistbandFacing = shapedWaistbandFacing; _fly = fly; _appliedMeasurements = measurements; _appliedSeamAllowance = seamAllowance; _appliedShortsLength = shortsLength; _appliedShapedWaistbandDepth = shapedWaistbandDepth; _appliedFacingDepth = facingDepth; _appliedSizeCode = _selectedSizeCode; _message = null; });
-    } on ArgumentError catch (e) { setState(() => _message = e.message?.toString() ?? 'Maße bitte prüfen.'); } on StateError catch (_) { setState(() => _message = 'Die Hosengeometrie konnte nicht eindeutig berechnet werden. Bitte Eingaben und gewählte Optionen prüfen.'); }
+      setState(() { _draft = draft; _leftFront = leftFront; _rightFront = rightFront; _back = back; _waistband = waistband; _shortsGeometry = shortsGeometry; _shapedWaistband = shapedWaistband; _shapedWaistbandFacing = shapedWaistbandFacing; _fly = fly; _appliedMeasurements = measurements; _appliedSeamAllowance = seamAllowance; _appliedShortsLength = shortsLength; _appliedShapedWaistbandDepth = shapedWaistbandDepth; _appliedFacingDepth = facingDepth; _appliedSizeCode = _selectedSizeCode; _message = null; _hasCurrentCalculationError = false; });
+    } on ArgumentError catch (e) { _showCalculationError(e.message?.toString() ?? 'Maße bitte prüfen.'); } on StateError catch (_) { _showCalculationError('Die Hosengeometrie konnte nicht eindeutig berechnet werden. Bitte Eingaben und gewählte Optionen prüfen.'); }
   }
 
   Future<void> _openPatternPdf() async {
-    final m = _appliedMeasurements; if (m == null) return;
+    final m = _appliedMeasurements; if (m == null || _hasCurrentCalculationError) return;
     try {
       final bytes = await TrouserPdfExporter().buildPatternPdf(measurements: m, seamAllowance: _appliedSeamAllowance, sizeCode: _appliedSizeCode, shortsLengthFromWaistCm: _appliedShortsLength, shapedWaistbandDepthCm: _appliedShapedWaistbandDepth, facingDepthCm: _appliedFacingDepth);
       await Printing.layoutPdf(name: 'Hose_v1_Schnittmuster_1zu1.pdf', onLayout: (_) async => bytes);
@@ -130,7 +138,7 @@ class _TrouserPageState extends State<TrouserPage> {
       const SizedBox(height: 8), Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Nahtzugabe'), value: _seamAllowanceEnabled, onChanged: (v) { setState(() => _seamAllowanceEnabled = v); _calculate(); }), _seamField('Seitennähte, Innenbein und Schritt', _normalSeamController), _seamField('Taille', _waistSeamController), _seamField('Saum', _hemSeamController)]))),
       const SizedBox(height: 8), SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: _calculate, icon: const Icon(Icons.calculate_outlined), label: const Text('Hose berechnen'))),
       if (_message != null) ...[const SizedBox(height: 12), Text(_message!, style: TextStyle(color: Theme.of(context).colorScheme.error))],
-      if (draft != null && leftFront != null && rightFront != null && back != null && waistband != null && fly != null) ...[const SizedBox(height: 16), Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Berechnung erfolgreich'), const SizedBox(height: 6), Text('Konstruktionsgröße: $_appliedSizeCode'), Text('Referenzpunkte: ${draft.points.length}'), Text('Alternative Beinform: ${_appliedMeasurements!.alternativeLegShapingCm.toStringAsFixed(1)} cm'), if (shortsGeometry != null) Text('Tailored Shorts: ${_appliedShortsLength!.toStringAsFixed(1)} cm ab Taille, echte Schnittteil-Geometrie aktiv'), Text('Vorderhose links: ${leftFront.outline.segments.length} Kontursegmente, ${leftFront.darts.length} Abnäher'), Text('Vorderhose rechts: ${rightFront.outline.segments.length} Kontursegmente, ${rightFront.darts.length} Abnäher'), Text('Hinterhose: ${back.outline.segments.length} Kontursegmente, ${back.darts.length} Abnäher'), Text('Bund: ${waistband.outline.segments.length} Kontursegmente, ${waistband.guideLines.length} Markierungs-/Bruchlinien'), if (shapedWaistband != null) Text('Geformter Bund: ${shapedWaistband.waistbandDepthCm.toStringAsFixed(1)} cm Tiefe, Geometrie berechnet'), if (shapedWaistbandFacing != null) Text('Beleg geformter Bund: ${shapedWaistbandFacing.facingDepthCm.toStringAsFixed(1)} cm Tiefe, Geometrie berechnet'), Text('Vorderer Schlitz rechts: P10–P6, Breite ${fly.widthCm.toStringAsFixed(1)} cm'), Text(_appliedSeamAllowance?.enabled == true ? 'Nahtzugabe: an' : 'Nahtzugabe: aus')]))), const SizedBox(height: 16), Text('Vorschau', style: Theme.of(context).textTheme.titleLarge), const SizedBox(height: 8), TrouserPreview(leftFront: leftFront, rightFront: rightFront, back: back, waistband: waistband, fly: fly), if (shapedWaistband != null) ...[const SizedBox(height: 16), Text('Geformter Bund – Vorschau', style: Theme.of(context).textTheme.titleMedium), const SizedBox(height: 8), TrouserShapedWaistbandPreview(geometry: shapedWaistband, seamAllowanceEnabled: _appliedSeamAllowance?.enabled == true)], if (shapedWaistbandFacing != null) ...[const SizedBox(height: 16), Text('Beleg geformter Bund – Vorschau', style: Theme.of(context).textTheme.titleMedium), const SizedBox(height: 8), TrouserShapedWaistbandFacingPreview(geometry: shapedWaistbandFacing, seamAllowanceEnabled: _appliedSeamAllowance?.enabled == true)], const SizedBox(height: 16), SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: _openPatternPdf, icon: const Icon(Icons.picture_as_pdf_outlined), label: const Text('PDF 1:1 öffnen')))],
+      if (draft != null && leftFront != null && rightFront != null && back != null && waistband != null && fly != null) ...[const SizedBox(height: 16), Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(_hasCurrentCalculationError ? 'Letzte gültige Berechnung' : 'Berechnung erfolgreich'), const SizedBox(height: 6), Text('Konstruktionsgröße: $_appliedSizeCode'), Text('Referenzpunkte: ${draft.points.length}'), Text('Alternative Beinform: ${_appliedMeasurements!.alternativeLegShapingCm.toStringAsFixed(1)} cm'), if (shortsGeometry != null) Text('Tailored Shorts: ${_appliedShortsLength!.toStringAsFixed(1)} cm ab Taille, echte Schnittteil-Geometrie aktiv'), Text('Vorderhose links: ${leftFront.outline.segments.length} Kontursegmente, ${leftFront.darts.length} Abnäher'), Text('Vorderhose rechts: ${rightFront.outline.segments.length} Kontursegmente, ${rightFront.darts.length} Abnäher'), Text('Hinterhose: ${back.outline.segments.length} Kontursegmente, ${back.darts.length} Abnäher'), Text('Bund: ${waistband.outline.segments.length} Kontursegmente, ${waistband.guideLines.length} Markierungs-/Bruchlinien'), if (shapedWaistband != null) Text('Geformter Bund: ${shapedWaistband.waistbandDepthCm.toStringAsFixed(1)} cm Tiefe, Geometrie berechnet'), if (shapedWaistbandFacing != null) Text('Beleg geformter Bund: ${shapedWaistbandFacing.facingDepthCm.toStringAsFixed(1)} cm Tiefe, Geometrie berechnet'), Text('Vorderer Schlitz rechts: P10–P6, Breite ${fly.widthCm.toStringAsFixed(1)} cm'), Text(_appliedSeamAllowance?.enabled == true ? 'Nahtzugabe: an' : 'Nahtzugabe: aus')]))), const SizedBox(height: 16), Text('Vorschau', style: Theme.of(context).textTheme.titleLarge), const SizedBox(height: 8), TrouserPreview(leftFront: leftFront, rightFront: rightFront, back: back, waistband: waistband, fly: fly), if (shapedWaistband != null) ...[const SizedBox(height: 16), Text('Geformter Bund – Vorschau', style: Theme.of(context).textTheme.titleMedium), const SizedBox(height: 8), TrouserShapedWaistbandPreview(geometry: shapedWaistband, seamAllowanceEnabled: _appliedSeamAllowance?.enabled == true)], if (shapedWaistbandFacing != null) ...[const SizedBox(height: 16), Text('Beleg geformter Bund – Vorschau', style: Theme.of(context).textTheme.titleMedium), const SizedBox(height: 8), TrouserShapedWaistbandFacingPreview(geometry: shapedWaistbandFacing, seamAllowanceEnabled: _appliedSeamAllowance?.enabled == true)], const SizedBox(height: 16), SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: _hasCurrentCalculationError ? null : _openPatternPdf, icon: const Icon(Icons.picture_as_pdf_outlined), label: const Text('PDF 1:1 öffnen')))],
     ])));
   }
 }
