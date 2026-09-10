@@ -93,7 +93,7 @@ class _TrouserPageState extends State<TrouserPage> {
   Future<void> _openPatternPdf() async {
     final m = _appliedMeasurements; if (m == null) return;
     try {
-      final bytes = await TrouserPdfExporter().buildPatternPdf(measurements: m, seamAllowance: _appliedSeamAllowance, sizeCode: _appliedSizeCode, shapedWaistbandDepthCm: _appliedShapedWaistbandDepth, facingDepthCm: _appliedFacingDepth);
+      final bytes = await TrouserPdfExporter().buildPatternPdf(measurements: m, seamAllowance: _appliedSeamAllowance, sizeCode: _appliedSizeCode, shortsLengthFromWaistCm: _appliedShortsLength, shapedWaistbandDepthCm: _appliedShapedWaistbandDepth, facingDepthCm: _appliedFacingDepth);
       await Printing.layoutPdf(name: 'Hose_v1_Schnittmuster_1zu1.pdf', onLayout: (_) async => bytes);
     } catch (_) { if (!mounted) return; ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hose-PDF konnte nicht erstellt werden. Bitte Maße prüfen.'))); }
   }
