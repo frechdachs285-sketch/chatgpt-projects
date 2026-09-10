@@ -72,22 +72,35 @@ class _TrouserPageState extends State<TrouserPage> {
     try {
       final draft = TrouserPatternCalculator.calculateReferencePoints(measurements, sizeCode: _selectedSizeCode);
       const pieceBuilder = TrouserPatternPieceBuilder(), waistbandBuilder = TrouserWaistbandBuilder(), shapedWaistbandBuilder = TrouserShapedWaistbandBuilder(), facingBuilder = TrouserShapedWaistbandFacingBuilder(), shortsBuilder = TrouserShortsGeometryBuilder(), flyBuilder = TrouserFlyBuilder();
-      final leftFront = shortsLength == null
-          ? pieceBuilder.leftFront(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode)
-          : pieceBuilder.shortsLeftFront(draft, shortsDepthY: shortsLength, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
-      final rightFront = shortsLength == null
-          ? pieceBuilder.rightFront(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode)
-          : pieceBuilder.shortsRightFront(draft, shortsDepthY: shortsLength, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
-      final back = shortsLength == null
-          ? pieceBuilder.back(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode)
-          : pieceBuilder.shortsBack(draft, shortsDepthY: shortsLength, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
+
+      PatternPiece leftFront;
+      PatternPiece rightFront;
+      PatternPiece back;
+      TrouserShortsGeometry? shortsGeometry;
+
+      if (shortsLength == null) {
+        leftFront = pieceBuilder.leftFront(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
+        rightFront = pieceBuilder.rightFront(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
+        back = pieceBuilder.back(draft, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
+        shortsGeometry = null;
+      } else {
+        try {
+          leftFront = pieceBuilder.shortsLeftFront(draft, shortsDepthY: shortsLength, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
+          rightFront = pieceBuilder.shortsRightFront(draft, shortsDepthY: shortsLength, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
+          back = pieceBuilder.shortsBack(draft, shortsDepthY: shortsLength, seamAllowance: seamAllowance, sizeCode: _selectedSizeCode);
+          shortsGeometry = shortsBuilder.build(draft: draft, shortsDepthY: shortsLength);
+        } on StateError catch (_) {
+          setState(() => _message = 'Diese Shorts-Länge schneidet die bestätigte Hosenkontur nicht eindeutig. Bitte eine andere Länge wählen.');
+          return;
+        }
+      }
+
       final waistband = waistbandBuilder.build(draft: draft, measurements: measurements, sizeCode: _selectedSizeCode, seamAllowanceEnabled: seamAllowance.enabled);
-      final shortsGeometry = shortsLength == null ? null : shortsBuilder.build(draft: draft, shortsDepthY: shortsLength);
       final shapedWaistband = shapedWaistbandDepth == null ? null : shapedWaistbandBuilder.build(draft: draft, waistbandDepthCm: shapedWaistbandDepth);
       final shapedWaistbandFacing = facingDepth == null ? null : facingBuilder.build(draft: draft, facingDepthCm: facingDepth);
       final fly = flyBuilder.build(draft);
       setState(() { _draft = draft; _leftFront = leftFront; _rightFront = rightFront; _back = back; _waistband = waistband; _shortsGeometry = shortsGeometry; _shapedWaistband = shapedWaistband; _shapedWaistbandFacing = shapedWaistbandFacing; _fly = fly; _appliedMeasurements = measurements; _appliedSeamAllowance = seamAllowance; _appliedShortsLength = shortsLength; _appliedShapedWaistbandDepth = shapedWaistbandDepth; _appliedFacingDepth = facingDepth; _appliedSizeCode = _selectedSizeCode; _message = null; });
-    } on ArgumentError catch (e) { setState(() => _message = e.message?.toString() ?? 'Maße bitte prüfen.'); } on StateError catch (_) { setState(() => _message = 'Diese Shorts-Länge schneidet die bestätigte Hosenkontur nicht eindeutig. Bitte eine andere Länge wählen.'); }
+    } on ArgumentError catch (e) { setState(() => _message = e.message?.toString() ?? 'Maße bitte prüfen.'); } on StateError catch (_) { setState(() => _message = 'Die Hosengeometrie konnte nicht eindeutig berechnet werden. Bitte Eingaben und gewählte Optionen prüfen.'); }
   }
 
   Future<void> _openPatternPdf() async {
