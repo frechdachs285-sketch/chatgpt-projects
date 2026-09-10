@@ -31,13 +31,18 @@ extension TrouserBackShortsCuttingOutline on TrouserCuttingOutlineBuilder {
 
     final hemIndex = _backShortsRoleIndex(parts, 'back_hem');
     final inseamIndex = _backShortsRoleIndex(parts, 'back_inseam');
+    final lowerInseamIndex =
+        hemIndex >= 0 && hemIndex + 1 < inseamIndex ? hemIndex + 1 : null;
     final firstCrotchIndex = _backShortsRoleIndex(parts, 'back_crotch');
     final lastCrotchIndex = _backShortsLastRoleIndex(parts, 'back_crotch');
     final waistIndex = parts.length - 1;
 
+    final expectedInseamIndex = hemIndex + (lowerInseamIndex == null ? 1 : 2);
     if (hemIndex <= 0 ||
-        hemIndex + 1 != inseamIndex ||
+        inseamIndex != expectedInseamIndex ||
         inseamIndex + 1 != firstCrotchIndex ||
+        (lowerInseamIndex != null &&
+            parts[lowerInseamIndex].source is! LineSegment) ||
         lastCrotchIndex + 1 != waistIndex) {
       throw StateError('Unexpected back Tailored-Shorts contour order.');
     }
@@ -48,7 +53,13 @@ extension TrouserBackShortsCuttingOutline on TrouserCuttingOutlineBuilder {
       if (i == hemIndex - 1) {
         joins.add(sideHemTransition(parts[i], parts[next]));
       } else if (i == hemIndex) {
-        joins.add(curveCurveTransition(parts[i], parts[next]));
+        if (lowerInseamIndex == null) {
+          joins.add(curveCurveTransition(parts[i], parts[next]));
+        } else {
+          joins.add(hemLowerInseamTransition(parts[i], parts[next]));
+        }
+      } else if (lowerInseamIndex != null && i == lowerInseamIndex) {
+        joins.add(lowerUpperInseamTransition(parts[i], parts[next]));
       } else if (i == inseamIndex) {
         joins.add(upperInseamCrotchTransition(parts[i], parts[next]));
       } else if (i == lastCrotchIndex) {
