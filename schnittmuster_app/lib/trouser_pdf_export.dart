@@ -176,7 +176,9 @@ class TrouserPdfExporter {
     final stepX = _tileWidthMm - _tileOverlapMm; final stepY = _tileHeightMm - _tileOverlapMm;
     final cols = math.max(1, ((canvasWidthMm - _tileWidthMm) / stepX).ceil() + 1); final rows = math.max(1, ((canvasHeightMm - _tileHeightMm) / stepY).ceil() + 1);
     for (var row = 0; row < rows; row++) { for (var col = 0; col < cols; col++) {
-      final tileX = col * stepX; final tileY = row * stepY; final tileName = '${String.fromCharCode(65 + col)}${row + 1}';
+      final tileX = col * stepX; final tileY = row * stepY;
+      if (!_tileHasVisibleContent(piece, originX: originX, originY: originY, tileX: tileX, tileY: tileY, fly: fly)) continue;
+      final tileName = '${String.fromCharCode(65 + col)}${row + 1}';
       doc.addPage(pw.Page(pageFormat: PdfPageFormat.a4, margin: pw.EdgeInsets.all(mm(_pageMarginMm)), build: (_) => pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
         pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text(title, style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)), pw.Text('Seite $tileName', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold))]),
         pw.SizedBox(height: mm(1.5)), pw.Container(width: double.infinity, padding: pw.EdgeInsets.symmetric(horizontal: mm(2.5), vertical: mm(1.5)), decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.45)), child: pw.Text('MONTAGE: rechte/untere Schneidelinie abschneiden, linke/obere Klebeflaeche unterlegen und Seiten exakt ausrichten.', style: pw.TextStyle(fontSize: 8.4, fontWeight: pw.FontWeight.bold))), pw.SizedBox(height: mm(2)),
@@ -190,6 +192,75 @@ class TrouserPdfExporter {
         ])),
       ])));
     }}
+  }
+
+  bool _tileHasVisibleContent(
+    PatternPiece piece, {
+    required double originX,
+    required double originY,
+    required double tileX,
+    required double tileY,
+    TrouserFlyGeometry? fly,
+  }) {
+    final minX = tileX;
+    final minY = tileY;
+    final maxX = tileX + _tileWidthMm;
+    final maxY = tileY + _tileHeightMm;
+
+    bool pointInside(PatternPoint p) {
+      final x = originX + p.x * 10.0;
+      final y = originY + p.y * 10.0;
+      return x >= minX && x <= maxX && y >= minY && y <= maxY;
+    }
+
+    bool lineTouches(PatternPoint a, PatternPoint b) {
+      final ax = originX + a.x * 10.0;
+      final ay = originY + a.y * 10.0;
+      final bx = originX + b.x * 10.0;
+      final by = originY + b.y * 10.0;
+      final lineMinX = math.min(ax, bx);
+      final lineMaxX = math.max(ax, bx);
+      final lineMinY = math.min(ay, by);
+      final lineMaxY = math.max(ay, by);
+      return lineMaxX >= minX && lineMinX <= maxX && lineMaxY >= minY && lineMinY <= maxY;
+    }
+
+    bool pathTouches(PatternPath path) {
+      for (final segment in path.segments) {
+        if (segment is BezierSegment) {
+          var previous = segment.start;
+          for (var i = 1; i <= 32; i++) {
+            final t = i / 32.0;
+            final u = 1.0 - t;
+            final point = PatternPoint(
+              u * u * u * segment.start.x + 3 * u * u * t * segment.control1.x + 3 * u * t * t * segment.control2.x + t * t * t * segment.end.x,
+              u * u * u * segment.start.y + 3 * u * u * t * segment.control1.y + 3 * u * t * t * segment.control2.y + t * t * t * segment.end.y,
+            );
+            if (lineTouches(previous, point)) return true;
+            previous = point;
+          }
+        } else if (lineTouches(segment.start, segment.end)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    if (piece.cuttingOutline != null && pathTouches(piece.cuttingOutline!)) return true;
+    if (pathTouches(piece.outline)) return true;
+    for (final guideLine in piece.guideLines) {
+      if (lineTouches(guideLine.start, guideLine.end)) return true;
+    }
+    for (final dart in piece.darts) {
+      if (lineTouches(dart.leg1, dart.apex) || lineTouches(dart.apex, dart.leg2)) return true;
+    }
+    final grain = piece.grainline;
+    if (grain != null && lineTouches(grain.start, grain.end)) return true;
+    for (final label in piece.labels) {
+      if (pointInside(label.position)) return true;
+    }
+    if (fly != null && lineTouches(fly.waistCenterFront, fly.lowerEnd)) return true;
+    return false;
   }
 
   pw.Widget _pathWidget(PatternPath path, double ox, double oy, {required double lineWidthMm}) => pw.Positioned(left: 0, top: 0, child: pw.ClipRect(child: pw.CustomPaint(size: PdfPoint(mm(_tileWidthMm), mm(_tileHeightMm)), painter: (canvas, size) {
