@@ -48,6 +48,8 @@ extension TrouserFrontShortsCuttingOutline on TrouserCuttingOutlineBuilder {
         (part.source.start.y - shortsDepthY).abs() <= 1e-8 &&
         (part.source.end.y - shortsDepthY).abs() <= 1e-8);
     final inseamIndex = _frontShortsRoleIndex(parts, 'front_inseam');
+    final lowerInseamIndex =
+        hemIndex >= 0 && hemIndex + 1 < inseamIndex ? hemIndex + 1 : null;
     final firstCrotchIndex = _frontShortsRoleIndex(parts, 'front_crotch');
     final lastCrotchIndex = _frontShortsLastRoleIndex(parts, 'front_crotch');
     final topIndex = parts.length - 2;
@@ -55,9 +57,12 @@ extension TrouserFrontShortsCuttingOutline on TrouserCuttingOutlineBuilder {
     final flyLowerIndex = fly == null ? null : lastCrotchIndex + 1;
     final flyOuterIndex = fly == null ? null : lastCrotchIndex + 2;
 
+    final expectedInseamIndex = hemIndex + (lowerInseamIndex == null ? 1 : 2);
     if (hemIndex <= 0 ||
-        hemIndex + 1 != inseamIndex ||
+        inseamIndex != expectedInseamIndex ||
         inseamIndex + 1 != firstCrotchIndex ||
+        (lowerInseamIndex != null &&
+            parts[lowerInseamIndex].source is! LineSegment) ||
         (fly == null && lastCrotchIndex + 1 != topIndex)) {
       throw StateError('Unexpected front Tailored-Shorts contour order.');
     }
@@ -76,7 +81,13 @@ extension TrouserFrontShortsCuttingOutline on TrouserCuttingOutlineBuilder {
       if (i == hemIndex - 1) {
         joins.add(curveLineTransition(parts[i], parts[next]));
       } else if (i == hemIndex) {
-        joins.add(lineCurveTransition(parts[i], parts[next]));
+        if (lowerInseamIndex == null) {
+          joins.add(lineCurveTransition(parts[i], parts[next]));
+        } else {
+          joins.add(lineLineTransition(parts[i], parts[next]));
+        }
+      } else if (lowerInseamIndex != null && i == lowerInseamIndex) {
+        joins.add(lowerUpperInseamTransition(parts[i], parts[next]));
       } else if (i == inseamIndex) {
         joins.add(upperInseamCrotchTransition(parts[i], parts[next]));
       } else if (i == lastCrotchIndex) {
