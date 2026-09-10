@@ -131,6 +131,7 @@ class TrouserPatternPieceBuilder {
             shortsDepthY: shortsDepthY,
           )
         : null;
+    final grainlineEnd = PatternPoint(draft[0].x, shortsDepthY);
 
     return PatternPiece(
       id: base.id,
@@ -140,10 +141,15 @@ class TrouserPatternPieceBuilder {
       cuttingOutline: cuttingOutline,
       guideLines: base.guideLines,
       darts: base.darts,
-      grainline: base.grainline,
+      grainline: Grainline(start: draft[0], end: grainlineEnd),
       notches: base.notches,
       dartNotches: base.dartNotches,
-      labels: base.labels,
+      labels: [
+        PatternLabel(
+          position: _midpoint(draft[0], grainlineEnd),
+          text: 'Shorts Vorderhose links - Größe $sizeCode',
+        ),
+      ],
     );
   }
 
@@ -177,6 +183,7 @@ class TrouserPatternPieceBuilder {
             fly: fly,
           )
         : null;
+    final grainlineEnd = PatternPoint(draft[0].x, shortsDepthY);
 
     return PatternPiece(
       id: base.id,
@@ -193,10 +200,15 @@ class TrouserPatternPieceBuilder {
         LineSegment(fly.waistCenterFront, fly.lowerEnd),
       ],
       darts: base.darts,
-      grainline: base.grainline,
+      grainline: Grainline(start: draft[0], end: grainlineEnd),
       notches: base.notches,
       dartNotches: base.dartNotches,
-      labels: base.labels,
+      labels: [
+        PatternLabel(
+          position: _midpoint(draft[0], grainlineEnd),
+          text: 'Shorts Vorderhose rechts - Größe $sizeCode',
+        ),
+      ],
     );
   }
 
@@ -220,6 +232,7 @@ class TrouserPatternPieceBuilder {
             settings: seamAllowance,
           )
         : null;
+    final grainlineEnd = PatternPoint(draft[0].x, shortsDepthY);
 
     return PatternPiece(
       id: 'trouser_shorts_back',
@@ -231,10 +244,10 @@ class TrouserPatternPieceBuilder {
         _toDart(dart30, width: 2.0, length: 12.0),
         _toDart(dart31, width: 2.0, length: 10.0),
       ],
-      grainline: Grainline(start: draft[0], end: draft[3]),
+      grainline: Grainline(start: draft[0], end: grainlineEnd),
       labels: [
         PatternLabel(
-          position: _midpoint(draft[0], draft[3]),
+          position: _midpoint(draft[0], grainlineEnd),
           text: 'Shorts Hinterhose - Größe $sizeCode',
         ),
       ],
