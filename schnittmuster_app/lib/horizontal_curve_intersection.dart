@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'pattern_geometry.dart';
 import 'pattern_models.dart';
 
@@ -41,62 +43,55 @@ class HorizontalCurveIntersection {
 
     for (var curveIndex = 0; curveIndex < list.length; curveIndex++) {
       final curve = list[curveIndex];
-      var previousT = 0.0;
-      var previous = curve.pointAt(previousT);
-      var previousDelta = previous.y - targetY;
+      final splitTs = <double>[0.0, ..._stationaryYParameters(curve), 1.0]
+        ..sort();
 
-      if (previousDelta.abs() <= tolerance) {
-        _addUniqueHit(
-          hits,
-          HorizontalCurveHit(
-            curve: curve,
-            curveIndex: curveIndex,
-            t: previousT,
-            point: previous,
-          ),
-          tolerance,
-        );
-      }
-
-      for (var i = 1; i <= samplesPerCurve; i++) {
-        final currentT = i / samplesPerCurve;
-        final current = curve.pointAt(currentT);
-        final currentDelta = current.y - targetY;
-
-        if (currentDelta.abs() <= tolerance) {
-          _addUniqueHit(
-            hits,
-            HorizontalCurveHit(
-              curve: curve,
-              curveIndex: curveIndex,
-              t: currentT,
-              point: current,
-            ),
-            tolerance,
-          );
-        } else if (previousDelta == 0.0 || currentDelta.sign != previousDelta.sign) {
-          final t = _bisectT(
-            curve,
-            targetY,
-            previousT,
-            currentT,
-            tolerance,
-          );
+      for (final t in splitTs) {
+        final point = curve.pointAt(t);
+        if ((point.y - targetY).abs() <= tolerance) {
           _addUniqueHit(
             hits,
             HorizontalCurveHit(
               curve: curve,
               curveIndex: curveIndex,
               t: t,
-              point: curve.pointAt(t),
+              point: point,
             ),
             tolerance,
           );
         }
+      }
 
-        previousT = currentT;
-        previous = current;
-        previousDelta = currentDelta;
+      for (var i = 0; i < splitTs.length - 1; i++) {
+        final lowT = splitTs[i];
+        final highT = splitTs[i + 1];
+        final lowDelta = curve.pointAt(lowT).y - targetY;
+        final highDelta = curve.pointAt(highT).y - targetY;
+
+        if (lowDelta.abs() <= tolerance || highDelta.abs() <= tolerance) {
+          continue;
+        }
+        if (lowDelta.sign == highDelta.sign) {
+          continue;
+        }
+
+        final t = _bisectT(
+          curve,
+          targetY,
+          lowT,
+          highT,
+          tolerance,
+        );
+        _addUniqueHit(
+          hits,
+          HorizontalCurveHit(
+            curve: curve,
+            curveIndex: curveIndex,
+            t: t,
+            point: curve.pointAt(t),
+          ),
+          tolerance,
+        );
       }
     }
 
@@ -150,6 +145,45 @@ class HorizontalCurveIntersection {
         tolerance: tolerance,
         samplesPerCurve: samplesPerCurve,
       ).point;
+
+  List<double> _stationaryYParameters(CubicBezierCurve curve) {
+    final y0 = curve.start.y;
+    final y1 = curve.control1.y;
+    final y2 = curve.control2.y;
+    final y3 = curve.end.y;
+
+    final cubic = -y0 + 3.0 * y1 - 3.0 * y2 + y3;
+    final quadratic = 3.0 * y0 - 6.0 * y1 + 3.0 * y2;
+    final linear = -3.0 * y0 + 3.0 * y1;
+
+    final a = 3.0 * cubic;
+    final b = 2.0 * quadratic;
+    final c = linear;
+    const epsilon = 1e-14;
+    final roots = <double>[];
+
+    if (a.abs() <= epsilon) {
+      if (b.abs() <= epsilon) return roots;
+      _addUnitRoot(roots, -c / b);
+      return roots;
+    }
+
+    final discriminant = b * b - 4.0 * a * c;
+    if (discriminant < -epsilon) return roots;
+
+    final sqrtDiscriminant = math.sqrt(math.max(0.0, discriminant));
+    _addUnitRoot(roots, (-b - sqrtDiscriminant) / (2.0 * a));
+    _addUnitRoot(roots, (-b + sqrtDiscriminant) / (2.0 * a));
+    roots.sort();
+    return roots;
+  }
+
+  void _addUnitRoot(List<double> roots, double t) {
+    const epsilon = 1e-12;
+    if (!t.isFinite || t <= epsilon || t >= 1.0 - epsilon) return;
+    if (roots.any((existing) => (existing - t).abs() <= epsilon)) return;
+    roots.add(t);
+  }
 
   double _bisectT(
     CubicBezierCurve curve,
