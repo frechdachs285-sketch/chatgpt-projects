@@ -7,6 +7,8 @@ import 'trouser_fly.dart';
 import 'trouser_outline_builder.dart';
 import 'trouser_pattern_calculator.dart';
 import 'trouser_seam_allowance.dart';
+import 'trouser_shorts_cutting_outline_back.dart';
+import 'trouser_shorts_cutting_outline_front.dart';
 import 'trouser_shorts_outline_builder.dart';
 
 /// Builds Hose-v1 pattern pieces only from already confirmed geometry.
@@ -102,14 +104,10 @@ class TrouserPatternPieceBuilder {
     );
   }
 
-  /// True Tailored-Shorts left-front seam piece.
-  ///
-  /// Seam allowance is intentionally not attached yet. The matching shorts
-  /// cutting outline is a separate next step so the long-trouser production
-  /// outline remains untouched.
   PatternPiece shortsLeftFront(
     TrouserReferenceDraft draft, {
     required double shortsDepthY,
+    TrouserSeamAllowanceSettings? seamAllowance,
     int sizeCode = 14,
   }) {
     final outline = shortsOutlines.front(
@@ -117,7 +115,7 @@ class TrouserPatternPieceBuilder {
       shortsDepthY: shortsDepthY,
       sizeCode: sizeCode,
     );
-    return _frontPieceFromOutline(
+    final base = _frontPieceFromOutline(
       draft,
       outline: outline,
       id: 'trouser_shorts_front_left',
@@ -125,12 +123,34 @@ class TrouserPatternPieceBuilder {
       label: 'Shorts Vorderhose links',
       sizeCode: sizeCode,
     );
+    final cuttingOutline = seamAllowance != null && seamAllowance.enabled
+        ? cuttingOutlines.buildFrontShortsCuttingOutline(
+            outline: outline,
+            draft: draft,
+            settings: seamAllowance,
+            shortsDepthY: shortsDepthY,
+          )
+        : null;
+
+    return PatternPiece(
+      id: base.id,
+      name: base.name,
+      points: base.points,
+      outline: base.outline,
+      cuttingOutline: cuttingOutline,
+      guideLines: base.guideLines,
+      darts: base.darts,
+      grainline: base.grainline,
+      notches: base.notches,
+      dartNotches: base.dartNotches,
+      labels: base.labels,
+    );
   }
 
-  /// True Tailored-Shorts right-front seam piece including the confirmed fly.
   PatternPiece shortsRightFront(
     TrouserReferenceDraft draft, {
     required double shortsDepthY,
+    TrouserSeamAllowanceSettings? seamAllowance,
     int sizeCode = 14,
   }) {
     final fly = const TrouserFlyBuilder().build(draft);
@@ -148,6 +168,15 @@ class TrouserPatternPieceBuilder {
       label: 'Shorts Vorderhose rechts',
       sizeCode: sizeCode,
     );
+    final cuttingOutline = seamAllowance != null && seamAllowance.enabled
+        ? cuttingOutlines.buildFrontShortsCuttingOutline(
+            outline: outline,
+            draft: draft,
+            settings: seamAllowance,
+            shortsDepthY: shortsDepthY,
+            fly: fly,
+          )
+        : null;
 
     return PatternPiece(
       id: base.id,
@@ -158,7 +187,7 @@ class TrouserPatternPieceBuilder {
         'FlyExtensionLower': fly.extensionLower,
       }),
       outline: base.outline,
-      cuttingOutline: null,
+      cuttingOutline: cuttingOutline,
       guideLines: [
         ...base.guideLines,
         LineSegment(fly.waistCenterFront, fly.lowerEnd),
@@ -171,10 +200,10 @@ class TrouserPatternPieceBuilder {
     );
   }
 
-  /// True Tailored-Shorts back seam piece.
   PatternPiece shortsBack(
     TrouserReferenceDraft draft, {
     required double shortsDepthY,
+    TrouserSeamAllowanceSettings? seamAllowance,
     int sizeCode = 14,
   }) {
     final dart30 = dartGeometry.back30(draft);
@@ -184,13 +213,20 @@ class TrouserPatternPieceBuilder {
       shortsDepthY: shortsDepthY,
       sizeCode: sizeCode,
     );
+    final cuttingOutline = seamAllowance != null && seamAllowance.enabled
+        ? cuttingOutlines.buildBackShortsCuttingOutline(
+            outline: outline,
+            draft: draft,
+            settings: seamAllowance,
+          )
+        : null;
 
     return PatternPiece(
       id: 'trouser_shorts_back',
       name: 'Shorts Hinterhose',
       points: _points(draft),
       outline: outline,
-      cuttingOutline: null,
+      cuttingOutline: cuttingOutline,
       darts: [
         _toDart(dart30, width: 2.0, length: 12.0),
         _toDart(dart31, width: 2.0, length: 10.0),
