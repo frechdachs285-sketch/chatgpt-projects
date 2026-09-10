@@ -78,17 +78,21 @@ class TrouserShortsGeometryBuilder {
       frontSide.segments,
       shortsDepthY,
     );
-    final frontInseamHem = intersections.singleIntersection(
-      [frontInseam],
-      shortsDepthY,
+    final frontInseamHem = _intersectInseam(
+      upperCurve: frontInseam,
+      lowerEnd: draft[14],
+      targetY: shortsDepthY,
+      name: 'front inseam',
     );
     final backSideHem = intersections.singleIntersection(
       backSide.segments,
       shortsDepthY,
     );
-    final backInseamHem = intersections.singleIntersection(
-      [backInseam],
-      shortsDepthY,
+    final backInseamHem = _intersectInseam(
+      upperCurve: backInseam,
+      lowerEnd: draft[28],
+      targetY: shortsDepthY,
+      name: 'back inseam',
     );
 
     final frontHem = LineSegment(frontInseamHem, frontSideHem);
@@ -111,6 +115,44 @@ class TrouserShortsGeometryBuilder {
       backInseamHem: backInseamHem,
       frontHem: frontHem,
       backHem: backHem,
+    );
+  }
+
+  PatternPoint _intersectInseam({
+    required CubicBezierCurve upperCurve,
+    required PatternPoint lowerEnd,
+    required double targetY,
+    required String name,
+  }) {
+    final upperHits = intersections.detailedIntersections(
+      [upperCurve],
+      targetY,
+    );
+    if (upperHits.length == 1) {
+      return upperHits.single.point;
+    }
+    if (upperHits.length > 1) {
+      throw StateError(
+        'Expected at most one horizontal intersection on $name upper curve, '
+        'found ${upperHits.length}.',
+      );
+    }
+
+    final start = upperCurve.end;
+    final dy = lowerEnd.y - start.y;
+    const tolerance = 1e-9;
+    if (dy.abs() <= tolerance) {
+      throw StateError('$name lower segment is horizontal or degenerate.');
+    }
+
+    final t = (targetY - start.y) / dy;
+    if (t < -tolerance || t > 1.0 + tolerance) {
+      throw StateError('No horizontal intersection found on confirmed $name.');
+    }
+    final clampedT = t.clamp(0.0, 1.0).toDouble();
+    return PatternPoint(
+      start.x + (lowerEnd.x - start.x) * clampedT,
+      start.y + (lowerEnd.y - start.y) * clampedT,
     );
   }
 }
