@@ -260,9 +260,15 @@ class _TrouserPreviewPainter extends CustomPainter {
       final position = map(label.position);
       final isTrouserPiece = label.text.startsWith('Vorderhose ') ||
           label.text.startsWith('Hinterhose');
+      final isShortsPiece = label.text.startsWith('Shorts Vorderhose ') ||
+          label.text.startsWith('Shorts Hinterhose');
       final previewText = isTrouserPiece
           ? label.text.replaceFirst(' - Größe ', '\nGröße ')
-          : label.text;
+          : isShortsPiece
+              ? label.text
+                  .replaceFirst('Shorts ', '')
+                  .replaceFirst(' - Größe ', '\nGröße ')
+              : label.text;
       final painter = TextPainter(
         text: TextSpan(
           text: previewText,
