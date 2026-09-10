@@ -64,4 +64,36 @@ void main() {
     ));
     expect(midpoint.y, closeTo(shortsDepthY + 1.0, 1e-9));
   });
+
+  test('deeper shorts intersect the confirmed lower straight inseams', () {
+    final draft = TrouserPatternCalculator.calculateReferencePoints(
+      measurements,
+      sizeCode: 14,
+    );
+
+    final shortsDepthY = (draft[15].y + draft[14].y) / 2.0;
+    final geometry = const TrouserShortsGeometryBuilder().build(
+      draft: draft,
+      shortsDepthY: shortsDepthY,
+    );
+
+    final frontT =
+        (shortsDepthY - draft[15].y) / (draft[14].y - draft[15].y);
+    final expectedFrontX =
+        draft[15].x + (draft[14].x - draft[15].x) * frontT;
+
+    final backT =
+        (shortsDepthY - draft[29].y) / (draft[28].y - draft[29].y);
+    final expectedBackX =
+        draft[29].x + (draft[28].x - draft[29].x) * backT;
+
+    expect(geometry.frontInseamHem.x, closeTo(expectedFrontX, 1e-8));
+    expect(geometry.frontInseamHem.y, closeTo(shortsDepthY, 1e-9));
+    expect(geometry.backInseamHem.x, closeTo(expectedBackX, 1e-8));
+    expect(geometry.backInseamHem.y, closeTo(shortsDepthY, 1e-9));
+
+    expect(geometry.frontHem.start.y, closeTo(shortsDepthY, 1e-9));
+    expect(geometry.frontHem.end.y, closeTo(shortsDepthY, 1e-9));
+    expect(geometry.backHem.pointAt(0.5).y, closeTo(shortsDepthY + 1.0, 1e-9));
+  });
 }
