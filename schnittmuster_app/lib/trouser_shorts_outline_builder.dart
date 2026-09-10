@@ -49,10 +49,6 @@ class TrouserShortsOutlineBuilder {
       side.segments,
       shortsDepthY,
     );
-    final inseamHit = intersections.singleDetailedIntersection(
-      [inseam],
-      shortsDepthY,
-    );
     final frontCrotch = curves.naturalSplineThrough([
       d[6],
       curves.frontCrotchGuide(
@@ -63,13 +59,18 @@ class TrouserShortsOutlineBuilder {
     ]);
 
     final sidePrefix = _prefixThroughHit(side.segments, sideHit);
-    final inseamPrefix = _prefixThroughHit([inseam], inseamHit);
+    final reversedInseam = _reversedInseamToHem(
+      inseam: inseam,
+      lowerEnd: d[14],
+      hemPoint: geometry.frontInseamHem,
+      targetY: shortsDepthY,
+      role: 'front_inseam',
+    );
 
     return PatternPath([
       ...sidePrefix.map((curve) => _segment(curve, 'front_side_seam')),
       LineSegment(geometry.frontSideHem, geometry.frontInseamHem),
-      ...inseamPrefix.reversed
-          .map((curve) => _segment(_reverse(curve), 'front_inseam')),
+      ...reversedInseam,
       ...frontCrotch.segments.reversed
           .map((curve) => _segment(_reverse(curve), 'front_crotch')),
       LineSegment(d[6], d[10]),
@@ -102,10 +103,6 @@ class TrouserShortsOutlineBuilder {
       side.segments,
       shortsDepthY,
     );
-    final inseamHit = intersections.singleDetailedIntersection(
-      [inseam],
-      shortsDepthY,
-    );
     final backCrotch = curves.naturalSplineThrough([
       d[21],
       d[19],
@@ -117,17 +114,57 @@ class TrouserShortsOutlineBuilder {
     ]);
 
     final sidePrefix = _prefixThroughHit(side.segments, sideHit);
-    final inseamPrefix = _prefixThroughHit([inseam], inseamHit);
+    final reversedInseam = _reversedInseamToHem(
+      inseam: inseam,
+      lowerEnd: d[28],
+      hemPoint: geometry.backInseamHem,
+      targetY: shortsDepthY,
+      role: 'back_inseam',
+    );
 
     return PatternPath([
       ...sidePrefix.map((curve) => _segment(curve, 'back_side_seam')),
       _segment(_reverse(geometry.backHem), 'back_hem'),
-      ...inseamPrefix.reversed
-          .map((curve) => _segment(_reverse(curve), 'back_inseam')),
+      ...reversedInseam,
       ...backCrotch.segments.reversed
           .map((curve) => _segment(_reverse(curve), 'back_crotch')),
       LineSegment(d[21], d[22]),
     ]);
+  }
+
+  List<PathSegment> _reversedInseamToHem({
+    required CubicBezierCurve inseam,
+    required PatternPoint lowerEnd,
+    required PatternPoint hemPoint,
+    required double targetY,
+    required String role,
+  }) {
+    final hits = intersections.detailedIntersections([inseam], targetY);
+    if (hits.length == 1) {
+      final prefix = _prefixThroughHit([inseam], hits.single);
+      return [
+        ...prefix.reversed.map((curve) => _segment(_reverse(curve), role)),
+      ];
+    }
+    if (hits.length > 1) {
+      throw StateError(
+        'Expected at most one horizontal intersection on $role upper curve, '
+        'found ${hits.length}.',
+      );
+    }
+
+    const tolerance = 1e-9;
+    final minY = inseam.end.y < lowerEnd.y ? inseam.end.y : lowerEnd.y;
+    final maxY = inseam.end.y > lowerEnd.y ? inseam.end.y : lowerEnd.y;
+    if (targetY < minY - tolerance || targetY > maxY + tolerance) {
+      throw StateError('No horizontal intersection found on confirmed $role.');
+    }
+
+    return [
+      if (hemPoint.distanceTo(inseam.end) > tolerance)
+        LineSegment(hemPoint, inseam.end),
+      _segment(_reverse(inseam), role),
+    ];
   }
 
   List<CubicBezierCurve> _prefixThroughHit(
