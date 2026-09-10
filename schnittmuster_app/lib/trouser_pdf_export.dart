@@ -29,6 +29,7 @@ class TrouserPdfExporter {
     required TrouserMeasurements measurements,
     TrouserSeamAllowanceSettings? seamAllowance,
     int sizeCode = 14,
+    double? shortsLengthFromWaistCm,
     double? shapedWaistbandDepthCm,
     double? facingDepthCm,
   }) async {
@@ -38,21 +39,42 @@ class TrouserPdfExporter {
     );
     const builder = TrouserPatternPieceBuilder();
     const waistbandBuilder = TrouserWaistbandBuilder();
-    final leftFront = builder.leftFront(
-      draft,
-      seamAllowance: seamAllowance,
-      sizeCode: sizeCode,
-    );
-    final rightFront = builder.rightFront(
-      draft,
-      seamAllowance: seamAllowance,
-      sizeCode: sizeCode,
-    );
-    final back = builder.back(
-      draft,
-      seamAllowance: seamAllowance,
-      sizeCode: sizeCode,
-    );
+    final leftFront = shortsLengthFromWaistCm == null
+        ? builder.leftFront(
+            draft,
+            seamAllowance: seamAllowance,
+            sizeCode: sizeCode,
+          )
+        : builder.shortsLeftFront(
+            draft,
+            shortsDepthY: shortsLengthFromWaistCm,
+            seamAllowance: seamAllowance,
+            sizeCode: sizeCode,
+          );
+    final rightFront = shortsLengthFromWaistCm == null
+        ? builder.rightFront(
+            draft,
+            seamAllowance: seamAllowance,
+            sizeCode: sizeCode,
+          )
+        : builder.shortsRightFront(
+            draft,
+            shortsDepthY: shortsLengthFromWaistCm,
+            seamAllowance: seamAllowance,
+            sizeCode: sizeCode,
+          );
+    final back = shortsLengthFromWaistCm == null
+        ? builder.back(
+            draft,
+            seamAllowance: seamAllowance,
+            sizeCode: sizeCode,
+          )
+        : builder.shortsBack(
+            draft,
+            shortsDepthY: shortsLengthFromWaistCm,
+            seamAllowance: seamAllowance,
+            sizeCode: sizeCode,
+          );
     final waistband = waistbandBuilder.build(
       draft: draft,
       measurements: measurements,
@@ -103,34 +125,35 @@ class TrouserPdfExporter {
 
     final doc = pw.Document();
     _addCalibrationPage(doc, measurements);
-    _addPieceTiles(doc, leftFront, title: 'Hose v1 - Vorderhose links 1:1');
-    _addPieceTiles(doc, rightFront, title: 'Hose v1 - Vorderhose rechts 1:1', fly: fly);
-    _addPieceTiles(doc, back, title: 'Hose v1 - Hinterhose 1:1');
+    final garmentName = shortsLengthFromWaistCm == null ? 'Hose v1' : 'Hose v1 - Tailored Shorts';
+    _addPieceTiles(doc, leftFront, title: '$garmentName - Vorderhose links 1:1');
+    _addPieceTiles(doc, rightFront, title: '$garmentName - Vorderhose rechts 1:1', fly: fly);
+    _addPieceTiles(doc, back, title: '$garmentName - Hinterhose 1:1');
     if (shapedWaistbandFront != null && shapedWaistbandBack != null) {
       _addPieceTiles(
         doc,
         shapedWaistbandFront,
-        title: 'Hose v1 - Geformter Bund vorn 1:1',
+        title: '$garmentName - Geformter Bund vorn 1:1',
       );
       _addPieceTiles(
         doc,
         shapedWaistbandBack,
-        title: 'Hose v1 - Geformter Bund hinten 1:1',
+        title: '$garmentName - Geformter Bund hinten 1:1',
       );
       if (facingFront != null && facingBack != null) {
         _addPieceTiles(
           doc,
           facingFront,
-          title: 'Hose v1 - Beleg vorn 1:1',
+          title: '$garmentName - Beleg vorn 1:1',
         );
         _addPieceTiles(
           doc,
           facingBack,
-          title: 'Hose v1 - Beleg hinten 1:1',
+          title: '$garmentName - Beleg hinten 1:1',
         );
       }
     } else {
-      _addPieceTiles(doc, waistband, title: 'Hose v1 - Gerader Bund 1:1');
+      _addPieceTiles(doc, waistband, title: '$garmentName - Gerader Bund 1:1');
     }
     return doc.save();
   }
