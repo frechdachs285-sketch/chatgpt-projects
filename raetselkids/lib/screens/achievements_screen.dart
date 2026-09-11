@@ -256,24 +256,24 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         emoji: '⭐',
                         title: 'Sternenstarter',
                         subtitle: _totalStars >= 10
-                            ? '10 Sterne geschafft!'
-                            : 'Noch ${10 - _totalStars} Sterne.',
+                            ? 'Geschafft: 10 Sterne!'
+                            : '${10 - _totalStars} Sterne fehlen noch.',
                         unlocked: _totalStars >= 10,
                       ),
                       _badgeCard(
                         emoji: '🌟',
                         title: 'Sternensammler',
                         subtitle: _totalStars >= 50
-                            ? '50 Sterne geschafft!'
-                            : 'Noch ${50 - _totalStars} Sterne.',
+                            ? 'Geschafft: 50 Sterne!'
+                            : '${50 - _totalStars} Sterne fehlen noch.',
                         unlocked: _totalStars >= 50,
                       ),
                       _badgeCard(
                         emoji: '✨',
                         title: 'Rätseli-Freund',
                         subtitle: _totalStars >= 100
-                            ? '100 Sterne – wow!'
-                            : 'Noch ${100 - _totalStars} Sterne.',
+                            ? 'Wow, 100 Sterne!'
+                            : '${100 - _totalStars} Sterne fehlen noch.',
                         unlocked: _totalStars >= 100,
                       ),
                       const SizedBox(height: 10),
@@ -285,7 +285,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                           emoji: world.emoji,
                           title: world.title,
                           subtitle: unlocked
-                              ? '${world.worldName}: 10 von 10 ⭐'
+                              ? '${world.worldName}: geschafft! ⭐'
                               : '${world.worldName}: $value von 10 ⭐',
                           unlocked: unlocked,
                         );
@@ -296,8 +296,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         emoji: '🏆',
                         title: 'Rätselkönig',
                         subtitle: allPerfect
-                            ? 'Alle 7 Welten perfekt gemeistert!'
-                            : '$unlockedWorlds von 7 Welten perfekt.',
+                            ? 'Alle 7 Welten geschafft!'
+                            : '$unlockedWorlds von 7 Welten geschafft.',
                         unlocked: allPerfect,
                         special: true,
                       ),
