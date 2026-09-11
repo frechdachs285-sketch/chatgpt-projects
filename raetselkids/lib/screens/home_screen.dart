@@ -374,35 +374,27 @@ class _MoxSpot extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
+          Container(
             width: 48,
-            height: 40,
-            child: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                const Positioned(top: 0, left: 12, child: _AntennaDot()),
-                const Positioned(top: 0, right: 12, child: _AntennaDot()),
-                Container(
-                  width: 42,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFAEE5E2),
-                    borderRadius: BorderRadius.circular(17),
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x18000000),
-                        blurRadius: 7,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text('🥽', style: TextStyle(fontSize: 20)),
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x22000000),
+                  blurRadius: 7,
+                  offset: Offset(0, 3),
                 ),
               ],
             ),
+            clipBehavior: Clip.antiAlias,
+            child: Image.asset(
+              'assets/branding/app_icon.png',
+              fit: BoxFit.cover,
+            ),
           ),
+          const SizedBox(height: 2),
           const Text(
             'Mox',
             style: TextStyle(
@@ -413,23 +405,6 @@ class _MoxSpot extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AntennaDot extends StatelessWidget {
-  const _AntennaDot();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 7,
-      height: 7,
-      decoration: const BoxDecoration(
-        color: Color(0xFF7A6CF6),
-        shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: Color(0x667A6CF6), blurRadius: 5)],
       ),
     );
   }
