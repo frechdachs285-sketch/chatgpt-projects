@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/progress_service.dart';
 import '../services/speech_service.dart';
+import '../services/settings_service.dart';
 import '../widgets/raetseli_mascot.dart';
 
 class DailyMatchingScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class DailyMatchingScreen extends StatefulWidget {
 class _DailyMatchingScreenState extends State<DailyMatchingScreen> {
   final SpeechService _speech = SpeechService();
   final ProgressService _progress = ProgressService();
+  final SettingsService _settings = SettingsService();
   late final _MatchingPuzzle _puzzle;
   String? _selectedLeft;
   final Set<String> _solved = {};
@@ -58,12 +60,17 @@ class _DailyMatchingScreenState extends State<DailyMatchingScreen> {
     super.dispose();
   }
 
+  Future<void> _haptic(Future<void> Function() feedback) async {
+    if (!await _settings.isSoundEnabled()) return;
+    await feedback();
+  }
+
   Future<void> _chooseRight(String right) async {
     final left = _selectedLeft;
     if (left == null || _solved.contains(left)) return;
 
     if (_puzzle.pairs[left] == right) {
-      HapticFeedback.mediumImpact();
+      await _haptic(HapticFeedback.mediumImpact);
       setState(() {
         _solved.add(left);
         _selectedLeft = null;
@@ -81,7 +88,7 @@ class _DailyMatchingScreenState extends State<DailyMatchingScreen> {
         await _speech.speak('Richtig! Das gehört zusammen.');
       }
     } else {
-      HapticFeedback.selectionClick();
+      await _haptic(HapticFeedback.selectionClick);
       await _speech.speak('Fast! Probiere noch einmal.');
     }
   }
@@ -227,8 +234,9 @@ class _DailyMatchingScreenState extends State<DailyMatchingScreen> {
       child: FilledButton.tonal(
         onPressed: solved
             ? null
-            : () {
-                HapticFeedback.lightImpact();
+            : () async {
+                await _haptic(HapticFeedback.lightImpact);
+                if (!mounted) return;
                 setState(() => _selectedLeft = item);
               },
         style: FilledButton.styleFrom(
