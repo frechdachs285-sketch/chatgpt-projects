@@ -9,18 +9,27 @@ import 'theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Older RätselKids versions stored progress with the legacy
-  // SharedPreferences API. SharedPreferencesAsync uses DataStore on Android
-  // by default, so migrate the old values before reading the new store.
-  final legacyPrefs = await SharedPreferences.getInstance();
-  await migrateLegacySharedPreferencesToSharedPreferencesAsyncIfNecessary(
-    legacySharedPreferencesInstance: legacyPrefs,
-    sharedPreferencesAsyncOptions: const SharedPreferencesOptions(),
-    migrationCompletedKey: 'raetselkids_legacy_migration_v1',
-  );
+  var introSeen = false;
 
-  final prefs = SharedPreferencesAsync();
-  final introSeen = await prefs.getBool('intro_seen') ?? false;
+  try {
+    // Older RätselKids versions stored progress with the legacy
+    // SharedPreferences API. SharedPreferencesAsync uses DataStore on Android
+    // by default, so migrate the old values before reading the new store.
+    final legacyPrefs = await SharedPreferences.getInstance();
+    await migrateLegacySharedPreferencesToSharedPreferencesAsyncIfNecessary(
+      legacySharedPreferencesInstance: legacyPrefs,
+      sharedPreferencesAsyncOptions: const SharedPreferencesOptions(),
+      migrationCompletedKey: 'raetselkids_legacy_migration_v1',
+    );
+
+    final prefs = SharedPreferencesAsync();
+    introSeen = await prefs.getBool('intro_seen') ?? false;
+  } catch (_) {
+    // If local preferences cannot be read, the app should still start.
+    // Falling back to the introduction is the safest child-friendly default.
+    introSeen = false;
+  }
+
   runApp(RaetselKidsApp(introSeen: introSeen));
 }
 
