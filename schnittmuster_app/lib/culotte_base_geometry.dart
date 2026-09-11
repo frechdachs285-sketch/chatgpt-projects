@@ -49,6 +49,21 @@ class CulotteBaseGeometryBuilder {
       points[key] = translate(local[key]!, skirtBase.frontCenterWaist);
     }
 
+    // App consistency rule: Aldrich's C2/C7 define the finished hemline,
+    // therefore they must coincide with the hem depth of the skirt basis that
+    // the Culotte construction is drawn around. This introduces no new
+    // construction measurement; it only prevents incompatible inputs/bases.
+    const tolerance = 1e-9;
+    bool samePoint(PatternPoint a, PatternPoint b) =>
+        (a.x - b.x).abs() <= tolerance && (a.y - b.y).abs() <= tolerance;
+
+    if (!samePoint(points['C2']!, skirtBase.backCenterHem) ||
+        !samePoint(points['C7']!, skirtBase.frontCenterHem)) {
+      throw StateError(
+        'Die Culotte-Fertiglaenge stimmt nicht mit der Saumtiefe der Rock-Grundlage ueberein.',
+      );
+    }
+
     // Aldrich: square down from C4/C9 to the finished hemline.
     // These names are app-specific derived points, not Aldrich point numbers.
     points['BACK_INNER_HEM'] = PatternPoint(points['C4']!.x, points['C2']!.y);
