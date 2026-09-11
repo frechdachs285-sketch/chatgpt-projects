@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../services/progress_service.dart';
 import '../services/settings_service.dart';
 
@@ -12,6 +14,7 @@ class ParentsScreen extends StatefulWidget {
 class _ParentsScreenState extends State<ParentsScreen> {
   final SettingsService _settings = SettingsService();
   final ProgressService _progress = ProgressService();
+  final SharedPreferencesAsync _prefs = SharedPreferencesAsync();
   bool _speech = true;
   bool _sound = true;
   bool _loading = true;
@@ -31,6 +34,16 @@ class _ParentsScreenState extends State<ParentsScreen> {
       _sound = sound;
       _loading = false;
     });
+  }
+
+  Future<void> _showIntroAgain() async {
+    await _prefs.setBool('intro_seen', false);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Die Einführung erscheint beim nächsten App-Start wieder.'),
+      ),
+    );
   }
 
   Future<void> _reset() async {
@@ -201,6 +214,27 @@ class _ParentsScreenState extends State<ParentsScreen> {
                       if (!mounted) return;
                       setState(() => _sound = value);
                     },
+                  ),
+                  const SizedBox(height: 18),
+                  _sectionTitle('Einführung', Icons.auto_stories_rounded),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 58,
+                    child: OutlinedButton.icon(
+                      onPressed: _showIntroAgain,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF5C52A3),
+                        side: const BorderSide(color: Color(0xFFC9C3EE)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      icon: const Icon(Icons.replay_rounded),
+                      label: const Text(
+                        'Einführung nochmal zeigen',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 18),
                   _sectionTitle('Spielstand', Icons.star_rounded),
