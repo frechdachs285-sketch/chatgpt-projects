@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/progress_service.dart';
+import '../services/settings_service.dart';
 import '../services/speech_service.dart';
 import '../widgets/raetseli_mascot.dart';
 import 'daily_matching_screen.dart';
@@ -18,6 +19,7 @@ class DailyPuzzleScreen extends StatefulWidget {
 class _DailyPuzzleScreenState extends State<DailyPuzzleScreen> {
   final SpeechService _speech = SpeechService();
   final ProgressService _progress = ProgressService();
+  final SettingsService _settings = SettingsService();
 
   int _nextNumber = 1;
   bool _finished = false;
@@ -135,15 +137,20 @@ class _DailyPuzzleScreenState extends State<DailyPuzzleScreen> {
     super.dispose();
   }
 
+  Future<void> _haptic(Future<void> Function() feedback) async {
+    if (!await _settings.isSoundEnabled()) return;
+    await feedback();
+  }
+
   Future<void> _tapPoint(int number) async {
     if (_finished || number != _nextNumber) {
       if (!_finished) {
-        HapticFeedback.selectionClick();
+        await _haptic(HapticFeedback.selectionClick);
       }
       return;
     }
 
-    HapticFeedback.lightImpact();
+    await _haptic(HapticFeedback.lightImpact);
 
     if (number == _motif.points.length) {
       setState(() {
