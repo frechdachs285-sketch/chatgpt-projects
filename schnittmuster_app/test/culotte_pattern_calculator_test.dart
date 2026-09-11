@@ -35,6 +35,14 @@ void main() {
     expectPoint('C8', 0.0, 15.1);
     expectPoint('C9', 10.5, 30.2);
 
+    // Culotte v1 uses Aldrich's explicitly permitted completely straight
+    // skirt basis: no optional 1 cm back swing and no 2.5 cm hem flare.
+    // Therefore both centre lines remain vertical in the local point system.
+    expect(points['C0']!.x, closeTo(points['C1']!.x, tolerance));
+    expect(points['C1']!.x, closeTo(points['C2']!.x, tolerance));
+    expect(points['C5']!.x, closeTo(points['C6']!.x, tolerance));
+    expect(points['C6']!.x, closeTo(points['C7']!.x, tolerance));
+
     final backOffset = 3.0 / math.sqrt(2.0);
     final frontOffset = 4.0 / math.sqrt(2.0);
     expectPoint('H3', -backOffset, 30.2 - backOffset);
