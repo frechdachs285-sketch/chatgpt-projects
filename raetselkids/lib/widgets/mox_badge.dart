@@ -4,18 +4,21 @@ class MoxBadge extends StatelessWidget {
   final double size;
   final bool showLabel;
   final String? message;
+  final VoidCallback? onTap;
 
   const MoxBadge({
     super.key,
     this.size = 48,
     this.showLabel = false,
     this.message,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final image = Semantics(
       label: 'Mox, der Tüftler-Begleiter',
+      button: onTap != null,
       child: Container(
         width: size,
         height: size,
@@ -38,8 +41,9 @@ class MoxBadge extends StatelessWidget {
       ),
     );
 
+    Widget content;
     if (message != null) {
-      return Row(
+      content = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           image,
@@ -54,25 +58,36 @@ class MoxBadge extends StatelessWidget {
           ),
         ],
       );
+    } else if (showLabel) {
+      content = Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          image,
+          const SizedBox(height: 2),
+          const Text(
+            'Mox',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF3F6666),
+              height: 1,
+            ),
+          ),
+        ],
+      );
+    } else {
+      content = image;
     }
 
-    if (!showLabel) return image;
+    if (onTap == null) return content;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        image,
-        const SizedBox(height: 2),
-        const Text(
-          'Mox',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF3F6666),
-            height: 1,
-          ),
-        ),
-      ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(size),
+      child: Padding(
+        padding: const EdgeInsets.all(2),
+        child: content,
+      ),
     );
   }
 }
