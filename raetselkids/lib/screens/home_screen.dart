@@ -187,37 +187,51 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             LayoutBuilder(
               builder: (context, constraints) {
+                final compact = constraints.maxHeight < 700;
+
                 return SingleChildScrollView(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minHeight: constraints.maxHeight),
                     child: IntrinsicHeight(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: compact ? 16 : 20,
+                          vertical: compact ? 7 : 10,
+                        ),
                         child: Column(
                           children: [
                             Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: compact ? 10 : 13,
+                                    vertical: compact ? 6 : 7,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withValues(alpha: .9),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(color: const Color(0x22A68DFF)),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     '🧩 RätselKids',
                                     style: TextStyle(
-                                      fontSize: 15,
+                                      fontSize: compact ? 13 : 15,
                                       fontWeight: FontWeight.w900,
-                                      color: Color(0xFF3D3A58),
+                                      color: const Color(0xFF3D3A58),
                                     ),
                                   ),
                                 ),
                                 const Spacer(),
-                                const MoxBadge(showLabel: true),
-                                const SizedBox(width: 9),
+                                MoxBadge(
+                                  size: compact ? 42 : 48,
+                                  showLabel: true,
+                                ),
+                                SizedBox(width: compact ? 6 : 9),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: compact ? 12 : 15,
+                                    vertical: compact ? 7 : 9,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFFFD966),
                                     borderRadius: BorderRadius.circular(24),
@@ -232,17 +246,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   child: Text(
                                     '⭐ $_totalStars',
-                                    style: const TextStyle(
-                                      fontSize: 20,
+                                    style: TextStyle(
+                                      fontSize: compact ? 18 : 20,
                                       fontWeight: FontWeight.w900,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 10),
+                            SizedBox(height: compact ? 7 : 10),
                             Container(
-                              padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
+                              padding: EdgeInsets.fromLTRB(
+                                compact ? 10 : 12,
+                                compact ? 8 : 11,
+                                compact ? 10 : 12,
+                                compact ? 9 : 12,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xEFFFFFFF),
                                 borderRadius: BorderRadius.circular(32),
@@ -257,26 +276,29 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               child: Column(
                                 children: [
-                                  const RaetseliMascot(
+                                  RaetseliMascot(
                                     message: 'Hallo! Bereit für ein Rätsel-Abenteuer?',
-                                    mascotSize: 84,
-                                    mascotEmojiSize: 51,
-                                    messageFontSize: 16,
+                                    mascotSize: compact ? 68 : 84,
+                                    mascotEmojiSize: compact ? 41 : 51,
+                                    messageFontSize: compact ? 14 : 16,
                                   ),
-                                  const SizedBox(height: 7),
-                                  const Text(
+                                  SizedBox(height: compact ? 4 : 7),
+                                  Text(
                                     'RätselKids',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontSize: 40,
+                                      fontSize: compact ? 34 : 40,
                                       fontWeight: FontWeight.w900,
-                                      color: Color(0xFF302E48),
+                                      color: const Color(0xFF302E48),
                                       height: 1,
                                     ),
                                   ),
-                                  const SizedBox(height: 7),
+                                  SizedBox(height: compact ? 5 : 7),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: compact ? 13 : 16,
+                                      vertical: compact ? 5 : 7,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFFFF0B8),
                                       borderRadius: BorderRadius.circular(22),
@@ -284,10 +306,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     child: Text(
                                       '$totalPossible Rätsel · 7 Welten',
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 14,
+                                      style: TextStyle(
+                                        fontSize: compact ? 13 : 14,
                                         fontWeight: FontWeight.w800,
-                                        color: Color(0xFF4B463B),
+                                        color: const Color(0xFF4B463B),
                                       ),
                                     ),
                                   ),
@@ -299,12 +321,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               emoji: '🚀',
                               label: 'Losspielen!',
                               backgroundColor: const Color(0xFF91DEBC),
-                              height: 82,
-                              fontSize: 25,
-                              emojiSize: 36,
+                              height: compact ? 70 : 82,
+                              fontSize: compact ? 22 : 25,
+                              emojiSize: compact ? 32 : 36,
                               onPressed: _openCategories,
                             ),
-                            const SizedBox(height: 10),
+                            SizedBox(height: compact ? 8 : 10),
                             BigMenuButton(
                               emoji: _dailyDone ? '✅' : '🎁',
                               label: _dailyDone
@@ -313,12 +335,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               backgroundColor: _dailyDone
                                   ? const Color(0xFFDDF5E6)
                                   : const Color(0xFFFFC9DD),
-                              height: 72,
-                              fontSize: 20,
-                              emojiSize: 31,
+                              height: compact ? 62 : 72,
+                              fontSize: compact ? 18 : 20,
+                              emojiSize: compact ? 28 : 31,
                               onPressed: _openDailyPuzzle,
                             ),
-                            const SizedBox(height: 10),
+                            SizedBox(height: compact ? 8 : 10),
                             Row(
                               children: [
                                 Expanded(
@@ -326,22 +348,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                     emoji: '🏆',
                                     label: 'Erfolge',
                                     backgroundColor: const Color(0xFFFFE39A),
-                                    height: 70,
-                                    fontSize: 17,
-                                    emojiSize: 25,
+                                    height: compact ? 62 : 70,
+                                    fontSize: compact ? 16 : 17,
+                                    emojiSize: compact ? 23 : 25,
                                     compact: true,
                                     onPressed: _showAchievements,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                SizedBox(width: compact ? 9 : 12),
                                 Expanded(
                                   child: BigMenuButton(
                                     emoji: '⚙️',
                                     label: 'Eltern',
                                     backgroundColor: const Color(0xFFD8D4FF),
-                                    height: 70,
-                                    fontSize: 17,
-                                    emojiSize: 25,
+                                    height: compact ? 62 : 70,
+                                    fontSize: compact ? 16 : 17,
+                                    emojiSize: compact ? 23 : 25,
                                     compact: true,
                                     onPressed: _openParentsArea,
                                   ),
@@ -349,7 +371,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                             const Spacer(),
-                            const Text('⭐  🧩  ⭐', style: TextStyle(fontSize: 17)),
+                            Text(
+                              '⭐  🧩  ⭐',
+                              style: TextStyle(fontSize: compact ? 15 : 17),
+                            ),
                           ],
                         ),
                       ),
