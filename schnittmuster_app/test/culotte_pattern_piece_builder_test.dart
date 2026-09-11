@@ -52,8 +52,16 @@ void main() {
     expect(front.outline.segments, isNotEmpty);
     expect(back.cuttingOutline, isNull);
     expect(front.cuttingOutline, isNull);
-    expect(back.grainline, isNull);
-    expect(front.grainline, isNull);
+
+    expect(back.grainline, isNotNull);
+    expect(front.grainline, isNotNull);
+    expect(back.grainline!.start.x, back.grainline!.end.x);
+    expect(front.grainline!.start.x, front.grainline!.end.x);
+    expect(back.grainline!.start.distanceTo(skirt.back!.grainline!.start), 0.0);
+    expect(back.grainline!.end.distanceTo(skirt.back!.grainline!.end), 0.0);
+    expect(front.grainline!.start.distanceTo(skirt.front!.grainline!.start), 0.0);
+    expect(front.grainline!.end.distanceTo(skirt.front!.grainline!.end), 0.0);
+
     expect(back.notches, isEmpty);
     expect(front.notches, isEmpty);
     expect(back.labels, isEmpty);
@@ -104,6 +112,8 @@ void main() {
         lessThanOrEqualTo(0.000001),
       );
       expect(identical(piece.cuttingOutline, piece.outline), isFalse);
+      expect(piece.grainline, isNotNull);
+      expect(piece.grainline!.start.x, piece.grainline!.end.x);
     }
   });
 }
