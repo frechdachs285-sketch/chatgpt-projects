@@ -254,8 +254,8 @@ class _CulottePageState extends State<CulottePage> {
               const SizedBox(height: 8),
               Text(
                 _seamAllowanceEnabled
-                    ? 'Culotte v1: Nahtlinie plus separate Zuschnittkontur; noch ohne Fadenlauf, Passzeichen, Beschriftungen oder PDF.'
-                    : 'Culotte v1: Nahtlinie mit bestätigten Abnähern; Nahtzugabe ausgeschaltet. Noch ohne Fadenlauf, Passzeichen, Beschriftungen oder PDF.',
+                    ? 'Culotte v1: Nahtlinie plus separate Zuschnittkontur und Fadenlauf; noch ohne Passzeichen, Beschriftungen oder PDF.'
+                    : 'Culotte v1: Nahtlinie mit bestätigten Abnähern und Fadenlauf; Nahtzugabe ausgeschaltet. Noch ohne Passzeichen, Beschriftungen oder PDF.',
               ),
             ],
           ],
