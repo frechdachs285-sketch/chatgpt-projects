@@ -218,31 +218,36 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
                     child: Column(children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: LinearProgressIndicator(
-                                value: (currentIndex + 1) / widget.puzzles.length,
-                                minHeight: 12,
-                                backgroundColor: const Color(0xFFECEAF8),
+                      Semantics(
+                        label: 'Rätsel ${currentIndex + 1} von ${widget.puzzles.length}',
+                        child: ExcludeSemantics(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: LinearProgressIndicator(
+                                    value: (currentIndex + 1) / widget.puzzles.length,
+                                    minHeight: 12,
+                                    backgroundColor: const Color(0xFFECEAF8),
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFE8FF),
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                child: Text(
+                                  '${currentIndex + 1}/${widget.puzzles.length}',
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFE8FF),
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: Text(
-                              '${currentIndex + 1}/${widget.puzzles.length}',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                       if (isTricky) ...[
                         const SizedBox(height: 8),
@@ -311,6 +316,13 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                         final answer = entry.value;
                         final chosen = selectedAnswer == answer;
                         final answerIsCorrect = answer == puzzle.correctAnswer;
+                        final semanticLabel = !answered
+                            ? 'Antwort $number: $answer'
+                            : answerIsCorrect
+                                ? 'Antwort $number: $answer, richtig'
+                                : chosen
+                                    ? 'Antwort $number: $answer, deine Auswahl, falsch'
+                                    : 'Antwort $number: $answer';
                         Color? background;
                         if (answered && chosen) {
                           background = answerIsCorrect ? const Color(0xFFBDECCF) : const Color(0xFFFFD4D4);
@@ -328,31 +340,36 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                           child: SizedBox(
                             width: double.infinity,
                             height: compact ? 58 : 64,
-                            child: FilledButton.tonal(
-                              onPressed: answered ? null : () => checkAnswer(answer),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: background,
-                                disabledBackgroundColor: background,
-                                disabledForegroundColor: const Color(0xFF2B2B3A),
-                                padding: const EdgeInsets.symmetric(horizontal: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(25),
-                                  side: const BorderSide(color: Color(0x18A68DFF), width: 2),
+                            child: Semantics(
+                              label: semanticLabel,
+                              child: FilledButton.tonal(
+                                onPressed: answered ? null : () => checkAnswer(answer),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: background,
+                                  disabledBackgroundColor: background,
+                                  disabledForegroundColor: const Color(0xFF2B2B3A),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(25),
+                                    side: const BorderSide(color: Color(0x18A68DFF), width: 2),
+                                  ),
+                                ),
+                                child: ExcludeSemantics(
+                                  child: Row(children: [
+                                    Container(
+                                      width: compact ? 38 : 42,
+                                      height: compact ? 38 : 42,
+                                      alignment: Alignment.center,
+                                      decoration: const BoxDecoration(color: Color(0xFFD8D4FF), shape: BoxShape.circle),
+                                      child: Text('$number', style: TextStyle(fontSize: compact ? 19 : 21, fontWeight: FontWeight.w900, color: const Color(0xFF4D478C))),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(child: Text(answer, textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 20 : 23, fontWeight: FontWeight.w900))),
+                                    const SizedBox(width: 8),
+                                    marker,
+                                  ]),
                                 ),
                               ),
-                              child: Row(children: [
-                                Container(
-                                  width: compact ? 38 : 42,
-                                  height: compact ? 38 : 42,
-                                  alignment: Alignment.center,
-                                  decoration: const BoxDecoration(color: Color(0xFFD8D4FF), shape: BoxShape.circle),
-                                  child: Text('$number', style: TextStyle(fontSize: compact ? 19 : 21, fontWeight: FontWeight.w900, color: const Color(0xFF4D478C))),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(child: Text(answer, textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 20 : 23, fontWeight: FontWeight.w900))),
-                                const SizedBox(width: 8),
-                                marker,
-                              ]),
                             ),
                           ),
                         );
