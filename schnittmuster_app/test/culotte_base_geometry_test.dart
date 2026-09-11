@@ -24,6 +24,14 @@ void main() {
         'P5': PatternPoint(0.0, 20.9),
         'P7': PatternPoint(26.5, 20.9),
         'P8': PatternPoint(26.5, 60.0),
+        // P9-P14 are required by the full Aldrich base adapter, but their
+        // coordinates are not part of this test's assertion scope.
+        'P9': PatternPoint(23.25, 0.0),
+        'P10': PatternPoint(23.25, -1.25),
+        'P11': PatternPoint(7.75, -0.4166666666666667),
+        'P12': PatternPoint(15.5, -0.8333333333333334),
+        'P13': PatternPoint(7.75, 13.583333333333334),
+        'P14': PatternPoint(15.5, 11.666666666666666),
       },
     );
     final front = piece(
@@ -34,6 +42,12 @@ void main() {
         'P6': PatternPoint(51.5, 20.9),
         'P7': PatternPoint(26.5, 20.9),
         'P8': PatternPoint(26.5, 60.0),
+        // P15-P18 are required by the full Aldrich base adapter, but their
+        // coordinates are not part of this test's assertion scope.
+        'P15': PatternPoint(30.25, 0.0),
+        'P16': PatternPoint(30.25, -1.25),
+        'P17': PatternPoint(44.416666666666664, -0.4166666666666667),
+        'P18': PatternPoint(44.416666666666664, 9.583333333333334),
       },
     );
 
