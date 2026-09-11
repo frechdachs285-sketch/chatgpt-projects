@@ -242,12 +242,19 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                             color: const Color(0xFFDDF4F2),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('🥽', style: TextStyle(fontSize: 20)),
-                              SizedBox(width: 7),
-                              Text(
+                              ClipOval(
+                                child: Image.asset(
+                                  'assets/branding/app_icon.png',
+                                  width: 30,
+                                  height: 30,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              const SizedBox(width: 7),
+                              const Text(
                                 'Mox tüftelt mit!',
                                 style: TextStyle(
                                   fontSize: 14,
