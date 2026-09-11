@@ -124,6 +124,30 @@ class _CulottePreviewPainter extends CustomPainter {
       _drawArrowHead(canvas, start, end, grainPaint, arrowSize);
       _drawArrowHead(canvas, end, start, grainPaint, arrowSize);
     }
+
+    for (final label in piece.labels) {
+      final center = map(label.position);
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: label.text,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 11.0,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        textAlign: TextAlign.center,
+      )..layout();
+
+      textPainter.paint(
+        canvas,
+        Offset(
+          center.dx - textPainter.width / 2.0,
+          center.dy - textPainter.height / 2.0,
+        ),
+      );
+    }
   }
 
   void _drawArrowHead(
