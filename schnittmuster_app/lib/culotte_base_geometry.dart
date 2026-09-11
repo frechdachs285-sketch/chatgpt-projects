@@ -49,6 +49,11 @@ class CulotteBaseGeometryBuilder {
       points[key] = translate(local[key]!, skirtBase.frontCenterWaist);
     }
 
+    // Aldrich: square down from C4/C9 to the finished hemline.
+    // These names are app-specific derived points, not Aldrich point numbers.
+    points['BACK_INNER_HEM'] = PatternPoint(points['C4']!.x, points['C2']!.y);
+    points['FRONT_INNER_HEM'] = PatternPoint(points['C9']!.x, points['C7']!.y);
+
     return CulotteBaseGeometry(
       skirtBase: skirtBase,
       points: Map<String, PatternPoint>.unmodifiable(points),
