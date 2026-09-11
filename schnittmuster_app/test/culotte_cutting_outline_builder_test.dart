@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:schnittmuster_app/culotte_base_geometry.dart';
