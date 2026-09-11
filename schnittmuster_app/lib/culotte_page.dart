@@ -4,6 +4,7 @@ import 'culotte_base_geometry.dart';
 import 'culotte_measurements.dart';
 import 'culotte_pattern_piece_builder.dart';
 import 'culotte_preview.dart';
+import 'culotte_seam_allowance.dart';
 import 'pattern_models.dart';
 import 'skirt_pattern_calculator.dart';
 
@@ -21,6 +22,13 @@ class _CulottePageState extends State<CulottePage> {
   final _finishedLengthController = TextEditingController(text: '60');
   final _bodyRiseController = TextEditingController(text: '28.7');
 
+  // Deliberately blank: Culotte-v1 seam-allowance values are app-side user
+  // choices and are not taken from Aldrich unless separately confirmed.
+  final _normalAllowanceController = TextEditingController();
+  final _waistAllowanceController = TextEditingController();
+  final _hemAllowanceController = TextEditingController();
+
+  bool _seamAllowanceEnabled = false;
   PatternPiece? _front;
   PatternPiece? _back;
   String? _message;
@@ -40,12 +48,21 @@ class _CulottePageState extends State<CulottePage> {
     _hipDepthController.dispose();
     _finishedLengthController.dispose();
     _bodyRiseController.dispose();
+    _normalAllowanceController.dispose();
+    _waistAllowanceController.dispose();
+    _hemAllowanceController.dispose();
     super.dispose();
   }
 
   double? _read(TextEditingController controller) {
     final value = double.tryParse(controller.text.trim().replaceAll(',', '.'));
     if (value == null || !value.isFinite || value <= 0.0) return null;
+    return value;
+  }
+
+  double? _readNonNegative(TextEditingController controller) {
+    final value = double.tryParse(controller.text.trim().replaceAll(',', '.'));
+    if (value == null || !value.isFinite || value < 0.0) return null;
     return value;
   }
 
@@ -71,6 +88,20 @@ class _CulottePageState extends State<CulottePage> {
     );
   }
 
+  CulotteSeamAllowanceSettings? get _seamAllowance {
+    if (!_seamAllowanceEnabled) return null;
+    final normal = _readNonNegative(_normalAllowanceController);
+    final waist = _readNonNegative(_waistAllowanceController);
+    final hem = _readNonNegative(_hemAllowanceController);
+    if (normal == null || waist == null || hem == null) return null;
+    return CulotteSeamAllowanceSettings(
+      enabled: true,
+      normalCm: normal,
+      waistCm: waist,
+      hemCm: hem,
+    );
+  }
+
   void _calculate() {
     FocusScope.of(context).unfocus();
     final m = _measurements;
@@ -81,9 +112,18 @@ class _CulottePageState extends State<CulottePage> {
       return;
     }
 
+    final seamAllowance = _seamAllowance;
+    if (_seamAllowanceEnabled && seamAllowance == null) {
+      setState(() {
+        _message = 'Bitte alle drei Nahtzugaben als Zahlen ab 0 cm eingeben.';
+      });
+      return;
+    }
+
     try {
-      // Culotte v1 uses the confirmed Aldrich tailored-skirt basis without
-      // seam allowance, waistband or zipper additions.
+      // Culotte v1 uses the confirmed Aldrich skirt basis without modifying
+      // that basis with seam allowance. The cutting outline is generated only
+      // afterwards as a separate app-side contour.
       final skirt = SkirtPatternCalculator().calculate(
         Measurements(
           waist: m.waist,
@@ -105,8 +145,16 @@ class _CulottePageState extends State<CulottePage> {
         measurements: m,
       );
       const builder = CulottePatternPieceBuilder();
-      final back = builder.buildBack(skirtBack: skirt.back!, geometry: geometry);
-      final front = builder.buildFront(skirtFront: skirt.front!, geometry: geometry);
+      final back = builder.buildBack(
+        skirtBack: skirt.back!,
+        geometry: geometry,
+        seamAllowance: seamAllowance,
+      );
+      final front = builder.buildFront(
+        skirtFront: skirt.front!,
+        geometry: geometry,
+        seamAllowance: seamAllowance,
+      );
 
       setState(() {
         _front = front;
@@ -119,15 +167,21 @@ class _CulottePageState extends State<CulottePage> {
       });
     } on StateError catch (_) {
       setState(() {
-        _message = 'Die Culotte-Geometrie konnte nicht eindeutig berechnet werden. Bitte die Maße prüfen.';
+        _message = 'Die Culotte-Geometrie konnte nicht eindeutig berechnet werden. Bitte die Maße oder Nahtzugaben prüfen.';
       });
     }
   }
 
-  Widget _field(String label, TextEditingController controller) => Padding(
+  Widget _field(
+    String label,
+    TextEditingController controller, {
+    bool enabled = true,
+  }) =>
+      Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: TextField(
           controller: controller,
+          enabled: enabled,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
@@ -161,6 +215,22 @@ class _CulottePageState extends State<CulottePage> {
             _field('Fertige Culotte-Länge ab Taille', _finishedLengthController),
             _field('Sitzhöhe', _bodyRiseController),
             const SizedBox(height: 4),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Nahtzugabe einschalten'),
+              subtitle: const Text('Zuschnittkontur getrennt von der Nahtlinie'),
+              value: _seamAllowanceEnabled,
+              onChanged: (value) {
+                setState(() => _seamAllowanceEnabled = value);
+              },
+            ),
+            if (_seamAllowanceEnabled) ...[
+              const SizedBox(height: 6),
+              _field('Normale Nahtzugabe', _normalAllowanceController),
+              _field('Taillenzugabe', _waistAllowanceController),
+              _field('Saumzugabe', _hemAllowanceController),
+            ],
+            const SizedBox(height: 4),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
@@ -182,8 +252,10 @@ class _CulottePageState extends State<CulottePage> {
               const SizedBox(height: 8),
               CulottePreview(front: front, back: back),
               const SizedBox(height: 8),
-              const Text(
-                'Culotte v1: derzeit reine Nahtlinie mit bestätigten Abnähern; noch ohne Nahtzugabe, Fadenlauf, Passzeichen, Beschriftungen oder PDF.',
+              Text(
+                _seamAllowanceEnabled
+                    ? 'Culotte v1: Nahtlinie plus separate Zuschnittkontur; noch ohne Fadenlauf, Passzeichen, Beschriftungen oder PDF.'
+                    : 'Culotte v1: Nahtlinie mit bestätigten Abnähern; Nahtzugabe ausgeschaltet. Noch ohne Fadenlauf, Passzeichen, Beschriftungen oder PDF.',
               ),
             ],
           ],
