@@ -8,8 +8,13 @@ import 'pattern_models.dart';
 ///
 /// The confirmed seam line always remains [outline]. A separate
 /// [cuttingOutline] is generated only when an enabled Culotte seam-allowance
-/// configuration is explicitly supplied. No notches, labels or grainline are
-/// introduced here.
+/// configuration is explicitly supplied.
+///
+/// Grainline rule:
+/// Aldrich's Culotte diagram shows a vertical grain direction for front and
+/// back but gives no separate numeric placement for the arrow. Culotte v1
+/// therefore keeps the already established vertical grainline of the traced
+/// straight-skirt basis. This adds no new construction measurement.
 class CulottePatternPieceBuilder {
   final CulotteOutlineBuilder _outlineBuilder;
   final CulotteCuttingOutlineBuilder _cuttingOutlineBuilder;
@@ -35,6 +40,10 @@ class CulottePatternPieceBuilder {
       ...skirtBack.points,
       for (final entry in geometry.points.entries) entry.key: entry.value,
     });
+    final grainline = skirtBack.grainline;
+    if (grainline == null) {
+      throw StateError('Der Fadenlauf der Rock-Grundlage fehlt.');
+    }
 
     final basePiece = PatternPiece(
       id: 'culotte_back',
@@ -42,6 +51,7 @@ class CulottePatternPieceBuilder {
       points: points,
       outline: outline,
       darts: darts,
+      grainline: grainline,
     );
 
     final cuttingOutline = seamAllowance != null && seamAllowance.enabled
@@ -59,6 +69,7 @@ class CulottePatternPieceBuilder {
       outline: outline,
       cuttingOutline: cuttingOutline,
       darts: darts,
+      grainline: grainline,
     );
   }
 
@@ -76,6 +87,10 @@ class CulottePatternPieceBuilder {
       ...skirtFront.points,
       for (final entry in geometry.points.entries) entry.key: entry.value,
     });
+    final grainline = skirtFront.grainline;
+    if (grainline == null) {
+      throw StateError('Der Fadenlauf der Rock-Grundlage fehlt.');
+    }
 
     final basePiece = PatternPiece(
       id: 'culotte_front',
@@ -83,6 +98,7 @@ class CulottePatternPieceBuilder {
       points: points,
       outline: outline,
       darts: darts,
+      grainline: grainline,
     );
 
     final cuttingOutline = seamAllowance != null && seamAllowance.enabled
@@ -100,6 +116,7 @@ class CulottePatternPieceBuilder {
       outline: outline,
       cuttingOutline: cuttingOutline,
       darts: darts,
+      grainline: grainline,
     );
   }
 }
