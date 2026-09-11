@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
+import 'culotte_page.dart';
 import 'trouser_page.dart';
 
 class GarmentSelectionPage extends StatelessWidget {
   final VoidCallback onOpenSkirt;
   final VoidCallback? onOpenTrouser;
+  final VoidCallback? onOpenCulotte;
 
   const GarmentSelectionPage({
     super.key,
     required this.onOpenSkirt,
     this.onOpenTrouser,
+    this.onOpenCulotte,
   });
 
   @override
@@ -21,6 +24,16 @@ class GarmentSelectionPage extends StatelessWidget {
       }
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const TrouserPage()),
+      );
+    }
+
+    void openCulotte() {
+      if (onOpenCulotte != null) {
+        onOpenCulotte!();
+        return;
+      }
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const CulottePage()),
       );
     }
 
@@ -54,6 +67,16 @@ class GarmentSelectionPage extends StatelessWidget {
                 subtitle: const Text('Individueller Grundschnitt nach Körpermaßen'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: openTrouser,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.checkroom_outlined, size: 34),
+                title: const Text('Culotte'),
+                subtitle: const Text('Einfache Culotte nach Körpermaßen'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: openCulotte,
               ),
             ),
             const SizedBox(height: 8),
