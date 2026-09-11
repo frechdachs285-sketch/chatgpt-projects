@@ -5,6 +5,15 @@ import 'pattern_models.dart';
 
 /// Calculates the source-confirmed Aldrich construction points for Culotte v1.
 ///
+/// Source basis decision for Culotte v1:
+/// Aldrich's Culotte instruction starts from the straight-skirt pattern.
+/// The Straight Skirt example explicitly permits a completely straight skirt
+/// without the optional back swing and without the 2.5 cm hem flare. Culotte
+/// v1 uses that permitted straight version, matching the Culotte drawing where
+/// the back points 0-1-2 and front points 5-6-7 lie on straight vertical
+/// centre lines. Therefore no 1 cm back swing and no 2.5 cm side-seam hem
+/// flare are introduced here.
+///
 /// Aldrich-derived rules:
 /// - C0-C1 = body rise + 1.5 cm
 /// - C0-C2 = finished length
@@ -26,7 +35,7 @@ class CulottePatternCalculator {
 
     final riseLine = m.bodyRise + 1.5;
 
-    // Back: local x points away from the side seam in negative direction.
+    // Back centre remains vertical by the documented straight-skirt choice.
     final c0 = const PatternPoint(0.0, 0.0);
     final c1 = PatternPoint(0.0, riseLine);
     final c2 = PatternPoint(0.0, m.finishedLength);
@@ -34,7 +43,7 @@ class CulottePatternCalculator {
     final c3 = PatternPoint(0.0, riseLine - c1ToC3);
     final c4 = PatternPoint(-(m.hip / 8.0 + 2.0), riseLine);
 
-    // Front: local x points away from the side seam in positive direction.
+    // Front centre remains vertical as illustrated by Aldrich.
     final c5 = const PatternPoint(0.0, 0.0);
     final c6 = PatternPoint(0.0, riseLine);
     final c7 = PatternPoint(0.0, m.finishedLength);
