@@ -41,7 +41,16 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     'letters': 'Buchstabenstar',
   };
 
+  static const _moxMessages = <String>[
+    'Mox tüftelt mit!',
+    'Knifflig? Wir schaffen das!',
+    'Mox hat die Denkbrille auf!',
+    'Schau ganz genau hin!',
+    'Tüftelmodus an!',
+  ];
+
   Puzzle get currentPuzzle => widget.puzzles[currentIndex];
+  String get _moxMessage => _moxMessages[currentIndex % _moxMessages.length];
 
   @override
   void initState() {
@@ -243,9 +252,9 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                             color: const Color(0xFFDDF4F2),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const MoxBadge(
+                          child: MoxBadge(
                             size: 30,
-                            message: 'Mox tüftelt mit!',
+                            message: _moxMessage,
                           ),
                         ),
                       ],
