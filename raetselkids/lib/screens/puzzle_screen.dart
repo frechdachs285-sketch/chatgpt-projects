@@ -198,170 +198,189 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
         )))],
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
-          child: Column(children: [
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: LinearProgressIndicator(
-                      value: (currentIndex + 1) / widget.puzzles.length,
-                      minHeight: 12,
-                      backgroundColor: const Color(0xFFECEAF8),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFE8FF),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Text(
-                    '${currentIndex + 1}/${widget.puzzles.length}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-                  ),
-                ),
-              ],
-            ),
-            if (isTricky) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDDF4F2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('🥽', style: TextStyle(fontSize: 20)),
-                    SizedBox(width: 7),
-                    Text(
-                      'Mox tüftelt mit!',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF3F6666),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxHeight < 690;
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+                    child: Column(children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: LinearProgressIndicator(
+                                value: (currentIndex + 1) / widget.puzzles.length,
+                                minHeight: 12,
+                                backgroundColor: const Color(0xFFECEAF8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFE8FF),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Text(
+                              '${currentIndex + 1}/${widget.puzzles.length}',
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 10),
-            RaetseliMascot(message: mascotText, celebrate: answered && isCorrect, onSpeak: _speakQuestion),
-            const SizedBox(height: 12),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 350),
-              transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: ScaleTransition(scale: animation, child: child)),
-              child: Container(
-                key: ValueKey(currentIndex),
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: const Color(0x22A68DFF), width: 2),
-                  boxShadow: const [BoxShadow(blurRadius: 18, offset: Offset(0, 6), color: Color(0x14000000))],
-                ),
-                child: Text(
-                  puzzle.question,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF2B2B3A)),
-                ),
-              ),
-            ),
-            const Spacer(),
-            AnimatedScale(
-              scale: answered && isCorrect ? 1.12 : 1.0,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutBack,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .72),
-                  borderRadius: BorderRadius.circular(26),
-                ),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(puzzle.emojiLine, textAlign: TextAlign.center, style: const TextStyle(fontSize: 58)),
-                ),
-              ),
-            ),
-            const Spacer(),
-            ..._currentAnswers.asMap().entries.map((entry) {
-              final number = entry.key + 1;
-              final answer = entry.value;
-              final chosen = selectedAnswer == answer;
-              final answerIsCorrect = answer == puzzle.correctAnswer;
-              Color? background;
-              if (answered && chosen) {
-                background = answerIsCorrect ? const Color(0xFFBDECCF) : const Color(0xFFFFD4D4);
-              } else if (answered && answerIsCorrect) {
-                background = const Color(0xFFDDF5E6);
-              }
-              Widget marker = const SizedBox(width: 34);
-              if (answered && answerIsCorrect) {
-                marker = const Icon(Icons.check_circle_rounded, color: Color(0xFF258A4B), size: 30);
-              } else if (answered && chosen) {
-                marker = const Icon(Icons.cancel_rounded, color: Color(0xFFD64A4A), size: 30);
-              }
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 64,
-                  child: FilledButton.tonal(
-                    onPressed: answered ? null : () => checkAnswer(answer),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: background,
-                      disabledBackgroundColor: background,
-                      disabledForegroundColor: const Color(0xFF2B2B3A),
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        side: const BorderSide(color: Color(0x18A68DFF), width: 2),
+                      if (isTricky) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDDF4F2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('🥽', style: TextStyle(fontSize: 20)),
+                              SizedBox(width: 7),
+                              Text(
+                                'Mox tüftelt mit!',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF3F6666),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      SizedBox(height: compact ? 7 : 10),
+                      RaetseliMascot(
+                        message: mascotText,
+                        celebrate: answered && isCorrect,
+                        onSpeak: _speakQuestion,
+                        mascotSize: compact ? 68 : 80,
+                        mascotEmojiSize: compact ? 40 : 48,
+                        messageFontSize: compact ? 14 : 15,
                       ),
-                    ),
-                    child: Row(children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        alignment: Alignment.center,
-                        decoration: const BoxDecoration(color: Color(0xFFD8D4FF), shape: BoxShape.circle),
-                        child: Text('$number', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: Color(0xFF4D478C))),
+                      SizedBox(height: compact ? 8 : 12),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 350),
+                        transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: ScaleTransition(scale: animation, child: child)),
+                        child: Container(
+                          key: ValueKey(currentIndex),
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(horizontal: 18, vertical: compact ? 14 : 20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: const Color(0x22A68DFF), width: 2),
+                            boxShadow: const [BoxShadow(blurRadius: 18, offset: Offset(0, 6), color: Color(0x14000000))],
+                          ),
+                          child: Text(
+                            puzzle.question,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: compact ? 21 : 24, fontWeight: FontWeight.w900, color: const Color(0xFF2B2B3A)),
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(child: Text(answer, textAlign: TextAlign.center, style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w900))),
-                      const SizedBox(width: 8),
-                      marker,
+                      if (!compact) const Spacer() else const SizedBox(height: 10),
+                      AnimatedScale(
+                        scale: answered && isCorrect ? 1.12 : 1.0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutBack,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 18, vertical: compact ? 6 : 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: .72),
+                            borderRadius: BorderRadius.circular(26),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(puzzle.emojiLine, textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 48 : 58)),
+                          ),
+                        ),
+                      ),
+                      if (!compact) const Spacer() else const SizedBox(height: 10),
+                      ..._currentAnswers.asMap().entries.map((entry) {
+                        final number = entry.key + 1;
+                        final answer = entry.value;
+                        final chosen = selectedAnswer == answer;
+                        final answerIsCorrect = answer == puzzle.correctAnswer;
+                        Color? background;
+                        if (answered && chosen) {
+                          background = answerIsCorrect ? const Color(0xFFBDECCF) : const Color(0xFFFFD4D4);
+                        } else if (answered && answerIsCorrect) {
+                          background = const Color(0xFFDDF5E6);
+                        }
+                        Widget marker = const SizedBox(width: 34);
+                        if (answered && answerIsCorrect) {
+                          marker = const Icon(Icons.check_circle_rounded, color: Color(0xFF258A4B), size: 30);
+                        } else if (answered && chosen) {
+                          marker = const Icon(Icons.cancel_rounded, color: Color(0xFFD64A4A), size: 30);
+                        }
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: compact ? 7 : 10),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: compact ? 58 : 64,
+                            child: FilledButton.tonal(
+                              onPressed: answered ? null : () => checkAnswer(answer),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: background,
+                                disabledBackgroundColor: background,
+                                disabledForegroundColor: const Color(0xFF2B2B3A),
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(25),
+                                  side: const BorderSide(color: Color(0x18A68DFF), width: 2),
+                                ),
+                              ),
+                              child: Row(children: [
+                                Container(
+                                  width: compact ? 38 : 42,
+                                  height: compact ? 38 : 42,
+                                  alignment: Alignment.center,
+                                  decoration: const BoxDecoration(color: Color(0xFFD8D4FF), shape: BoxShape.circle),
+                                  child: Text('$number', style: TextStyle(fontSize: compact ? 19 : 21, fontWeight: FontWeight.w900, color: const Color(0xFF4D478C))),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(child: Text(answer, textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 20 : 23, fontWeight: FontWeight.w900))),
+                                const SizedBox(width: 8),
+                                marker,
+                              ]),
+                            ),
+                          ),
+                        );
+                      }),
+                      if (answered) ...[
+                        const SizedBox(height: 3),
+                        SizedBox(
+                          width: double.infinity,
+                          height: compact ? 54 : 58,
+                          child: FilledButton(
+                            onPressed: _advancing ? null : nextPuzzle,
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            ),
+                            child: Text(
+                              currentIndex == widget.puzzles.length - 1 ? 'Fertig 🎉' : 'Weiter ➜',
+                              style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                        ),
+                      ],
                     ]),
                   ),
                 ),
-              );
-            }),
-            if (answered) ...[
-              const SizedBox(height: 3),
-              SizedBox(
-                width: double.infinity,
-                height: 58,
-                child: FilledButton(
-                  onPressed: _advancing ? null : nextPuzzle,
-                  style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  ),
-                  child: Text(
-                    currentIndex == widget.puzzles.length - 1 ? 'Fertig 🎉' : 'Weiter ➜',
-                    style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
-                  ),
-                ),
               ),
-            ],
-          ]),
+            );
+          },
         ),
       ),
     );
