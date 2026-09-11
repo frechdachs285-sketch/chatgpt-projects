@@ -71,8 +71,12 @@ void main() {
     expectPoint('C8', 51.5, 15.1);
     expectPoint('C9', 62.0, 30.2);
 
+    // Aldrich: square down from C4/C9 to the finished hemline.
+    expectPoint('BACK_INNER_HEM', -14.5, 60.0);
+    expectPoint('FRONT_INNER_HEM', 62.0, 60.0);
+
     expect(geometry.skirtBase.backCenterHip.x, 0.0);
     expect(geometry.skirtBase.frontCenterHip.x, 51.5);
-    expect(geometry.points.length, 12);
+    expect(geometry.points.length, 14);
   });
 }
