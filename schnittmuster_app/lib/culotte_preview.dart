@@ -94,6 +94,10 @@ class _CulottePreviewPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
       ..strokeCap = StrokeCap.round;
+    final grainPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..strokeCap = StrokeCap.round;
 
     final cuttingOutline = piece.cuttingOutline;
     if (cuttingOutline != null) {
@@ -109,6 +113,45 @@ class _CulottePreviewPainter extends CustomPainter {
         ..lineTo(map(dart.leg2).dx, map(dart.leg2).dy);
       canvas.drawPath(path, dartPaint);
     }
+
+    final grainline = piece.grainline;
+    if (grainline != null) {
+      final start = map(grainline.start);
+      final end = map(grainline.end);
+      canvas.drawLine(start, end, grainPaint);
+
+      final arrowSize = math.max(4.0, math.min(8.0, 0.7 * scale));
+      _drawArrowHead(canvas, start, end, grainPaint, arrowSize);
+      _drawArrowHead(canvas, end, start, grainPaint, arrowSize);
+    }
+  }
+
+  void _drawArrowHead(
+    Canvas canvas,
+    Offset tip,
+    Offset toward,
+    Paint paint,
+    double size,
+  ) {
+    final dx = toward.dx - tip.dx;
+    final dy = toward.dy - tip.dy;
+    final length = math.sqrt(dx * dx + dy * dy);
+    if (length <= 0.000001) return;
+
+    final ux = dx / length;
+    final uy = dy / length;
+    final px = -uy;
+    final py = ux;
+    final baseX = tip.dx + ux * size;
+    final baseY = tip.dy + uy * size;
+    final halfWidth = size * 0.45;
+
+    final path = Path()
+      ..moveTo(tip.dx, tip.dy)
+      ..lineTo(baseX + px * halfWidth, baseY + py * halfWidth)
+      ..moveTo(tip.dx, tip.dy)
+      ..lineTo(baseX - px * halfWidth, baseY - py * halfWidth);
+    canvas.drawPath(path, paint);
   }
 
   Path _canvasPath(
@@ -156,6 +199,11 @@ class _CulottePreviewPainter extends CustomPainter {
 
     for (final dart in piece.darts) {
       points.addAll([dart.leg1, dart.leg2, dart.apex]);
+    }
+    final grainline = piece.grainline;
+    if (grainline != null) {
+      points.add(grainline.start);
+      points.add(grainline.end);
     }
     if (points.isEmpty) return Rect.zero;
 
