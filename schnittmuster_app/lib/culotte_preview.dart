@@ -85,10 +85,20 @@ class _CulottePreviewPainter extends CustomPainter {
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
+    final cuttingPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
     final dartPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
       ..strokeCap = StrokeCap.round;
+
+    final cuttingOutline = piece.cuttingOutline;
+    if (cuttingOutline != null) {
+      canvas.drawPath(_canvasPath(cuttingOutline, map), cuttingPaint);
+    }
 
     canvas.drawPath(_canvasPath(piece.outline, map), outlinePaint);
 
@@ -128,14 +138,22 @@ class _CulottePreviewPainter extends CustomPainter {
 
   Rect _pieceBounds(PatternPiece piece) {
     final points = <PatternPoint>[];
-    for (final segment in piece.outline.segments) {
-      points.add(segment.start);
-      points.add(segment.end);
-      if (segment is BezierSegment) {
-        points.add(segment.control1);
-        points.add(segment.control2);
+
+    void addPath(PatternPath path) {
+      for (final segment in path.segments) {
+        points.add(segment.start);
+        points.add(segment.end);
+        if (segment is BezierSegment) {
+          points.add(segment.control1);
+          points.add(segment.control2);
+        }
       }
     }
+
+    addPath(piece.outline);
+    final cuttingOutline = piece.cuttingOutline;
+    if (cuttingOutline != null) addPath(cuttingOutline);
+
     for (final dart in piece.darts) {
       points.addAll([dart.leg1, dart.leg2, dart.apex]);
     }
