@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
 
 import 'culotte_base_geometry.dart';
 import 'culotte_measurements.dart';
 import 'culotte_pattern_piece_builder.dart';
+import 'culotte_pdf_export.dart';
 import 'culotte_preview.dart';
 import 'culotte_seam_allowance.dart';
 import 'pattern_models.dart';
@@ -31,6 +33,7 @@ class _CulottePageState extends State<CulottePage> {
   bool _seamAllowanceEnabled = false;
   PatternPiece? _front;
   PatternPiece? _back;
+  CulotteMeasurements? _appliedMeasurements;
   String? _message;
 
   @override
@@ -159,6 +162,7 @@ class _CulottePageState extends State<CulottePage> {
       setState(() {
         _front = front;
         _back = back;
+        _appliedMeasurements = m;
         _message = null;
       });
     } on ArgumentError catch (error) {
@@ -169,6 +173,32 @@ class _CulottePageState extends State<CulottePage> {
       setState(() {
         _message = 'Die Culotte-Geometrie konnte nicht eindeutig berechnet werden. Bitte die Maße oder Nahtzugaben prüfen.';
       });
+    }
+  }
+
+  Future<void> _openPatternPdf() async {
+    final front = _front;
+    final back = _back;
+    final measurements = _appliedMeasurements;
+    if (front == null || back == null || measurements == null) return;
+
+    try {
+      final bytes = await CulottePdfExporter().buildPatternPdf(
+        measurements: measurements,
+        front: front,
+        back: back,
+      );
+      await Printing.layoutPdf(
+        name: 'Culotte_v1_Schnittmuster_1zu1.pdf',
+        onLayout: (_) async => bytes,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Culotte-PDF konnte nicht erstellt werden. Bitte Maße prüfen.'),
+        ),
+      );
     }
   }
 
@@ -251,11 +281,20 @@ class _CulottePageState extends State<CulottePage> {
               Text('Vorschau', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               CulottePreview(front: front, back: back),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _openPatternPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('Culotte-PDF 1:1 öffnen'),
+                ),
+              ),
               const SizedBox(height: 8),
               Text(
                 _seamAllowanceEnabled
-                    ? 'Culotte v1: Nahtlinie plus separate Zuschnittkontur und Fadenlauf; noch ohne Passzeichen, Beschriftungen oder PDF.'
-                    : 'Culotte v1: Nahtlinie mit bestätigten Abnähern und Fadenlauf; Nahtzugabe ausgeschaltet. Noch ohne Passzeichen, Beschriftungen oder PDF.',
+                    ? 'Culotte v1: Nahtlinie plus separate Zuschnittkontur, Fadenlauf und Beschriftungen; noch ohne Passzeichen.'
+                    : 'Culotte v1: Nahtlinie mit bestätigten Abnähern, Fadenlauf und Beschriftungen; Nahtzugabe ausgeschaltet. Noch ohne Passzeichen.',
               ),
             ],
           ],
