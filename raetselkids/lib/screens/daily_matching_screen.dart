@@ -103,134 +103,160 @@ class _DailyMatchingScreenState extends State<DailyMatchingScreen> {
       backgroundColor: const Color(0xFFFFFCF5),
       appBar: AppBar(title: const Text('🎁 Tagesrätsel')),
       body: SafeArea(
-        child: Stack(
-          children: [
-            const Positioned(
-              top: 34,
-              right: 14,
-              child: Opacity(
-                opacity: .38,
-                child: Text('⭐', style: TextStyle(fontSize: 25)),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
-              child: Column(
-                children: [
-                  RaetseliMascot(
-                    message: finished
-                        ? (_earnedStar
-                            ? 'Super! Dein Tagesstern ist da! ⭐'
-                            : 'Super! Heute schon geschafft! 🎉')
-                        : 'Finde immer zwei Dinge, die zusammengehören. 👆',
-                    mascotSize: 72,
-                    mascotEmojiSize: 43,
-                    messageFontSize: 15,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxHeight < 650;
+
+            return Stack(
+              children: [
+                const Positioned(
+                  top: 34,
+                  right: 14,
+                  child: Opacity(
+                    opacity: .38,
+                    child: Text('⭐', style: TextStyle(fontSize: 25)),
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF0B8),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Text(
-                      _puzzle.title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF302E48),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    18,
+                    compact ? 6 : 10,
+                    18,
+                    compact ? 12 : 18,
+                  ),
+                  child: Column(
+                    children: [
+                      RaetseliMascot(
+                        message: finished
+                            ? (_earnedStar
+                                ? 'Super! Dein Tagesstern ist da! ⭐'
+                                : 'Super! Heute schon geschafft! 🎉')
+                            : 'Finde immer zwei Dinge, die zusammengehören. 👆',
+                        mascotSize: compact ? 58 : 72,
+                        mascotEmojiSize: compact ? 35 : 43,
+                        messageFontSize: compact ? 13 : 15,
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: leftItems.map(_leftButton).toList(),
-                          ),
+                      SizedBox(height: compact ? 7 : 12),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: compact ? 9 : 12,
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 6),
-                          child: Text('↔️', style: TextStyle(fontSize: 28)),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF0B8),
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: rightItems.map(_rightButton).toList(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: finished
-                          ? const Color(0xFFDDF5E6)
-                          : const Color(0xFFEFE8FF),
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: Text(
-                      finished
-                          ? (_earnedStar
-                              ? '⭐ +1 Tagesstern!'
-                              : '✓ Tagesrätsel geschafft!')
-                          : _selectedLeft == null
-                              ? '👈 Wähle links'
-                              : '👉 Jetzt rechts',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                  if (finished) ...[
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: FilledButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: FilledButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                        ),
-                        child: const Text(
-                          'Zurück ⭐',
+                        child: Text(
+                          _puzzle.title,
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 19,
+                            fontSize: compact ? 19 : 22,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF302E48),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: compact ? 6 : 12),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: leftItems
+                                    .map((item) => _leftButton(item, compact))
+                                    .toList(),
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: compact ? 3 : 6,
+                              ),
+                              child: Text(
+                                '↔️',
+                                style: TextStyle(fontSize: compact ? 22 : 28),
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: rightItems
+                                    .map((item) => _rightButton(item, compact))
+                                    .toList(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: compact ? 6 : 10),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: compact ? 9 : 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: finished
+                              ? const Color(0xFFDDF5E6)
+                              : const Color(0xFFEFE8FF),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Text(
+                          finished
+                              ? (_earnedStar
+                                  ? '⭐ +1 Tagesstern!'
+                                  : '✓ Tagesrätsel geschafft!')
+                              : _selectedLeft == null
+                                  ? '👈 Wähle links'
+                                  : '👉 Jetzt rechts',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: compact ? 16 : 18,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
+                      if (finished) ...[
+                        SizedBox(height: compact ? 6 : 10),
+                        SizedBox(
+                          width: double.infinity,
+                          height: compact ? 48 : 56,
+                          child: FilledButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                            ),
+                            child: Text(
+                              'Zurück ⭐',
+                              style: TextStyle(
+                                fontSize: compact ? 17 : 19,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _leftButton(String item) {
+  Widget _leftButton(String item, bool compact) {
     final solved = _solved.contains(item);
     final selected = _selectedLeft == item;
 
     return SizedBox(
       width: double.infinity,
-      height: 92,
+      height: compact ? 68 : 92,
       child: FilledButton.tonal(
         onPressed: solved
             ? null
@@ -247,7 +273,7 @@ class _DailyMatchingScreenState extends State<DailyMatchingScreen> {
                   : Colors.white,
           disabledBackgroundColor: const Color(0xFFDDF5E6),
           disabledForegroundColor: const Color(0xFF2B2B3A),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(25),
             side: BorderSide(
@@ -258,37 +284,49 @@ class _DailyMatchingScreenState extends State<DailyMatchingScreen> {
             ),
           ),
         ),
-        child: Text(
-          solved ? '$item ✓' : item,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            solved ? '$item ✓' : item,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: compact ? 16 : 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _rightButton(String item) {
+  Widget _rightButton(String item, bool compact) {
     final solved = _solved.any((left) => _puzzle.pairs[left] == item);
 
     return SizedBox(
       width: double.infinity,
-      height: 92,
+      height: compact ? 68 : 92,
       child: FilledButton.tonal(
         onPressed: solved ? null : () => _chooseRight(item),
         style: FilledButton.styleFrom(
           backgroundColor: solved ? const Color(0xFFDDF5E6) : Colors.white,
           disabledBackgroundColor: const Color(0xFFDDF5E6),
           disabledForegroundColor: const Color(0xFF2B2B3A),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(25),
             side: const BorderSide(color: Color(0x18A68DFF), width: 2),
           ),
         ),
-        child: Text(
-          solved ? '$item ✓' : item,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            solved ? '$item ✓' : item,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: compact ? 16 : 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ),
       ),
     );
