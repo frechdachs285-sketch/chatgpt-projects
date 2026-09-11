@@ -21,29 +21,29 @@ class _IntroScreenState extends State<IntroScreen> {
     _IntroPage(
       emoji: '🦊',
       title: 'Hallo bei RätselKids!',
-      mascotMessage: 'Komm, wir rätseln zusammen! 😊',
-      text: 'Ich bin Rätseli und rätsle mit dir. Zusammen schaffen wir das!',
-      speech: 'Hallo bei RätselKids! Ich bin Rätseli und rätsle mit dir. Zusammen schaffen wir das!',
+      mascotMessage: 'Komm, wir legen los! 😊',
+      text: 'Ich bin Rätseli und begleite dich bei deinen Rätseln.',
+      speech: 'Hallo bei RätselKids! Ich bin Rätseli und begleite dich bei deinen Rätseln.',
     ),
     _IntroPage(
       emoji: '👆',
       title: 'Einfach antippen',
       mascotMessage: 'Du entscheidest! 👆',
-      text: 'Hör gut zu und tippe auf die Antwort, die du richtig findest.',
+      text: 'Hör gut zu und tippe auf deine Antwort.',
       speech: 'Hör gut zu und tippe auf die Antwort, die du richtig findest.',
     ),
     _IntroPage(
       emoji: '🔊',
       title: 'Ich lese dir vor',
-      mascotMessage: 'Ich helfe dir beim Zuhören! 🔊',
-      text: 'Du musst noch nicht alles lesen können. Mit der Sprachtaste hörst du die Aufgabe noch einmal.',
+      mascotMessage: 'Drück einfach auf 🔊!',
+      text: 'Mit der Sprachtaste hörst du die Aufgabe noch einmal.',
       speech: 'Du musst noch nicht alles lesen können. Mit der Sprachtaste hörst du die Aufgabe noch einmal.',
     ),
     _IntroPage(
       emoji: '⭐',
       title: 'Sammle Sterne!',
-      mascotMessage: 'Fürs Rätseln gibt es Sterne! ⭐',
-      text: 'Für gelöste Rätsel bekommst du Sterne und kannst tolle Abzeichen schaffen.',
+      mascotMessage: 'Viel Spaß beim Sammeln! ⭐',
+      text: 'Für gelöste Rätsel bekommst du Sterne und kannst Abzeichen schaffen.',
       speech: 'Für gelöste Rätsel bekommst du Sterne und kannst tolle Abzeichen schaffen. Los gehts!',
     ),
   ];
@@ -88,11 +88,20 @@ class _IntroScreenState extends State<IntroScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
+            final compact = constraints.maxHeight < 700;
+            final horizontalPadding = compact ? 18.0 : 22.0;
+            final verticalPadding = compact ? 12.0 : 18.0;
+
             return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                verticalPadding,
+                horizontalPadding,
+                compact ? 18 : 24,
+              ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 42,
+                  minHeight: constraints.maxHeight - (compact ? 30 : 42),
                 ),
                 child: IntrinsicHeight(
                   child: Column(
@@ -120,38 +129,41 @@ class _IntroScreenState extends State<IntroScreen> {
                       const Spacer(),
                       RaetseliMascot(
                         message: page.mascotMessage,
-                        mascotSize: 100,
-                        mascotEmojiSize: 60,
-                        messageFontSize: 17,
+                        mascotSize: compact ? 78 : 100,
+                        mascotEmojiSize: compact ? 47 : 60,
+                        messageFontSize: compact ? 15 : 17,
                       ),
-                      const SizedBox(height: 22),
+                      SizedBox(height: compact ? 12 : 22),
                       Container(
-                        width: 108,
-                        height: 108,
+                        width: compact ? 86 : 108,
+                        height: compact ? 86 : 108,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFF0B8),
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 3),
                         ),
-                        child: Text(page.emoji, style: const TextStyle(fontSize: 58)),
+                        child: Text(
+                          page.emoji,
+                          style: TextStyle(fontSize: compact ? 46 : 58),
+                        ),
                       ),
-                      const SizedBox(height: 14),
+                      SizedBox(height: compact ? 9 : 14),
                       Text(
                         page.title,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 29,
+                        style: TextStyle(
+                          fontSize: compact ? 25 : 29,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF302E48),
+                          color: const Color(0xFF302E48),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: compact ? 8 : 12),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 15,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: compact ? 15 : 18,
+                          vertical: compact ? 11 : 15,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -161,16 +173,16 @@ class _IntroScreenState extends State<IntroScreen> {
                         child: Text(
                           page.text,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            height: 1.32,
+                          style: TextStyle(
+                            fontSize: compact ? 16 : 17,
+                            height: 1.3,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF514F61),
+                            color: const Color(0xFF514F61),
                           ),
                         ),
                       ),
                       const Spacer(),
-                      const SizedBox(height: 18),
+                      SizedBox(height: compact ? 12 : 18),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(
@@ -188,10 +200,10 @@ class _IntroScreenState extends State<IntroScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 18),
+                      SizedBox(height: compact ? 12 : 18),
                       SizedBox(
                         width: double.infinity,
-                        height: 62,
+                        height: compact ? 56 : 62,
                         child: FilledButton(
                           onPressed: _next,
                           style: FilledButton.styleFrom(
@@ -203,8 +215,8 @@ class _IntroScreenState extends State<IntroScreen> {
                           ),
                           child: Text(
                             last ? '🚀 Los geht’s!' : 'Weiter ➜',
-                            style: const TextStyle(
-                              fontSize: 21,
+                            style: TextStyle(
+                              fontSize: compact ? 19 : 21,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
