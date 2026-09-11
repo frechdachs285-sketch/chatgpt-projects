@@ -4,17 +4,6 @@ import 'culotte_outline_builder.dart';
 import 'culotte_seam_allowance.dart';
 import 'pattern_models.dart';
 
-/// Converts the confirmed Culotte v1 geometry into PatternPiece objects.
-///
-/// The confirmed seam line always remains [outline]. A separate
-/// [cuttingOutline] is generated only when an enabled Culotte seam-allowance
-/// configuration is explicitly supplied.
-///
-/// Grainline rule:
-/// Aldrich's Culotte diagram shows a vertical grain direction for front and
-/// back but gives no separate numeric placement for the arrow. Culotte v1
-/// therefore keeps the already established vertical grainline of the traced
-/// straight-skirt basis. This adds no new construction measurement.
 class CulottePatternPieceBuilder {
   final CulotteOutlineBuilder _outlineBuilder;
   final CulotteCuttingOutlineBuilder _cuttingOutlineBuilder;
@@ -25,6 +14,16 @@ class CulottePatternPieceBuilder {
         const CulotteCuttingOutlineBuilder(),
   })  : _outlineBuilder = outlineBuilder,
         _cuttingOutlineBuilder = cuttingOutlineBuilder;
+
+  PatternLabel _labelFor(Grainline grainline, String text) {
+    return PatternLabel(
+      position: PatternPoint(
+        (grainline.start.x + grainline.end.x) / 2.0,
+        (grainline.start.y + grainline.end.y) / 2.0,
+      ),
+      text: text,
+    );
+  }
 
   PatternPiece buildBack({
     required PatternPiece skirtBack,
@@ -44,6 +43,9 @@ class CulottePatternPieceBuilder {
     if (grainline == null) {
       throw StateError('Der Fadenlauf der Rock-Grundlage fehlt.');
     }
+    final labels = <PatternLabel>[
+      _labelFor(grainline, 'Culotte Rueckenteil'),
+    ];
 
     final basePiece = PatternPiece(
       id: 'culotte_back',
@@ -52,6 +54,7 @@ class CulottePatternPieceBuilder {
       outline: outline,
       darts: darts,
       grainline: grainline,
+      labels: labels,
     );
 
     final cuttingOutline = seamAllowance != null && seamAllowance.enabled
@@ -70,6 +73,7 @@ class CulottePatternPieceBuilder {
       cuttingOutline: cuttingOutline,
       darts: darts,
       grainline: grainline,
+      labels: labels,
     );
   }
 
@@ -91,6 +95,9 @@ class CulottePatternPieceBuilder {
     if (grainline == null) {
       throw StateError('Der Fadenlauf der Rock-Grundlage fehlt.');
     }
+    final labels = <PatternLabel>[
+      _labelFor(grainline, 'Culotte Vorderteil'),
+    ];
 
     final basePiece = PatternPiece(
       id: 'culotte_front',
@@ -99,6 +106,7 @@ class CulottePatternPieceBuilder {
       outline: outline,
       darts: darts,
       grainline: grainline,
+      labels: labels,
     );
 
     final cuttingOutline = seamAllowance != null && seamAllowance.enabled
@@ -117,6 +125,7 @@ class CulottePatternPieceBuilder {
       cuttingOutline: cuttingOutline,
       darts: darts,
       grainline: grainline,
+      labels: labels,
     );
   }
 }
