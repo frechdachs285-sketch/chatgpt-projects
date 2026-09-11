@@ -4,6 +4,7 @@ import '../models/puzzle.dart';
 import '../services/progress_service.dart';
 import '../services/speech_service.dart';
 import '../services/settings_service.dart';
+import '../widgets/mox_badge.dart';
 import '../widgets/raetseli_mascot.dart';
 
 class PuzzleScreen extends StatefulWidget {
@@ -242,27 +243,9 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                             color: const Color(0xFFDDF4F2),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ClipOval(
-                                child: Image.asset(
-                                  'assets/branding/app_icon.png',
-                                  width: 30,
-                                  height: 30,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(width: 7),
-                              const Text(
-                                'Mox tüftelt mit!',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF3F6666),
-                                ),
-                              ),
-                            ],
+                          child: const MoxBadge(
+                            size: 30,
+                            message: 'Mox tüftelt mit!',
                           ),
                         ),
                       ],
