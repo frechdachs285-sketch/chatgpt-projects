@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class MoxBadge extends StatelessWidget {
+class MoxBadge extends StatefulWidget {
   final double size;
   final bool showLabel;
   final String? message;
@@ -15,13 +15,57 @@ class MoxBadge extends StatelessWidget {
   });
 
   @override
+  State<MoxBadge> createState() => _MoxBadgeState();
+}
+
+class _MoxBadgeState extends State<MoxBadge> {
+  static const _tapMessages = <String>[
+    'Mox tüftelt mit!',
+    'Knifflig? Wir schaffen das!',
+    'Mox hat die Denkbrille auf!',
+    'Schau ganz genau hin!',
+    'Tüftelmodus an!',
+  ];
+
+  int _tapIndex = 0;
+
+  String? get _shownMessage {
+    if (widget.message == null) return null;
+    if (widget.onTap != null) return widget.message;
+    return _tapMessages[_tapIndex % _tapMessages.length];
+  }
+
+  @override
+  void didUpdateWidget(covariant MoxBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.message != widget.message) {
+      final index = _tapMessages.indexOf(widget.message ?? '');
+      _tapIndex = index >= 0 ? index : 0;
+    }
+  }
+
+  void _handleTap() {
+    if (widget.onTap != null) {
+      widget.onTap!();
+      return;
+    }
+    if (widget.message == null) return;
+    setState(() {
+      _tapIndex = (_tapIndex + 1) % _tapMessages.length;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isInteractive = widget.onTap != null || widget.message != null;
+    final shownMessage = _shownMessage;
+
     final image = Semantics(
       label: 'Mox, der Tüftler-Begleiter',
-      button: onTap != null,
+      button: isInteractive,
       child: Container(
-        width: size,
-        height: size,
+        width: widget.size,
+        height: widget.size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white, width: 2),
@@ -42,14 +86,14 @@ class MoxBadge extends StatelessWidget {
     );
 
     Widget content;
-    if (message != null) {
+    if (shownMessage != null) {
       content = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           image,
           const SizedBox(width: 7),
           Text(
-            message!,
+            shownMessage,
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w900,
@@ -58,7 +102,7 @@ class MoxBadge extends StatelessWidget {
           ),
         ],
       );
-    } else if (showLabel) {
+    } else if (widget.showLabel) {
       content = Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -79,11 +123,11 @@ class MoxBadge extends StatelessWidget {
       content = image;
     }
 
-    if (onTap == null) return content;
+    if (!isInteractive) return content;
 
     return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(size),
+      onTap: _handleTap,
+      borderRadius: BorderRadius.circular(widget.size),
       child: Padding(
         padding: const EdgeInsets.all(2),
         child: content,
