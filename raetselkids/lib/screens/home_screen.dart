@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../data/sample_puzzles.dart';
 import '../services/progress_service.dart';
 import '../widgets/big_menu_button.dart';
+import '../widgets/mox_badge.dart';
 import '../widgets/raetseli_mascot.dart';
 import 'achievements_screen.dart';
 import 'category_screen.dart';
@@ -213,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 const Spacer(),
-                                const _MoxSpot(),
+                                const MoxBadge(showLabel: true),
                                 const SizedBox(width: 9),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
@@ -359,52 +360,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _MoxSpot extends StatelessWidget {
-  const _MoxSpot();
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Mox, der Tüftler-Begleiter',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x22000000),
-                  blurRadius: 7,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Image.asset(
-              'assets/branding/app_icon.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(height: 2),
-          const Text(
-            'Mox',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF3F6666),
-              height: 1,
-            ),
-          ),
-        ],
       ),
     );
   }
