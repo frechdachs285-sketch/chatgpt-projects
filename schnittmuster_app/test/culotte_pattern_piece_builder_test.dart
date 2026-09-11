@@ -34,7 +34,7 @@ void main() {
         measurements: culotteMeasurements,
       );
 
-  test('builder creates front and back Culotte PatternPieces without unconfirmed extras', () {
+  test('builder creates front and back Culotte PatternPieces with only confirmed extras', () {
     final skirt = buildSkirt();
     expect(skirt.isValid, isTrue);
     final geometry = buildGeometry(skirt);
@@ -64,8 +64,22 @@ void main() {
 
     expect(back.notches, isEmpty);
     expect(front.notches, isEmpty);
-    expect(back.labels, isEmpty);
-    expect(front.labels, isEmpty);
+
+    expect(back.labels, hasLength(1));
+    expect(front.labels, hasLength(1));
+    expect(back.labels.single.text, 'Culotte Rueckenteil');
+    expect(front.labels.single.text, 'Culotte Vorderteil');
+
+    final backGrainMid = PatternPoint(
+      (back.grainline!.start.x + back.grainline!.end.x) / 2.0,
+      (back.grainline!.start.y + back.grainline!.end.y) / 2.0,
+    );
+    final frontGrainMid = PatternPoint(
+      (front.grainline!.start.x + front.grainline!.end.x) / 2.0,
+      (front.grainline!.start.y + front.grainline!.end.y) / 2.0,
+    );
+    expect(back.labels.single.position.distanceTo(backGrainMid), 0.0);
+    expect(front.labels.single.position.distanceTo(frontGrainMid), 0.0);
 
     expect(back.darts.length, skirt.back!.darts.length);
     expect(front.darts.length, skirt.front!.darts.length);
@@ -78,7 +92,7 @@ void main() {
     }
   });
 
-  test('enabled Culotte seam allowance creates a separate closed cuttingOutline', () {
+  test('enabled Culotte seam allowance keeps labels and creates a separate closed cuttingOutline', () {
     final skirt = buildSkirt();
     expect(skirt.isValid, isTrue);
     final geometry = buildGeometry(skirt);
@@ -114,6 +128,7 @@ void main() {
       expect(identical(piece.cuttingOutline, piece.outline), isFalse);
       expect(piece.grainline, isNotNull);
       expect(piece.grainline!.start.x, piece.grainline!.end.x);
+      expect(piece.labels, hasLength(1));
     }
   });
 }
