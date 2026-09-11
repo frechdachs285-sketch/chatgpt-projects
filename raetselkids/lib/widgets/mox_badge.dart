@@ -27,7 +27,18 @@ class _MoxBadgeState extends State<MoxBadge> {
     'Tüftelmodus an!',
   ];
 
-  int _tapIndex = 0;
+  late int _tapIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _tapIndex = _indexForMessage(widget.message);
+  }
+
+  int _indexForMessage(String? message) {
+    final index = _tapMessages.indexOf(message ?? '');
+    return index >= 0 ? index : 0;
+  }
 
   String? get _shownMessage {
     if (widget.message == null) return null;
@@ -39,8 +50,7 @@ class _MoxBadgeState extends State<MoxBadge> {
   void didUpdateWidget(covariant MoxBadge oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.message != widget.message) {
-      final index = _tapMessages.indexOf(widget.message ?? '');
-      _tapIndex = index >= 0 ? index : 0;
+      _tapIndex = _indexForMessage(widget.message);
     }
   }
 
