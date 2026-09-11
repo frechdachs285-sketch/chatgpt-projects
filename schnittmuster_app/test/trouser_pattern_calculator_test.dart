@@ -66,6 +66,73 @@ void main() {
     }
   });
 
+  test('alternative leg shaping 0 keeps every reference point unchanged', () {
+    final defaultDraft = TrouserPatternCalculator.calculateReferencePoints(size14);
+    final zeroDraft = TrouserPatternCalculator.calculateReferencePoints(
+      const TrouserMeasurements(
+        waist: 76.0,
+        hip: 100.0,
+        hipDepth: 20.9,
+        bodyRise: 28.7,
+        waistToFloor: 105.0,
+        trouserBottomWidth: 22.0,
+        alternativeLegShapingCm: 0.0,
+      ),
+    );
+
+    for (var n = 0; n <= 31; n++) {
+      expect(zeroDraft[n].x, closeTo(defaultDraft[n].x, 1e-12), reason: 'P$n.x');
+      expect(zeroDraft[n].y, closeTo(defaultDraft[n].y, 1e-12), reason: 'P$n.y');
+    }
+  });
+
+  test('alternative leg shaping shifts only P12-P15 and P26-P29 in x', () {
+    final base = TrouserPatternCalculator.calculateReferencePoints(size14);
+    final plusOne = TrouserPatternCalculator.calculateReferencePoints(
+      const TrouserMeasurements(
+        waist: 76.0,
+        hip: 100.0,
+        hipDepth: 20.9,
+        bodyRise: 28.7,
+        waistToFloor: 105.0,
+        trouserBottomWidth: 22.0,
+        alternativeLegShapingCm: 1.0,
+      ),
+    );
+    final minusOne = TrouserPatternCalculator.calculateReferencePoints(
+      const TrouserMeasurements(
+        waist: 76.0,
+        hip: 100.0,
+        hipDepth: 20.9,
+        bodyRise: 28.7,
+        waistToFloor: 105.0,
+        trouserBottomWidth: 22.0,
+        alternativeLegShapingCm: -1.0,
+      ),
+    );
+
+    const positiveSide = {12, 13, 26, 27};
+    const negativeSide = {14, 15, 28, 29};
+    const changed = {...positiveSide, ...negativeSide};
+
+    for (var n = 0; n <= 31; n++) {
+      expect(plusOne[n].y, closeTo(base[n].y, 1e-12), reason: 'plus P$n.y');
+      expect(minusOne[n].y, closeTo(base[n].y, 1e-12), reason: 'minus P$n.y');
+
+      if (positiveSide.contains(n)) {
+        expect(plusOne[n].x - base[n].x, closeTo(1.0, 1e-12), reason: 'plus P$n.x');
+        expect(minusOne[n].x - base[n].x, closeTo(-1.0, 1e-12), reason: 'minus P$n.x');
+      } else if (negativeSide.contains(n)) {
+        expect(plusOne[n].x - base[n].x, closeTo(-1.0, 1e-12), reason: 'plus P$n.x');
+        expect(minusOne[n].x - base[n].x, closeTo(1.0, 1e-12), reason: 'minus P$n.x');
+      } else {
+        expect(changed.contains(n), isFalse);
+        expect(plusOne[n].x, closeTo(base[n].x, 1e-12), reason: 'plus P$n.x');
+        expect(minusOne[n].x, closeTo(base[n].x, 1e-12), reason: 'minus P$n.x');
+      }
+    }
+  });
+
   test('size-dependent P13/P15/P27/P29 use the selected Aldrich rule', () {
     final size14Draft = TrouserPatternCalculator.calculateReferencePoints(size14, sizeCode: 14);
     final size18Draft = TrouserPatternCalculator.calculateReferencePoints(size14, sizeCode: 18);

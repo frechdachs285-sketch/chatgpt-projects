@@ -2,7 +2,7 @@
 ## Quelldatei: Aldrich-Regeln, eigene Digitalregeln und bestätigter Entwicklungsstand
 
 Stand: 9. September 2026
-Branch: `schnittmuster-hose-v1`
+Branch: `hose-v1-erweiterung`
 Referenzgröße: 14
 
 ## 1. Hauptquelle
@@ -12,7 +12,7 @@ Für Hose v1 verwendeter Grundschnitt:
 - „Classic tailored trouser block“
 - Seiten 100–101
 
-Für den geraden Bund:
+Für Bundvarianten und Belege:
 - Seite 98
 
 Diese Quelle ist die fachliche Grundlage nur für Regeln, die tatsächlich daraus übernommen und im Projekt geprüft wurden.
@@ -26,6 +26,12 @@ Diese Quelle ist die fachliche Grundlage nur für Regeln, die tatsächlich darau
 - fertige Saumweite je Hosenbein
 
 Alle Maße werden in Zentimetern verarbeitet.
+
+Zusätzliche optionale Hose-v1-Eingaben:
+- Bundtiefe für den geformten Bund
+- Belegtiefe für den geformten Bund
+
+Diese beiden Tiefen sind frei wählbare digitale App-Eingaben. Für sie wird keine konkrete Aldrich-Zahl behauptet.
 
 ## 3. Übernommene Aldrich-Punktkonstruktion P0–P31
 Wichtige im Projekt digital hinterlegte Beziehungen:
@@ -108,6 +114,8 @@ Folgende Regeln sind eigene, im Projekt entwickelte oder bestätigte Digitalrege
 - Klebe-/Ausrichtungsmarkierungen und Kontrollquadrat.
 - Fadenlauf als digitale Darstellung.
 - Größenbeschriftung als digitale Produkt-/Ausgaberegel.
+- frei wählbare Bundtiefe für den geformten Bund.
+- frei wählbare Belegtiefe für den geformten Bund.
 
 ### 6.1 Vorderer Schlitz rechts
 Der Schlitz ist ausdrücklich eine eigene Hose-v1-Produktregel und stammt nicht aus dem klassischen Aldrich-Grundschnitt.
@@ -130,7 +138,7 @@ Bestätigte digitale Regel:
 - es wird kein zusätzlicher eigener Schlitz-Nahtzugabenwert eingeführt
 
 ## 7. Gerader Bund
-Quelle für die Bundkonstruktion: Aldrich, Seite 98.
+Quelle für die Grundidee der Bundkonstruktion: Aldrich, Seite 98.
 
 Bestätigter Hose-v1-Stand:
 - gerader einteiliger Bund
@@ -141,18 +149,56 @@ Bestätigter Hose-v1-Stand:
 - 4,0 cm Untertritt/Verlängerung
 - Markierungen für vordere Mitte, Seitennähte und hintere Mitte
 - Bruchlinie in der Mitte der 8,0-cm-Breite
+- Nahtzugabe: 1,5 cm rundherum bei aktivierter Nahtzugabe
+- bei deaktivierter Nahtzugabe bleibt nur die bestätigte Bund-Nähkontur
 
-Offen und deshalb bewusst nicht programmiert:
-- Nahtzugabe des Bundes
+Die 1,5-cm-Nahtzugabe des geraden Bundes ist eine bestätigte Hose-v1-Digitalregel und wird nicht als Aldrich-Regel ausgegeben.
 
-Grund: Für Hose v1 ist dafür noch keine konkrete, fachlich bestätigte Nahtzugabenregel festgelegt. Es wird nichts geschätzt.
+## 8. Geformter Bund und Beleg
+Quelle für die fachliche Grundidee: Aldrich, Seite 98.
 
-## 8. Fertige Schnittteile
-Aktuell werden erzeugt:
+Aus der Quelle übernommen bzw. als fachlicher Rahmen verwendet:
+- geformte Bundteile können körpernah aus der Taillen-/oberen Hüftgeometrie abgeleitet werden
+- geformte Bundteile werden einzeln zugeschnitten und belegt
+- Belege können als getrennte Teile konstruiert werden
+
+Nicht als konkrete Aldrich-Maßregel ausgeben:
+- die in der App eingegebene Bundtiefe
+- die in der App eingegebene Belegtiefe
+- die digitale Kurven-/Offset-Berechnung
+- die 1,5-cm-Nahtzugabenregel
+
+### 8.1 Geformter Bund – bestätigte Hose-v1-Digitalregel
+- Bundtiefe ist frei wählbar und wird in cm eingegeben
+- geformter Bund wird in zwei Schnittteilen erzeugt: vorn und hinten
+- die bestätigte Nähkontur bleibt unverändert
+- bei aktivierter Nahtzugabe wird eine separate Schneidekontur erzeugt
+- Nahtzugabe des geformten Bundes: 1,5 cm rundherum
+- bei deaktivierter Nahtzugabe wird nur die Nähkontur ausgegeben
+- Vorschau AN/AUS auf Android praktisch bestätigt
+
+### 8.2 Beleg des geformten Bundes – bestätigte Hose-v1-Digitalregel
+- Belegtiefe ist frei wählbar und wird in cm eingegeben
+- Beleg wird in zwei Schnittteilen erzeugt: vorn und hinten
+- die bestätigte Beleg-Nähkontur bleibt unverändert
+- bei aktivierter Nahtzugabe wird eine separate Schneidekontur erzeugt
+- Nahtzugabe des Belegs: 1,5 cm rundherum
+- bei deaktivierter Nahtzugabe wird nur die Nähkontur ausgegeben
+- Vorschau AN/AUS auf Android praktisch bestätigt
+
+### 8.3 Auswahlregel gerader/geformter Bund
+Bestätigte digitale Produktregel:
+- Feld „Bundtiefe geformter Bund“ leer → gerader Bund wird verwendet
+- Bundtiefe eingegeben → geformter Bund vorn + hinten ersetzt den geraden Bund in der 1:1-PDF
+- Belegtiefe zusätzlich eingegeben → Beleg vorn + hinten wird zusätzlich in die 1:1-PDF aufgenommen
+
+## 9. Fertige Schnittteile
+Aktuell werden abhängig von der gewählten Bundvariante erzeugt:
 - Vorderhose links
 - Vorderhose rechts mit angeschnittenem 4,0-cm-Schlitz
 - Hinterhose
-- Gerader Bund
+- gerader Bund oder geformter Bund vorn + hinten
+- optional Beleg vorn + hinten zum geformten Bund
 
 Vorhanden sind außerdem:
 - Vorder- und Hinterabnäher
@@ -161,33 +207,48 @@ Vorhanden sind außerdem:
 - Größenbeschriftung
 - Nahtkontur
 - Schneidekontur bei aktivierter Nahtzugabe für Vorder- und Hinterhose
+- Schneidekontur bei aktivierter Nahtzugabe für geraden Bund, geformten Bund und Beleg
 
 Zusätzliche unbestätigte Passzeichen/Knipse werden nicht ergänzt.
 
-## 9. Nahtzugaben
+## 10. Nahtzugaben
 Für Vorder- und Hinterhose sind getrennte Nahtzugabenwerte vorhanden für:
 - normale Kanten: Seitennähte, Innenbein und Schritt
 - Taille
 - Saum
 
-Die Nahtzugabe kann ein- und ausgeschaltet werden.
+Zusätzlich bestätigte feste Hose-v1-Digitalregeln:
+- gerader Bund: 1,5 cm rundherum
+- geformter Bund: 1,5 cm rundherum
+- Beleg geformter Bund: 1,5 cm rundherum
+
+Die Nahtzugabe kann global ein- und ausgeschaltet werden.
 
 Die Schneidekontur wird mathematisch aus der bestätigten Nahtkontur und den jeweiligen Nahtzugaben berechnet.
 
-## 10. Vorschau
+## 11. Vorschau
 Bestätigter Stand:
 - linke Vorderhose, rechte Vorderhose und Hinterhose werden getrennt dargestellt
 - Schlitzerweiterung ist nur an der rechten Vorderhose sichtbar
-- Bund wird separat dargestellt
+- gerader Bund wird separat dargestellt
+- geformter Bund vorn/hinten wird separat dargestellt, wenn eine Bundtiefe eingegeben wurde
+- Beleg vorn/hinten wird separat dargestellt, wenn eine Belegtiefe eingegeben wurde
 - Nahtkontur und Schneidekontur sind unterscheidbar
+- Nahtzugabe AN/AUS funktioniert für den geraden Bund technisch und für geformten Bund und Beleg praktisch bestätigt
 - Fadenlauf und Abnäher sind sichtbar
 - Größenbeschriftung ist für die drei Hosenteile zweizeilig dargestellt, um Überlappungen zu vermeiden
 - Referenztest Größe 14 auf Android erfolgreich geprüft
 
-## 11. PDF 1:1 und A4-Kachelung
+## 12. PDF 1:1 und A4-Kachelung
 Bestätigter Stand:
-- getrennte PDF-Ausgabe für Vorderhose links, Vorderhose rechts, Hinterhose und Bund
+- getrennte PDF-Ausgabe für Vorderhose links, Vorderhose rechts und Hinterhose
 - rechte Vorderhose enthält die Schlitzerweiterung
+- bei geradem Bund: gerader Bund wird ausgegeben
+- gerader Bund besitzt technisch die bestätigte 1,5-cm-Schneidekontur bei Nahtzugabe AN
+- bei geformtem Bund: geformter Bund vorn + hinten ersetzt den geraden Bund
+- bei zusätzlicher Belegtiefe: Beleg vorn + hinten wird zusätzlich ausgegeben
+- geformter Bund und Beleg übernehmen die bestätigte 1,5-cm-Schneidekontur bei Nahtzugabe AN
+- bei Nahtzugabe AUS wird für Bundteile und Beleg nur die Nähkontur ausgegeben
 - 1:1-Geometrie wird in Millimeter/PDF-Punkte umgerechnet
 - automatische A4-Kachelung
 - Seitenkoordinaten wie A1, B1, C1 usw.
@@ -195,11 +256,18 @@ Bestätigter Stand:
 - Kontrollquadrat 100 × 100 mm
 - Kontrolllinie 200 mm
 - Hinweis auf Druck mit 100 % / tatsächlicher Größe
-- Größenbeschriftung ist im PDF sichtbar und wurde praktisch geprüft
+- Größenbeschriftung ist im PDF sichtbar
 
-Der praktische Android-PDF-Test mit Referenzgröße 14 ergab im aktuellen Stand 41 Seiten. Diese Seitenzahl ist kein festgeschriebener Produktwert, sondern ergibt sich aus den aktuellen Schnittmaßen, Schnittteilen und Kachelparametern.
+Praktischer Android-PDF-Test mit Referenzgröße 14:
+- geformter Bund ohne geraden Bund praktisch bestätigt
+- Beleg vorn/hinten praktisch bestätigt
+- Nahtzugabe AN praktisch bestätigt
+- Nahtzugabe AUS praktisch bestätigt
+- mit geformtem Bund + Beleg wurden im getesteten Stand 44 Seiten angezeigt
 
-## 12. Praktisch geprüfter Stand
+Die Seitenzahl ist kein festgeschriebener Produktwert. Sie ergibt sich aus Schnittmaßen, gewählten Schnittteilen, Nahtzugaben und Kachelparametern.
+
+## 13. Praktisch geprüfter Stand
 Referenz: Größe 14.
 
 Geprüft und bestätigt:
@@ -210,43 +278,60 @@ Geprüft und bestätigt:
 - Schneidekontur inklusive Schlitz ist sichtbar
 - Vorschau der Schnittteile funktioniert
 - Größenbeschriftungen sind lesbar und überlappen nach der Korrektur nicht mehr
+- geformter Bund vorn/hinten wird korrekt dargestellt
+- geformter Bund: Nahtzugabe AN/AUS praktisch bestätigt
+- Beleg vorn/hinten wird korrekt dargestellt
+- Beleg: Nahtzugabe AN/AUS praktisch bestätigt
 - 1:1-PDF öffnet
-- rechte Vorderhose und Hinterhose tragen die Größenbeschriftung im PDF korrekt
+- geformter Bund ersetzt den geraden Bund bei eingetragener Bundtiefe
+- Beleg vorn/hinten erscheint bei zusätzlicher Belegtiefe in der PDF
+- Beleg-PDF mit Nahtzugabe AN/AUS praktisch bestätigt
 - A4-Kachelung und Seitenkennzeichnung sind sichtbar vorhanden
+
+Technisch bestätigt, aber für diesen neuen Regelentscheid noch nicht erneut separat praktisch gegengeprüft:
+- gerader Bund: 1,5 cm Nahtzugabe rundherum mit globalem AN/AUS-Schalter
 
 Noch nicht physisch bestätigt:
 - tatsächliche Druckmaßhaltigkeit auf Papier
 
 Dafür ist später das 100 × 100-mm-Kontrollquadrat bei 100 % / „Tatsächliche Größe“ auszudrucken und nachzumessen.
 
-## 13. Bewusst offene bzw. gesperrte Punkte
+## 14. Bewusst offene bzw. gesperrte Punkte
 - Größe 26 bleibt gesperrt.
-- Bund-Nahtzugabe bleibt offen, bis eine bestätigte Regel vorliegt.
 - zusätzliche Passzeichen/Knipse werden ohne bestätigte Grundlage nicht ergänzt.
 - Taschen und weitere Modellierungsdetails gehören nicht automatisch zum klassischen Hosengrundschnitt und werden nicht ohne eigene geprüfte Regeln hinzugefügt.
 - physischer 1:1-Drucktest steht noch aus.
 
-## 14. Schutz bestehender Projektstände
+## 15. Schutz bestehender Projektstände
 - Rock v1 bleibt eingefroren und darf für Hose-v1-Änderungen nicht verändert werden.
 - Funktionierenden Hose-v1-Code nicht unnötig verändern.
 - Neue Regeln zuerst fachlich festlegen, dann programmieren und anschließend per CI und praktischem Test prüfen.
+- Aldrich-Regeln und eigene Hose-v1-Digitalregeln bleiben ausdrücklich getrennt dokumentiert.
 
-## 15. Quellenregel für die weitere Entwicklung
+## 16. Quellenregel für die weitere Entwicklung
 1. Aldrich wird nur dort als Quelle genannt, wo eine Regel nachweislich aus dem verwendeten Aldrich-Material übernommen wurde.
 2. Eigene Digitalregeln werden separat als „Hose-v1-Digitalregel“ dokumentiert.
 3. Maße, Formeln oder Konstruktionswerte werden nicht geschätzt.
 4. Neue Regeln werden vor der Programmierung fachlich geprüft und bestätigt.
 5. Größe 14 bleibt die unveränderte Referenz für Regressionstests; andere Größen verwenden ausschließlich die bestätigten größenabhängigen Aldrich-Werte.
 
-## 16. Technischer Abschlussstand dieser Dokumentation
-Letzter funktionaler Code-Commit vor dieser Dokumentation:
-- `a59e5ce44f3a6c8fa9b2d62cd7edfec5563f1128`
-- Änderung: zweizeilige Größenbeschriftung in der Vorschau
+## 17. Technischer Abschlussstand dieser Dokumentation
+Aktueller funktionaler Code-Stand für die Beleg-PDF-Integration:
+- `371d05f3787c35a2e62c9a46ec513446151a1ba4`
+- Änderung: angewendete Belegtiefe wird an den 1:1-PDF-Exporter übergeben
+
+Vorheriger zugehöriger PDF-Commit:
+- `399369aee1f1a3a93c1137197dc4b4f26e2fce32`
+- Änderung: Beleg vorn + hinten als 1:1-PDF-Schnittteile integriert
+
+Gerader Bund:
+- 1,5-cm-Nahtzugabe rundherum ist im bestehenden `TrouserWaistbandBuilder` bereits implementiert und wurde am 9. September 2026 ausdrücklich als Hose-v1-Digitalregel bestätigt.
+- Für diese Bestätigung war keine Codeänderung erforderlich.
 
 Dazu erfolgreich:
-- Schnittmuster App Check #469
-- Schnittmuster APK #308
+- Schnittmuster App Check #504
+- Schnittmuster APK #343
 
-Die praktische Vorschau- und PDF-Kontrolle auf Android wurde anschließend ebenfalls erfolgreich durchgeführt.
+Die praktische Vorschau- und PDF-Kontrolle auf Android wurde für geformten Bund und Beleg sowohl mit Nahtzugabe AN als auch AUS erfolgreich durchgeführt.
 
 Diese Datei dokumentiert den aktuell bestätigten Quellen- und Entwicklungsstand für „Hose v1“ der Schnittmuster-App. Sie ist als Arbeits- und Referenzquelle für die weitere Entwicklung gedacht und ersetzt keine vollständige Wiedergabe des urheberrechtlich geschützten Buches.

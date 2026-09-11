@@ -2,8 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'pattern_geometry.dart';
 import 'pattern_models.dart';
 import 'trouser_fly.dart';
+import 'trouser_shorts_geometry.dart';
 
 class TrouserPreview extends StatelessWidget {
   final PatternPiece leftFront;
@@ -11,6 +13,7 @@ class TrouserPreview extends StatelessWidget {
   final PatternPiece back;
   final PatternPiece waistband;
   final TrouserFlyGeometry? fly;
+  final TrouserShortsGeometry? shortsGeometry;
 
   const TrouserPreview({
     super.key,
@@ -19,6 +22,7 @@ class TrouserPreview extends StatelessWidget {
     required this.back,
     required this.waistband,
     this.fly,
+    this.shortsGeometry,
   });
 
   @override
@@ -40,6 +44,7 @@ class TrouserPreview extends StatelessWidget {
               back: back,
               waistband: waistband,
               fly: fly,
+              shortsGeometry: shortsGeometry,
             ),
           ),
         ),
@@ -54,6 +59,7 @@ class _TrouserPreviewPainter extends CustomPainter {
   final PatternPiece back;
   final PatternPiece waistband;
   final TrouserFlyGeometry? fly;
+  final TrouserShortsGeometry? shortsGeometry;
 
   _TrouserPreviewPainter({
     required this.leftFront,
@@ -61,14 +67,25 @@ class _TrouserPreviewPainter extends CustomPainter {
     required this.back,
     required this.waistband,
     required this.fly,
+    required this.shortsGeometry,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     const gapCm = 8.0;
-    final leftFrontBounds = _pieceBounds(leftFront);
-    final rightFrontBounds = _pieceBounds(rightFront);
-    final backBounds = _pieceBounds(back);
+    final shorts = shortsGeometry;
+    final leftFrontBounds = _pieceBounds(
+      leftFront,
+      maxY: shorts?.shortsDepthY,
+    );
+    final rightFrontBounds = _pieceBounds(
+      rightFront,
+      maxY: shorts?.shortsDepthY,
+    );
+    final backBounds = _pieceBounds(
+      back,
+      maxY: shorts == null ? null : shorts.shortsDepthY + 1.0,
+    );
     final waistbandBounds = _pieceBounds(waistband);
 
     final trouserWidth = leftFrontBounds.width +
@@ -93,8 +110,15 @@ class _TrouserPreviewPainter extends CustomPainter {
     );
     final trouserX = origin.dx + (totalWidth - trouserWidth) * scale / 2.0;
 
-    _drawPiece(canvas, leftFront,
-        origin: Offset(trouserX, origin.dy), bounds: leftFrontBounds, scale: scale);
+    _drawPiece(
+      canvas,
+      leftFront,
+      origin: Offset(trouserX, origin.dy),
+      bounds: leftFrontBounds,
+      scale: scale,
+      shortsHemLine: shorts?.frontHem,
+      suppressCuttingOutline: shorts != null,
+    );
     _drawPiece(
       canvas,
       rightFront,
@@ -102,6 +126,8 @@ class _TrouserPreviewPainter extends CustomPainter {
       bounds: rightFrontBounds,
       scale: scale,
       fly: fly,
+      shortsHemLine: shorts?.frontHem,
+      suppressCuttingOutline: shorts != null,
     );
     _drawPiece(
       canvas,
@@ -113,6 +139,8 @@ class _TrouserPreviewPainter extends CustomPainter {
       ),
       bounds: backBounds,
       scale: scale,
+      shortsHemCurve: shorts?.backHem,
+      suppressCuttingOutline: shorts != null,
     );
     _drawPiece(
       canvas,
@@ -133,6 +161,9 @@ class _TrouserPreviewPainter extends CustomPainter {
     required Rect bounds,
     required double scale,
     TrouserFlyGeometry? fly,
+    LineSegment? shortsHemLine,
+    CubicBezierCurve? shortsHemCurve,
+    bool suppressCuttingOutline = false,
   }) {
     Offset map(PatternPoint p) => Offset(
           origin.dx + (p.x - bounds.left) * scale,
@@ -165,12 +196,39 @@ class _TrouserPreviewPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round;
+    final shortsHemPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(
+      origin.dx - 1.0,
+      origin.dy - 1.0,
+      bounds.width * scale + 2.0,
+      bounds.height * scale + 2.0,
+    ));
 
     final cuttingOutline = piece.cuttingOutline;
-    if (cuttingOutline != null) {
+    if (!suppressCuttingOutline && cuttingOutline != null) {
       canvas.drawPath(_canvasPath(cuttingOutline, map), cuttingPaint);
     }
     canvas.drawPath(_canvasPath(piece.outline, map), outlinePaint);
+
+    if (shortsHemLine != null) {
+      canvas.drawLine(map(shortsHemLine.start), map(shortsHemLine.end), shortsHemPaint);
+    }
+    if (shortsHemCurve != null) {
+      final start = map(shortsHemCurve.start);
+      final c1 = map(shortsHemCurve.control1);
+      final c2 = map(shortsHemCurve.control2);
+      final end = map(shortsHemCurve.end);
+      final hemPath = Path()
+        ..moveTo(start.dx, start.dy)
+        ..cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
+      canvas.drawPath(hemPath, shortsHemPaint);
+    }
 
     for (final guide in piece.guideLines) {
       canvas.drawLine(map(guide.start), map(guide.end), guidePaint);
@@ -202,9 +260,15 @@ class _TrouserPreviewPainter extends CustomPainter {
       final position = map(label.position);
       final isTrouserPiece = label.text.startsWith('Vorderhose ') ||
           label.text.startsWith('Hinterhose');
+      final isShortsPiece = label.text.startsWith('Shorts Vorderhose ') ||
+          label.text.startsWith('Shorts Hinterhose');
       final previewText = isTrouserPiece
           ? label.text.replaceFirst(' - Größe ', '\nGröße ')
-          : label.text;
+          : isShortsPiece
+              ? label.text
+                  .replaceFirst('Shorts ', '')
+                  .replaceFirst(' - Größe ', '\nGröße ')
+              : label.text;
       final painter = TextPainter(
         text: TextSpan(
           text: previewText,
@@ -222,6 +286,8 @@ class _TrouserPreviewPainter extends CustomPainter {
         Offset(position.dx - painter.width / 2.0, position.dy - painter.height / 2.0),
       );
     }
+
+    canvas.restore();
   }
 
   Path _canvasPath(PatternPath patternPath, Offset Function(PatternPoint point) map) {
@@ -262,7 +328,7 @@ class _TrouserPreviewPainter extends CustomPainter {
     canvas.drawLine(tip, Offset(base.dx - px * arrowHalfWidth, base.dy - py * arrowHalfWidth), paint);
   }
 
-  Rect _pieceBounds(PatternPiece piece) {
+  Rect _pieceBounds(PatternPiece piece, {double? maxY}) {
     final points = <PatternPoint>[];
     _addPathPoints(points, piece.outline);
     final cuttingOutline = piece.cuttingOutline;
@@ -278,7 +344,10 @@ class _TrouserPreviewPainter extends CustomPainter {
     for (final label in piece.labels) {
       points.add(label.position);
     }
-    return _boundsOf(points);
+    final full = _boundsOf(points);
+    if (maxY == null) return full;
+    final bottom = math.max(full.top, math.min(full.bottom, maxY));
+    return Rect.fromLTRB(full.left, full.top, full.right, bottom);
   }
 
   void _addPathPoints(List<PatternPoint> points, PatternPath path) {
@@ -313,5 +382,6 @@ class _TrouserPreviewPainter extends CustomPainter {
       oldDelegate.rightFront != rightFront ||
       oldDelegate.back != back ||
       oldDelegate.waistband != waistband ||
-      oldDelegate.fly != fly;
+      oldDelegate.fly != fly ||
+      oldDelegate.shortsGeometry != shortsGeometry;
 }

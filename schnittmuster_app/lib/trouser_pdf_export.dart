@@ -9,6 +9,10 @@ import 'trouser_fly.dart';
 import 'trouser_pattern_calculator.dart';
 import 'trouser_pattern_piece_builder.dart';
 import 'trouser_seam_allowance.dart';
+import 'trouser_shaped_waistband_builder.dart';
+import 'trouser_shaped_waistband_facing_builder.dart';
+import 'trouser_shaped_waistband_facing_pattern_adapter.dart';
+import 'trouser_shaped_waistband_pattern_adapter.dart';
 import 'trouser_waistband_builder.dart';
 
 class TrouserPdfExporter {
@@ -25,6 +29,9 @@ class TrouserPdfExporter {
     required TrouserMeasurements measurements,
     TrouserSeamAllowanceSettings? seamAllowance,
     int sizeCode = 14,
+    double? shortsLengthFromWaistCm,
+    double? shapedWaistbandDepthCm,
+    double? facingDepthCm,
   }) async {
     final draft = TrouserPatternCalculator.calculateReferencePoints(
       measurements,
@@ -32,21 +39,42 @@ class TrouserPdfExporter {
     );
     const builder = TrouserPatternPieceBuilder();
     const waistbandBuilder = TrouserWaistbandBuilder();
-    final leftFront = builder.leftFront(
-      draft,
-      seamAllowance: seamAllowance,
-      sizeCode: sizeCode,
-    );
-    final rightFront = builder.rightFront(
-      draft,
-      seamAllowance: seamAllowance,
-      sizeCode: sizeCode,
-    );
-    final back = builder.back(
-      draft,
-      seamAllowance: seamAllowance,
-      sizeCode: sizeCode,
-    );
+    final leftFront = shortsLengthFromWaistCm == null
+        ? builder.leftFront(
+            draft,
+            seamAllowance: seamAllowance,
+            sizeCode: sizeCode,
+          )
+        : builder.shortsLeftFront(
+            draft,
+            shortsDepthY: shortsLengthFromWaistCm,
+            seamAllowance: seamAllowance,
+            sizeCode: sizeCode,
+          );
+    final rightFront = shortsLengthFromWaistCm == null
+        ? builder.rightFront(
+            draft,
+            seamAllowance: seamAllowance,
+            sizeCode: sizeCode,
+          )
+        : builder.shortsRightFront(
+            draft,
+            shortsDepthY: shortsLengthFromWaistCm,
+            seamAllowance: seamAllowance,
+            sizeCode: sizeCode,
+          );
+    final back = shortsLengthFromWaistCm == null
+        ? builder.back(
+            draft,
+            seamAllowance: seamAllowance,
+            sizeCode: sizeCode,
+          )
+        : builder.shortsBack(
+            draft,
+            shortsDepthY: shortsLengthFromWaistCm,
+            seamAllowance: seamAllowance,
+            sizeCode: sizeCode,
+          );
     final waistband = waistbandBuilder.build(
       draft: draft,
       measurements: measurements,
@@ -55,12 +83,78 @@ class TrouserPdfExporter {
     );
     final fly = const TrouserFlyBuilder().build(draft);
 
+    PatternPiece? shapedWaistbandFront;
+    PatternPiece? shapedWaistbandBack;
+    if (shapedWaistbandDepthCm != null) {
+      final geometry = const TrouserShapedWaistbandBuilder().build(
+        draft: draft,
+        waistbandDepthCm: shapedWaistbandDepthCm,
+      );
+      const adapter = TrouserShapedWaistbandPatternAdapter();
+      shapedWaistbandFront = adapter.front(
+        geometry,
+        sizeCode: sizeCode,
+        seamAllowanceEnabled: seamAllowance?.enabled == true,
+      );
+      shapedWaistbandBack = adapter.back(
+        geometry,
+        sizeCode: sizeCode,
+        seamAllowanceEnabled: seamAllowance?.enabled == true,
+      );
+    }
+
+    PatternPiece? facingFront;
+    PatternPiece? facingBack;
+    if (shapedWaistbandDepthCm != null && facingDepthCm != null) {
+      final facingGeometry = const TrouserShapedWaistbandFacingBuilder().build(
+        draft: draft,
+        facingDepthCm: facingDepthCm,
+      );
+      const facingAdapter = TrouserShapedWaistbandFacingPatternAdapter();
+      facingFront = facingAdapter.front(
+        facingGeometry,
+        sizeCode: sizeCode,
+        seamAllowanceEnabled: seamAllowance?.enabled == true,
+      );
+      facingBack = facingAdapter.back(
+        facingGeometry,
+        sizeCode: sizeCode,
+        seamAllowanceEnabled: seamAllowance?.enabled == true,
+      );
+    }
+
     final doc = pw.Document();
     _addCalibrationPage(doc, measurements);
-    _addPieceTiles(doc, leftFront, title: 'Hose v1 - Vorderhose links 1:1');
-    _addPieceTiles(doc, rightFront, title: 'Hose v1 - Vorderhose rechts 1:1', fly: fly);
-    _addPieceTiles(doc, back, title: 'Hose v1 - Hinterhose 1:1');
-    _addPieceTiles(doc, waistband, title: 'Hose v1 - Gerader Bund 1:1');
+    final garmentName = shortsLengthFromWaistCm == null ? 'Hose v1' : 'Hose v1 - Tailored Shorts';
+    _addPieceTiles(doc, leftFront, title: '$garmentName - Vorderhose links 1:1');
+    _addPieceTiles(doc, rightFront, title: '$garmentName - Vorderhose rechts 1:1', fly: fly);
+    _addPieceTiles(doc, back, title: '$garmentName - Hinterhose 1:1');
+    if (shapedWaistbandFront != null && shapedWaistbandBack != null) {
+      _addPieceTiles(
+        doc,
+        shapedWaistbandFront,
+        title: '$garmentName - Geformter Bund vorn 1:1',
+      );
+      _addPieceTiles(
+        doc,
+        shapedWaistbandBack,
+        title: '$garmentName - Geformter Bund hinten 1:1',
+      );
+      if (facingFront != null && facingBack != null) {
+        _addPieceTiles(
+          doc,
+          facingFront,
+          title: '$garmentName - Beleg vorn 1:1',
+        );
+        _addPieceTiles(
+          doc,
+          facingBack,
+          title: '$garmentName - Beleg hinten 1:1',
+        );
+      }
+    } else {
+      _addPieceTiles(doc, waistband, title: '$garmentName - Gerader Bund 1:1');
+    }
     return doc.save();
   }
 
@@ -82,7 +176,9 @@ class TrouserPdfExporter {
     final stepX = _tileWidthMm - _tileOverlapMm; final stepY = _tileHeightMm - _tileOverlapMm;
     final cols = math.max(1, ((canvasWidthMm - _tileWidthMm) / stepX).ceil() + 1); final rows = math.max(1, ((canvasHeightMm - _tileHeightMm) / stepY).ceil() + 1);
     for (var row = 0; row < rows; row++) { for (var col = 0; col < cols; col++) {
-      final tileX = col * stepX; final tileY = row * stepY; final tileName = '${String.fromCharCode(65 + col)}${row + 1}';
+      final tileX = col * stepX; final tileY = row * stepY;
+      if (!_tileHasVisibleContent(piece, originX: originX, originY: originY, tileX: tileX, tileY: tileY, fly: fly)) continue;
+      final tileName = '${String.fromCharCode(65 + col)}${row + 1}';
       doc.addPage(pw.Page(pageFormat: PdfPageFormat.a4, margin: pw.EdgeInsets.all(mm(_pageMarginMm)), build: (_) => pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
         pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text(title, style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)), pw.Text('Seite $tileName', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold))]),
         pw.SizedBox(height: mm(1.5)), pw.Container(width: double.infinity, padding: pw.EdgeInsets.symmetric(horizontal: mm(2.5), vertical: mm(1.5)), decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.45)), child: pw.Text('MONTAGE: rechte/untere Schneidelinie abschneiden, linke/obere Klebeflaeche unterlegen und Seiten exakt ausrichten.', style: pw.TextStyle(fontSize: 8.4, fontWeight: pw.FontWeight.bold))), pw.SizedBox(height: mm(2)),
@@ -96,6 +192,75 @@ class TrouserPdfExporter {
         ])),
       ])));
     }}
+  }
+
+  bool _tileHasVisibleContent(
+    PatternPiece piece, {
+    required double originX,
+    required double originY,
+    required double tileX,
+    required double tileY,
+    TrouserFlyGeometry? fly,
+  }) {
+    final minX = tileX;
+    final minY = tileY;
+    final maxX = tileX + _tileWidthMm;
+    final maxY = tileY + _tileHeightMm;
+
+    bool pointInside(PatternPoint p) {
+      final x = originX + p.x * 10.0;
+      final y = originY + p.y * 10.0;
+      return x >= minX && x <= maxX && y >= minY && y <= maxY;
+    }
+
+    bool lineTouches(PatternPoint a, PatternPoint b) {
+      final ax = originX + a.x * 10.0;
+      final ay = originY + a.y * 10.0;
+      final bx = originX + b.x * 10.0;
+      final by = originY + b.y * 10.0;
+      final lineMinX = math.min(ax, bx);
+      final lineMaxX = math.max(ax, bx);
+      final lineMinY = math.min(ay, by);
+      final lineMaxY = math.max(ay, by);
+      return lineMaxX >= minX && lineMinX <= maxX && lineMaxY >= minY && lineMinY <= maxY;
+    }
+
+    bool pathTouches(PatternPath path) {
+      for (final segment in path.segments) {
+        if (segment is BezierSegment) {
+          var previous = segment.start;
+          for (var i = 1; i <= 32; i++) {
+            final t = i / 32.0;
+            final u = 1.0 - t;
+            final point = PatternPoint(
+              u * u * u * segment.start.x + 3 * u * u * t * segment.control1.x + 3 * u * t * t * segment.control2.x + t * t * t * segment.end.x,
+              u * u * u * segment.start.y + 3 * u * u * t * segment.control1.y + 3 * u * t * t * segment.control2.y + t * t * t * segment.end.y,
+            );
+            if (lineTouches(previous, point)) return true;
+            previous = point;
+          }
+        } else if (lineTouches(segment.start, segment.end)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    if (piece.cuttingOutline != null && pathTouches(piece.cuttingOutline!)) return true;
+    if (pathTouches(piece.outline)) return true;
+    for (final guideLine in piece.guideLines) {
+      if (lineTouches(guideLine.start, guideLine.end)) return true;
+    }
+    for (final dart in piece.darts) {
+      if (lineTouches(dart.leg1, dart.apex) || lineTouches(dart.apex, dart.leg2)) return true;
+    }
+    final grain = piece.grainline;
+    if (grain != null && lineTouches(grain.start, grain.end)) return true;
+    for (final label in piece.labels) {
+      if (pointInside(label.position)) return true;
+    }
+    if (fly != null && lineTouches(fly.waistCenterFront, fly.lowerEnd)) return true;
+    return false;
   }
 
   pw.Widget _pathWidget(PatternPath path, double ox, double oy, {required double lineWidthMm}) => pw.Positioned(left: 0, top: 0, child: pw.ClipRect(child: pw.CustomPaint(size: PdfPoint(mm(_tileWidthMm), mm(_tileHeightMm)), painter: (canvas, size) {
