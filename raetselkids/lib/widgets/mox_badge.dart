@@ -92,12 +92,16 @@ class _MoxBadgeState extends State<MoxBadge> {
         children: [
           image,
           const SizedBox(width: 7),
-          Text(
-            shownMessage,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF3F6666),
+          Flexible(
+            child: Text(
+              shownMessage,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF3F6666),
+              ),
             ),
           ),
         ],
