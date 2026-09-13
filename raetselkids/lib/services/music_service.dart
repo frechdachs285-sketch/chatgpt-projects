@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
 
+import 'music_preferences.dart';
 import 'settings_service.dart';
 
 class MusicTrack {
@@ -58,6 +59,7 @@ class MusicService {
 
   final AudioPlayer _player = AudioPlayer();
   final SettingsService _settings = SettingsService();
+  final MusicPreferences _musicPreferences = MusicPreferences();
   final Random _random = Random();
 
   MusicTrack? _currentTrack;
@@ -75,8 +77,8 @@ class MusicService {
       return;
     }
 
-    final randomEnabled = await _settings.isMusicRandomEnabled();
-    final selectedId = await _settings.getMusicTrack();
+    final randomEnabled = await _musicPreferences.isMusicRandomEnabled();
+    final selectedId = await _musicPreferences.getMusicTrack();
     final track = randomEnabled
         ? tracks[_random.nextInt(tracks.length)]
         : tracks.firstWhere(
@@ -110,7 +112,7 @@ class MusicService {
   }
 
   Future<void> selectTrack(String trackId) async {
-    await _settings.setMusicTrack(trackId);
+    await _musicPreferences.setMusicTrack(trackId);
     final track = tracks.firstWhere(
       (item) => item.id == trackId,
       orElse: () => tracks.first,
@@ -119,7 +121,7 @@ class MusicService {
   }
 
   Future<void> setRandomEnabled(bool enabled) async {
-    await _settings.setMusicRandomEnabled(enabled);
+    await _musicPreferences.setMusicRandomEnabled(enabled);
     if (enabled) await startSelected();
   }
 
