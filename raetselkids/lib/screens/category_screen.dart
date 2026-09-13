@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../data/sample_puzzles.dart';
+import '../data/english_puzzles.dart';
 import '../models/puzzle.dart';
 import '../services/progress_service.dart';
 import 'puzzle_screen.dart';
@@ -26,7 +26,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   Future<void> _load() async {
     final result = <String, int>{};
-    for (final id in allCategoryIds) {
+    for (final id in englishAllCategoryIds) {
       result[id] = await _progress.getBestStars(id);
     }
     if (!mounted) return;
@@ -48,9 +48,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   String _modeLabel(RoundMode mode) => switch (mode) {
-        RoundMode.easy => 'Leicht',
-        RoundMode.tricky => 'Knifflig',
-        RoundMode.mixed => 'Gemischt',
+        RoundMode.easy => 'Easy',
+        RoundMode.tricky => 'Tricky',
+        RoundMode.mixed => 'Mixed',
       };
 
   Future<RoundMode?> _chooseMode(String title) {
@@ -68,16 +68,16 @@ class _CategoryScreenState extends State<CategoryScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '$title – wie schwer?',
+                '$title – choose a level',
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 16),
-              _modeButton(context, '🌱', 'Leicht', '5 Rätsel', const Color(0xFFDDF5E6), RoundMode.easy),
+              _modeButton(context, '🌱', 'Easy', '5 puzzles', const Color(0xFFDDF5E6), RoundMode.easy),
               const SizedBox(height: 10),
-              _modeButton(context, '🧠', 'Knifflig', '5 Rätsel', const Color(0xFFFFE3A7), RoundMode.tricky),
+              _modeButton(context, '🧠', 'Tricky', '4–5 puzzles', const Color(0xFFFFE3A7), RoundMode.tricky),
               const SizedBox(height: 10),
-              _modeButton(context, '🎲', 'Gemischt', '10 Rätsel', const Color(0xFFE6D2FF), RoundMode.mixed),
+              _modeButton(context, '🎲', 'Mixed', 'all puzzles', const Color(0xFFE6D2FF), RoundMode.mixed),
             ],
           ),
         ),
@@ -138,7 +138,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     if (round.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Für diese Stufe sind gerade keine Rätsel verfügbar.'),
+          content: Text('No puzzles are available for this level yet.'),
         ),
       );
       return;
@@ -222,7 +222,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         children: [
                           if (best == 0)
                             Text(
-                              '${puzzles.length} Rätsel',
+                              '${puzzles.length} puzzles',
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
@@ -276,7 +276,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Deine Rätselwelten')),
+      appBar: AppBar(title: const Text('English puzzle worlds')),
       body: SafeArea(
         child: Stack(
           children: [
@@ -312,7 +312,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       SizedBox(width: 10),
                       Flexible(
                         child: Text(
-                          'Such dir eine Welt aus!',
+                          'Choose a world!',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 20,
@@ -326,53 +326,32 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 ),
                 const SizedBox(height: 18),
                 _categoryCard(
-                  id: 'numbers',
-                  title: 'Zahlen',
-                  emoji: '🔢',
-                  color: const Color(0xFFBFE1FF),
-                  puzzles: numberPuzzles,
-                ),
-                _categoryCard(
-                  id: 'animals',
-                  title: 'Tiere',
-                  emoji: '🐾',
-                  color: const Color(0xFFCBEBC0),
-                  puzzles: animalPuzzles,
-                ),
-                _categoryCard(
-                  id: 'colors',
-                  title: 'Farben',
+                  id: 'english_colors',
+                  title: 'Colours',
                   emoji: '🎨',
                   color: const Color(0xFFFFD3E0),
-                  puzzles: colorPuzzles,
+                  puzzles: englishColorPuzzles,
                 ),
                 _categoryCard(
-                  id: 'missing',
-                  title: 'Was fehlt?',
-                  emoji: '🔍',
-                  color: const Color(0xFFFFE3A7),
-                  puzzles: missingPuzzles,
+                  id: 'english_numbers',
+                  title: 'Numbers',
+                  emoji: '🔢',
+                  color: const Color(0xFFBFE1FF),
+                  puzzles: englishNumberPuzzles,
                 ),
                 _categoryCard(
-                  id: 'shapes',
-                  title: 'Formen',
-                  emoji: '🔷',
-                  color: const Color(0xFFCFE8FF),
-                  puzzles: shapePuzzles,
+                  id: 'english_animals',
+                  title: 'Animals',
+                  emoji: '🐾',
+                  color: const Color(0xFFCBEBC0),
+                  puzzles: englishAnimalPuzzles,
                 ),
                 _categoryCard(
-                  id: 'opposites',
-                  title: 'Gegensätze',
-                  emoji: '↔️',
-                  color: const Color(0xFFE6D2FF),
-                  puzzles: oppositePuzzles,
-                ),
-                _categoryCard(
-                  id: 'letters',
-                  title: 'Buchstaben',
+                  id: 'english_letters',
+                  title: 'Letters',
                   emoji: '🔤',
                   color: const Color(0xFFFFD7B8),
-                  puzzles: letterPuzzles,
+                  puzzles: englishLetterPuzzles,
                 ),
               ],
             ),
