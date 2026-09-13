@@ -113,10 +113,12 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   Future<void> nextPuzzle() async {
     if (_advancing) return;
     setState(() => _advancing = true);
+
     if (currentIndex >= widget.puzzles.length - 1) {
       await _finishRound();
       return;
     }
+
     setState(() {
       currentIndex++;
       answered = false;
@@ -174,7 +176,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
           ] else ...[
             const Text('🤩', style: TextStyle(fontSize: 62)),
             const SizedBox(height: 10),
-            const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Text(newBest ? 'Neue Bestleistung! ⭐ $stars von ${widget.puzzles.length}' : 'Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.', textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
           ],
@@ -235,8 +237,14 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                               const SizedBox(width: 10),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                                decoration: BoxDecoration(color: const Color(0xFFEFE8FF), borderRadius: BorderRadius.circular(18)),
-                                child: Text('${currentIndex + 1}/${widget.puzzles.length}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900)),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFE8FF),
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                child: Text(
+                                  '${currentIndex + 1}/${widget.puzzles.length}',
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                                ),
                               ),
                             ],
                           ),
@@ -246,8 +254,14 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                          decoration: BoxDecoration(color: const Color(0xFFDDF4F2), borderRadius: BorderRadius.circular(20)),
-                          child: MoxBadge(size: 30, message: _moxMessage),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDDF4F2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: MoxBadge(
+                            size: 30,
+                            message: _moxMessage,
+                          ),
                         ),
                       ],
                       SizedBox(height: compact ? 7 : 10),
@@ -273,7 +287,11 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                             border: Border.all(color: const Color(0x22A68DFF), width: 2),
                             boxShadow: const [BoxShadow(blurRadius: 18, offset: Offset(0, 6), color: Color(0x14000000))],
                           ),
-                          child: Text(puzzle.question, textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 21 : 24, fontWeight: FontWeight.w900, color: const Color(0xFF2B2B3A))),
+                          child: Text(
+                            puzzle.question,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: compact ? 21 : 24, fontWeight: FontWeight.w900, color: const Color(0xFF2B2B3A)),
+                          ),
                         ),
                       ),
                       if (!compact) const Spacer() else const SizedBox(height: 10),
@@ -283,8 +301,14 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                         curve: Curves.easeOutBack,
                         child: Container(
                           padding: EdgeInsets.symmetric(horizontal: 18, vertical: compact ? 6 : 10),
-                          decoration: BoxDecoration(color: Colors.white.withValues(alpha: .72), borderRadius: BorderRadius.circular(26)),
-                          child: FittedBox(fit: BoxFit.scaleDown, child: Text(puzzle.emojiLine, textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 48 : 58))),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: .72),
+                            borderRadius: BorderRadius.circular(26),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(puzzle.emojiLine, textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 48 : 58)),
+                          ),
                         ),
                       ),
                       if (!compact) const Spacer() else const SizedBox(height: 10),
@@ -326,7 +350,10 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                                   disabledBackgroundColor: background,
                                   disabledForegroundColor: const Color(0xFF2B2B3A),
                                   padding: const EdgeInsets.symmetric(horizontal: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25), side: const BorderSide(color: Color(0x18A68DFF), width: 2)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(25),
+                                    side: const BorderSide(color: Color(0x18A68DFF), width: 2),
+                                  ),
                                 ),
                                 child: ExcludeSemantics(
                                   child: Row(children: [
@@ -355,8 +382,13 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                           height: compact ? 54 : 58,
                           child: FilledButton(
                             onPressed: _advancing ? null : nextPuzzle,
-                            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
-                            child: Text(currentIndex == widget.puzzles.length - 1 ? 'Fertig 🎉' : 'Weiter ➜', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            ),
+                            child: Text(
+                              currentIndex == widget.puzzles.length - 1 ? 'Fertig 🎉' : 'Weiter ➜',
+                              style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+                            ),
                           ),
                         ),
                       ],
