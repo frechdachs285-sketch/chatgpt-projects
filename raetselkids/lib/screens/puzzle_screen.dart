@@ -39,10 +39,6 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     'shapes': 'Formenfinder',
     'opposites': 'Gegensatz-Genie',
     'letters': 'Buchstabenstar',
-    'english_colors': 'Colour Star',
-    'english_numbers': 'Number Star',
-    'english_animals': 'Animal Star',
-    'english_letters': 'Letter Star',
   };
 
   static const _moxMessages = <String>[
@@ -55,7 +51,6 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
   Puzzle get currentPuzzle => widget.puzzles[currentIndex];
   String get _moxMessage => _moxMessages[currentIndex % _moxMessages.length];
-  bool get _isEnglish => currentPuzzle.speechLanguage.startsWith('en');
 
   @override
   void initState() {
@@ -76,15 +71,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
   Future<void> _speakQuestion() async {
     final puzzle = currentPuzzle;
-    if (puzzle.speechLanguage.startsWith('en')) {
-      await _speechService.speak(
-        '${puzzle.question}. Choose answer 1, 2 or 3.',
-        language: puzzle.speechLanguage,
-      );
-      return;
-    }
-
-    final answers = _currentAnswers.asMap().entries.map((entry) => 'Antwort ${entry.key + 1}: ${entry.value}.').join(' ');
+    final answerLabel = puzzle.speechLanguage.startsWith('en') ? 'Answer' : 'Antwort';
+    final answers = _currentAnswers.asMap().entries.map((entry) => '$answerLabel ${entry.key + 1}: ${entry.value}.').join(' ');
     await _speechService.speak('${puzzle.question}. $answers', language: puzzle.speechLanguage);
   }
 
@@ -106,8 +94,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
   Future<void> checkAnswer(String answer) async {
     if (answered) return;
-    final puzzle = currentPuzzle;
-    final correct = answer == puzzle.correctAnswer;
+    final correct = answer == currentPuzzle.correctAnswer;
     setState(() {
       selectedAnswer = answer;
       answered = true;
@@ -115,40 +102,21 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     });
     if (correct) {
       await _playCorrectFeedback();
-      if (puzzle.speechLanguage.startsWith('en')) {
-        final target = puzzle.speakTarget;
-        final message = target == null ? 'Great! That is correct!' : 'Great! That is correct. $target.';
-        await _speechService.speak(message, language: puzzle.speechLanguage);
-      } else {
-        await _speechService.speak('Juhu! Super gemacht! Das ist richtig!', language: puzzle.speechLanguage);
-      }
+      await _speechService.speak('Juhu! Super gemacht! Das ist richtig!');
     } else {
       await _playWrongFeedback();
-      final correctIndex = _currentAnswers.indexOf(puzzle.correctAnswer) + 1;
-      if (puzzle.speechLanguage.startsWith('en')) {
-        final target = puzzle.speakTarget;
-        final message = target == null
-            ? 'Almost! The correct answer is number $correctIndex.'
-            : 'Almost! The correct answer is number $correctIndex. $target.';
-        await _speechService.speak(message, language: puzzle.speechLanguage);
-      } else {
-        await _speechService.speak(
-          'Ups! Fast geschafft. Richtig ist Antwort $correctIndex: ${puzzle.correctAnswer}.',
-          language: puzzle.speechLanguage,
-        );
-      }
+      final correctIndex = _currentAnswers.indexOf(currentPuzzle.correctAnswer) + 1;
+      await _speechService.speak('Ups! Fast geschafft. Richtig ist Antwort $correctIndex: ${currentPuzzle.correctAnswer}.');
     }
   }
 
   Future<void> nextPuzzle() async {
     if (_advancing) return;
     setState(() => _advancing = true);
-
     if (currentIndex >= widget.puzzles.length - 1) {
       await _finishRound();
       return;
     }
-
     setState(() {
       currentIndex++;
       answered = false;
@@ -168,22 +136,13 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     final perfect = stars == widget.puzzles.length;
     final firstPerfect = perfect && previousBest < widget.maxCategoryStars;
     final badgeName = _badgeNames[widget.categoryId] ?? '${widget.title}-Profi';
-    final language = currentPuzzle.speechLanguage;
 
-    if (language.startsWith('en')) {
-      if (firstPerfect) {
-        await _speechService.speak('Wow! Every puzzle was correct! You earned the $badgeName badge!', language: language);
-      } else if (perfect) {
-        await _speechService.speak('Wow! Every puzzle was correct again! Your $badgeName badge is still shining!', language: language);
-      } else {
-        await _speechService.speak('Well done! You collected $stars out of ${widget.puzzles.length} stars.', language: language);
-      }
-    } else if (firstPerfect) {
-      await _speechService.speak('Wow! Alle Rätsel richtig! Du bekommst das Abzeichen $badgeName!', language: language);
+    if (firstPerfect) {
+      await _speechService.speak('Wow! Alle Rätsel richtig! Du bekommst das Abzeichen $badgeName!');
     } else if (perfect) {
-      await _speechService.speak('Wow! Wieder alle Rätsel richtig! Dein Abzeichen $badgeName glänzt weiter!', language: language);
+      await _speechService.speak('Wow! Wieder alle Rätsel richtig! Dein Abzeichen $badgeName glänzt weiter!');
     } else {
-      await _speechService.speak('Geschafft! Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.', language: language);
+      await _speechService.speak('Geschafft! Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.');
     }
     if (!mounted) return;
 
@@ -215,7 +174,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
           ] else ...[
             const Text('🤩', style: TextStyle(fontSize: 62)),
             const SizedBox(height: 10),
-            const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Text(newBest ? 'Neue Bestleistung! ⭐ $stars von ${widget.puzzles.length}' : 'Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.', textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
           ],
@@ -234,10 +193,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     final isCorrect = selectedAnswer == puzzle.correctAnswer;
     final isTricky = widget.title.contains('Knifflig');
     final mascotText = !answered
-        ? (_isEnglish ? 'I read the question aloud. Tap 🔊 to hear it again.' : 'Ich lese dir alles vor. Tippe auf 🔊 zum Wiederholen.')
-        : isCorrect
-            ? (_isEnglish ? 'Yes! Exactly right! ⭐' : 'Jaaa! Genau richtig! ⭐')
-            : (_isEnglish ? 'Almost! The correct answer is marked 🙂' : 'Fast! Die richtige Antwort ist markiert 🙂');
+        ? 'Ich lese dir alles vor. Tippe auf 🔊 zum Wiederholen.'
+        : isCorrect ? 'Jaaa! Genau richtig! ⭐' : 'Fast! Die richtige Antwort ist markiert 🙂';
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFCF5),
@@ -278,14 +235,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                               const SizedBox(width: 10),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEFE8FF),
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                                child: Text(
-                                  '${currentIndex + 1}/${widget.puzzles.length}',
-                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-                                ),
+                                decoration: BoxDecoration(color: const Color(0xFFEFE8FF), borderRadius: BorderRadius.circular(18)),
+                                child: Text('${currentIndex + 1}/${widget.puzzles.length}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900)),
                               ),
                             ],
                           ),
@@ -295,14 +246,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFDDF4F2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: MoxBadge(
-                            size: 30,
-                            message: _moxMessage,
-                          ),
+                          decoration: BoxDecoration(color: const Color(0xFFDDF4F2), borderRadius: BorderRadius.circular(20)),
+                          child: MoxBadge(size: 30, message: _moxMessage),
                         ),
                       ],
                       SizedBox(height: compact ? 7 : 10),
@@ -328,11 +273,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                             border: Border.all(color: const Color(0x22A68DFF), width: 2),
                             boxShadow: const [BoxShadow(blurRadius: 18, offset: Offset(0, 6), color: Color(0x14000000))],
                           ),
-                          child: Text(
-                            puzzle.question,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: compact ? 21 : 24, fontWeight: FontWeight.w900, color: const Color(0xFF2B2B3A)),
-                          ),
+                          child: Text(puzzle.question, textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 21 : 24, fontWeight: FontWeight.w900, color: const Color(0xFF2B2B3A))),
                         ),
                       ),
                       if (!compact) const Spacer() else const SizedBox(height: 10),
@@ -342,14 +283,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                         curve: Curves.easeOutBack,
                         child: Container(
                           padding: EdgeInsets.symmetric(horizontal: 18, vertical: compact ? 6 : 10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: .72),
-                            borderRadius: BorderRadius.circular(26),
-                          ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(puzzle.emojiLine, textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 48 : 58)),
-                          ),
+                          decoration: BoxDecoration(color: Colors.white.withValues(alpha: .72), borderRadius: BorderRadius.circular(26)),
+                          child: FittedBox(fit: BoxFit.scaleDown, child: Text(puzzle.emojiLine, textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 48 : 58))),
                         ),
                       ),
                       if (!compact) const Spacer() else const SizedBox(height: 10),
@@ -391,10 +326,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                                   disabledBackgroundColor: background,
                                   disabledForegroundColor: const Color(0xFF2B2B3A),
                                   padding: const EdgeInsets.symmetric(horizontal: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(25),
-                                    side: const BorderSide(color: Color(0x18A68DFF), width: 2),
-                                  ),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25), side: const BorderSide(color: Color(0x18A68DFF), width: 2)),
                                 ),
                                 child: ExcludeSemantics(
                                   child: Row(children: [
@@ -423,13 +355,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                           height: compact ? 54 : 58,
                           child: FilledButton(
                             onPressed: _advancing ? null : nextPuzzle,
-                            style: FilledButton.styleFrom(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            ),
-                            child: Text(
-                              currentIndex == widget.puzzles.length - 1 ? 'Fertig 🎉' : 'Weiter ➜',
-                              style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
-                            ),
+                            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
+                            child: Text(currentIndex == widget.puzzles.length - 1 ? 'Fertig 🎉' : 'Weiter ➜', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
                           ),
                         ),
                       ],
