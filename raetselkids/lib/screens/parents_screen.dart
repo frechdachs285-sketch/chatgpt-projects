@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/music_preferences.dart';
 import '../services/progress_service.dart';
 import '../services/settings_service.dart';
 
@@ -12,11 +13,23 @@ class ParentsScreen extends StatefulWidget {
 }
 
 class _ParentsScreenState extends State<ParentsScreen> {
+  static const _musicTracks = [
+    ('rainbow', '🌈', 'Regenbogen'),
+    ('adventure', '🐾', 'Abenteuer'),
+    ('star_dance', '⭐', 'Sternentanz'),
+    ('magic_forest', '🌳', 'Zauberwald'),
+    ('dream_cloud', '☁️', 'Traumwolke'),
+  ];
+
   final SettingsService _settings = SettingsService();
+  final MusicPreferences _musicPreferences = MusicPreferences();
   final ProgressService _progress = ProgressService();
   final SharedPreferencesAsync _prefs = SharedPreferencesAsync();
+
   bool _speech = true;
   bool _sound = true;
+  bool _musicRandom = false;
+  String _musicTrack = 'rainbow';
   bool _loading = true;
 
   @override
@@ -28,10 +41,15 @@ class _ParentsScreenState extends State<ParentsScreen> {
   Future<void> _load() async {
     final speech = await _settings.isSpeechEnabled();
     final sound = await _settings.isSoundEnabled();
+    final musicRandom = await _musicPreferences.isMusicRandomEnabled();
+    final musicTrack = await _musicPreferences.getMusicTrack();
+
     if (!mounted) return;
     setState(() {
       _speech = speech;
       _sound = sound;
+      _musicRandom = musicRandom;
+      _musicTrack = musicTrack;
       _loading = false;
     });
   }
@@ -138,33 +156,60 @@ class _ParentsScreenState extends State<ParentsScreen> {
     );
   }
 
-  Widget _musicPreviewCard() {
+  Widget _musicSelectionCard() {
     return Container(
-      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF6E5),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFF0D8A5)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            blurRadius: 18,
+            offset: Offset(0, 6),
+            color: Color(0x12000000),
+          ),
+        ],
       ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          Icon(Icons.music_note_rounded, color: Color(0xFF9A6B17), size: 30),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hintergrundmusik kommt bald 🎵',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'Regenbogen, Abenteuer, Sternentanz, Zauberwald und Traumwolke sind vorbereitet. Die Auswahl wird freigeschaltet, sobald die Musikdateien in der App liegen.',
-                  style: TextStyle(fontSize: 14, height: 1.35),
-                ),
-              ],
+          SwitchListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            secondary: const Icon(Icons.shuffle_rounded, color: Color(0xFF6D5BD0)),
+            title: const Text(
+              'Zufallsmodus 🔀',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            ),
+            subtitle: const Text('Bei jedem Start wird später ein anderer Musiktitel gewählt.'),
+            value: _musicRandom,
+            onChanged: (value) async {
+              await _musicPreferences.setMusicRandomEnabled(value);
+              if (!mounted) return;
+              setState(() => _musicRandom = value);
+            },
+          ),
+          const Divider(height: 1),
+          for (final track in _musicTracks)
+            RadioListTile<String>(
+              value: track.$1,
+              groupValue: _musicTrack,
+              onChanged: _musicRandom
+                  ? null
+                  : (value) async {
+                      if (value == null) return;
+                      await _musicPreferences.setMusicTrack(value);
+                      if (!mounted) return;
+                      setState(() => _musicTrack = value);
+                    },
+              title: Text(
+                '${track.$2} ${track.$3}',
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              subtitle: const Text('Auswahl wird lokal gespeichert.'),
+            ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(18, 6, 18, 18),
+            child: Text(
+              'Hinweis: Die Auswahl ist bereits vorbereitet. Musik wird erst abgespielt, sobald die MP3-Dateien eingebunden sind.',
+              style: TextStyle(fontSize: 13, height: 1.35, color: Color(0xFF6B6475)),
             ),
           ),
         ],
@@ -252,7 +297,7 @@ class _ParentsScreenState extends State<ParentsScreen> {
                   const SizedBox(height: 18),
                   _sectionTitle('Musik', Icons.library_music_rounded),
                   const SizedBox(height: 12),
-                  _musicPreviewCard(),
+                  _musicSelectionCard(),
                   const SizedBox(height: 18),
                   _sectionTitle('Einführung', Icons.auto_stories_rounded),
                   const SizedBox(height: 12),
