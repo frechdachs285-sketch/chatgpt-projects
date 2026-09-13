@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SettingsService {
   static const _speechKey = 'speech_enabled';
   static const _soundKey = 'sound_enabled';
+  static const _musicKey = 'music_enabled';
 
   final SharedPreferencesAsync _prefs = SharedPreferencesAsync();
 
@@ -20,5 +21,13 @@ class SettingsService {
 
   Future<void> setSoundEnabled(bool enabled) async {
     await _prefs.setBool(_soundKey, enabled);
+  }
+
+  Future<bool> isMusicEnabled() async {
+    return await _prefs.getBool(_musicKey) ?? true;
+  }
+
+  Future<void> setMusicEnabled(bool enabled) async {
+    await _prefs.setBool(_musicKey, enabled);
   }
 }
