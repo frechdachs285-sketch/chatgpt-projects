@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../data/english_puzzles.dart';
+import '../data/sample_puzzles.dart';
 import '../services/progress_service.dart';
 import '../widgets/big_menu_button.dart';
 import '../widgets/mox_badge.dart';
 import '../widgets/raetseli_mascot.dart';
 import 'achievements_screen.dart';
 import 'category_screen.dart';
+import 'daily_puzzle_screen.dart';
 import 'parents_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ProgressService _progressService = ProgressService();
   int _totalStars = 0;
+  bool _dailyDone = false;
 
   @override
   void initState() {
@@ -27,30 +29,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadProgress() async {
     final stars = await _progressService.getTotalStars();
+    final dailyDone = await _progressService.isDailyCompletedToday();
     if (!mounted) return;
-    setState(() => _totalStars = stars);
+    setState(() {
+      _totalStars = stars;
+      _dailyDone = dailyDone;
+    });
   }
 
   Future<void> _openCategories() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const CategoryScreen()),
-    );
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoryScreen()));
+    await _loadProgress();
+  }
+
+  Future<void> _openDailyPuzzle() async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const DailyPuzzleScreen()));
     await _loadProgress();
   }
 
   Future<void> _showAchievements() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const AchievementsScreen()),
-    );
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementsScreen()));
     await _loadProgress();
   }
 
   Future<void> _openParentsArea() async {
     var answer = '';
     var showError = false;
-
     final allowed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -65,17 +69,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return AlertDialog(
             scrollable: true,
-            title: const Text('Adults only 🔒'),
+            title: const Text('Nur für Erwachsene 🔒'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Please solve this quick question:'),
+                const Text('Bitte löse kurz diese Aufgabe:'),
                 const SizedBox(height: 10),
-                const Text(
-                  '7 × 8 = ?',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
-                ),
+                const Text('7 × 8 = ?', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 10),
                 TextField(
                   keyboardType: TextInputType.number,
@@ -83,8 +84,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
-                    hintText: 'Answer',
-                    errorText: showError ? 'That answer is not correct yet.' : null,
+                    hintText: 'Ergebnis',
+                    errorText: showError ? 'Das Ergebnis war noch nicht richtig.' : null,
                   ),
                   onChanged: (value) {
                     answer = value;
@@ -95,14 +96,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('Back'),
-              ),
-              FilledButton(
-                onPressed: submit,
-                child: const Text('Open'),
-              ),
+              TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Zurück')),
+              FilledButton(onPressed: submit, child: const Text('Öffnen')),
             ],
           );
         },
@@ -110,21 +105,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (allowed != true || !mounted) return;
-
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ParentsScreen()),
-    );
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const ParentsScreen()));
     await _loadProgress();
   }
 
   @override
   Widget build(BuildContext context) {
-    final totalPossible =
-        englishColorPuzzles.length +
-        englishNumberPuzzles.length +
-        englishAnimalPuzzles.length +
-        englishLetterPuzzles.length;
+    final totalPossible = numberPuzzles.length +
+        animalPuzzles.length +
+        colorPuzzles.length +
+        missingPuzzles.length +
+        shapePuzzles.length +
+        oppositePuzzles.length +
+        letterPuzzles.length;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -157,10 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(color: const Color(0x22A68DFF)),
                                   ),
-                                  child: Text(
-                                    '🧩 RätselKids English',
-                                    style: TextStyle(fontSize: compact ? 13 : 15, fontWeight: FontWeight.w900, color: const Color(0xFF3D3A58)),
-                                  ),
+                                  child: Text('🧩 RätselKids', style: TextStyle(fontSize: compact ? 13 : 15, fontWeight: FontWeight.w900, color: const Color(0xFF3D3A58))),
                                 ),
                                 const Spacer(),
                                 MoxBadge(size: compact ? 42 : 48, showLabel: true),
@@ -189,26 +179,18 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Column(
                                 children: [
                                   RaetseliMascot(
-                                    message: 'Hello! Ready for an English puzzle adventure?',
+                                    message: 'Hallo! Bereit für ein Rätsel-Abenteuer?',
                                     mascotSize: compact ? 68 : 84,
                                     mascotEmojiSize: compact ? 41 : 51,
                                     messageFontSize: compact ? 14 : 16,
                                   ),
                                   SizedBox(height: compact ? 4 : 7),
-                                  Text(
-                                    'RätselKids English',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(fontSize: compact ? 34 : 40, fontWeight: FontWeight.w900, color: const Color(0xFF302E48), height: 1),
-                                  ),
+                                  Text('RätselKids', textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 34 : 40, fontWeight: FontWeight.w900, color: const Color(0xFF302E48), height: 1)),
                                   SizedBox(height: compact ? 5 : 7),
                                   Container(
                                     padding: EdgeInsets.symmetric(horizontal: compact ? 13 : 16, vertical: compact ? 5 : 7),
                                     decoration: BoxDecoration(color: const Color(0xFFFFF0B8), borderRadius: BorderRadius.circular(22)),
-                                    child: Text(
-                                      '$totalPossible puzzles · 4 worlds',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(fontSize: compact ? 13 : 14, fontWeight: FontWeight.w800, color: const Color(0xFF4B463B)),
-                                    ),
+                                    child: Text('$totalPossible Rätsel · 7 Welten + Englisch', textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 13 : 14, fontWeight: FontWeight.w800, color: const Color(0xFF4B463B))),
                                   ),
                                 ],
                               ),
@@ -216,20 +198,30 @@ class _HomeScreenState extends State<HomeScreen> {
                             const Spacer(),
                             BigMenuButton(
                               emoji: '🚀',
-                              label: "Let's play!",
+                              label: 'Losspielen!',
                               backgroundColor: const Color(0xFF91DEBC),
                               height: compact ? 70 : 82,
                               fontSize: compact ? 22 : 25,
                               emojiSize: compact ? 32 : 36,
                               onPressed: _openCategories,
                             ),
-                            SizedBox(height: compact ? 10 : 12),
+                            SizedBox(height: compact ? 8 : 10),
+                            BigMenuButton(
+                              emoji: _dailyDone ? '✅' : '🎁',
+                              label: _dailyDone ? 'Tagesrätsel geschafft!' : 'Tagesrätsel · +1 ⭐',
+                              backgroundColor: _dailyDone ? const Color(0xFFDDF5E6) : const Color(0xFFFFC9DD),
+                              height: compact ? 62 : 72,
+                              fontSize: compact ? 18 : 20,
+                              emojiSize: compact ? 28 : 31,
+                              onPressed: _openDailyPuzzle,
+                            ),
+                            SizedBox(height: compact ? 8 : 10),
                             Row(
                               children: [
                                 Expanded(
                                   child: BigMenuButton(
                                     emoji: '🏆',
-                                    label: 'Achievements',
+                                    label: 'Erfolge',
                                     backgroundColor: const Color(0xFFFFE39A),
                                     height: compact ? 62 : 70,
                                     fontSize: compact ? 16 : 17,
@@ -242,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Expanded(
                                   child: BigMenuButton(
                                     emoji: '⚙️',
-                                    label: 'Parents',
+                                    label: 'Eltern',
                                     backgroundColor: const Color(0xFFD8D4FF),
                                     height: compact ? 62 : 70,
                                     fontSize: compact ? 16 : 17,
