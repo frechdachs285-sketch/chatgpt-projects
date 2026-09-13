@@ -63,7 +63,17 @@ class _EnglishCategoryScreenState extends State<EnglishCategoryScreen> {
     };
   }
 
-  Future<EnglishRoundMode?> _chooseMode(String title) {
+  Future<EnglishRoundMode?> _chooseMode(
+    String title,
+    List<Puzzle> puzzles,
+  ) {
+    final easyCount = puzzles
+        .where((p) => p.difficulty == PuzzleDifficulty.easy)
+        .length;
+    final trickyCount = puzzles
+        .where((p) => p.difficulty == PuzzleDifficulty.tricky)
+        .length;
+
     return showModalBottomSheet<EnglishRoundMode>(
       context: context,
       showDragHandle: true,
@@ -90,6 +100,7 @@ class _EnglishCategoryScreenState extends State<EnglishCategoryScreen> {
                 context,
                 '🌱',
                 'Leicht',
+                '$easyCount Rätsel',
                 EnglishRoundMode.easy,
                 const Color(0xFFDDF5E6),
               ),
@@ -98,6 +109,7 @@ class _EnglishCategoryScreenState extends State<EnglishCategoryScreen> {
                 context,
                 '🧠',
                 'Knifflig',
+                '$trickyCount Rätsel',
                 EnglishRoundMode.tricky,
                 const Color(0xFFFFE3A7),
               ),
@@ -106,6 +118,7 @@ class _EnglishCategoryScreenState extends State<EnglishCategoryScreen> {
                 context,
                 '🎲',
                 'Gemischt',
+                '${puzzles.length} Rätsel',
                 EnglishRoundMode.mixed,
                 const Color(0xFFE6D2FF),
               ),
@@ -120,6 +133,7 @@ class _EnglishCategoryScreenState extends State<EnglishCategoryScreen> {
     BuildContext context,
     String emoji,
     String title,
+    String subtitle,
     EnglishRoundMode value,
     Color color,
   ) {
@@ -140,11 +154,20 @@ class _EnglishCategoryScreenState extends State<EnglishCategoryScreen> {
           children: [
             Text(emoji, style: const TextStyle(fontSize: 30)),
             const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
             Text(
-              title,
+              subtitle,
               style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ],
@@ -159,7 +182,7 @@ class _EnglishCategoryScreenState extends State<EnglishCategoryScreen> {
     required String emoji,
     required List<Puzzle> puzzles,
   }) async {
-    final mode = await _chooseMode(title);
+    final mode = await _chooseMode(title, puzzles);
     if (mode == null || !mounted) return;
 
     final round = _prepareRound(puzzles, mode);
