@@ -53,8 +53,9 @@ class _EnglishLearningPuzzleScreenState
   bool _answered = false;
   bool _advancing = false;
   String? _selected;
-  late List<String> _answers;
   String? _lastCorrectFeedback;
+  String? _currentCorrectFeedback;
+  late List<String> _answers;
 
   Puzzle get puzzle => widget.puzzles[_index];
 
@@ -112,9 +113,12 @@ class _EnglishLearningPuzzleScreenState
     await _speech.stop();
 
     final correct = answer == puzzle.correctAnswer;
+    final correctFeedback = correct ? _nextCorrectFeedback() : null;
+
     setState(() {
       _answered = true;
       _selected = answer;
+      _currentCorrectFeedback = correctFeedback;
       if (correct) _stars++;
     });
 
@@ -130,7 +134,7 @@ class _EnglishLearningPuzzleScreenState
 
     if (!_speechStillCurrent(sequence)) return;
     await _speech.speak(
-      correct ? _nextCorrectFeedback() : 'Fast! Die richtige Antwort ist markiert.',
+      correctFeedback ?? 'Fast! Die richtige Antwort ist markiert.',
       language: puzzle.speechLanguage,
     );
     if (!_speechStillCurrent(sequence)) return;
@@ -139,6 +143,13 @@ class _EnglishLearningPuzzleScreenState
       puzzle.speakTarget ?? puzzle.correctAnswer,
       language: puzzle.targetSpeechLanguage ?? 'en-GB',
     );
+    if (!_speechStillCurrent(sequence)) return;
+
+    if (correct) {
+      await Future<void>.delayed(const Duration(milliseconds: 700));
+      if (!_speechStillCurrent(sequence)) return;
+      await _next();
+    }
   }
 
   Future<void> _next() async {
@@ -157,6 +168,7 @@ class _EnglishLearningPuzzleScreenState
       _index++;
       _answered = false;
       _selected = null;
+      _currentCorrectFeedback = null;
       _prepareAnswers();
       _advancing = false;
     });
@@ -280,7 +292,7 @@ class _EnglishLearningPuzzleScreenState
                           message: !_answered
                               ? 'Ich lese die Aufgabe vor und spreche die englischen Wörter für dich.'
                               : isCorrect
-                                  ? 'Jaaa! Genau richtig! ⭐'
+                                  ? '${_currentCorrectFeedback ?? 'Super gemacht!'} ⭐'
                                   : 'Fast! Die richtige Antwort ist markiert 🙂',
                           celebrate: _answered && isCorrect,
                           onSpeak: _speakQuestion,
@@ -376,7 +388,7 @@ class _EnglishLearningPuzzleScreenState
                           );
                         }),
                         if (!compact) const Spacer(),
-                        if (_answered) ...[
+                        if (_answered && !isCorrect) ...[
                           SizedBox(height: compact ? 3 : 8),
                           SizedBox(
                             width: double.infinity,
