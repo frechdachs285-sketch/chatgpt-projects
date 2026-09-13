@@ -187,24 +187,29 @@ class _ParentsScreenState extends State<ParentsScreen> {
             },
           ),
           const Divider(height: 1),
-          for (final track in _musicTracks)
-            RadioListTile<String>(
-              value: track.$1,
-              groupValue: _musicTrack,
-              onChanged: _musicRandom
-                  ? null
-                  : (value) async {
-                      if (value == null) return;
-                      await _musicPreferences.setMusicTrack(value);
-                      if (!mounted) return;
-                      setState(() => _musicTrack = value);
-                    },
-              title: Text(
-                '${track.$2} ${track.$3}',
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              subtitle: const Text('Auswahl wird lokal gespeichert.'),
+          RadioGroup<String>(
+            groupValue: _musicTrack,
+            onChanged: (value) async {
+              if (_musicRandom || value == null) return;
+              await _musicPreferences.setMusicTrack(value);
+              if (!mounted) return;
+              setState(() => _musicTrack = value);
+            },
+            child: Column(
+              children: [
+                for (final track in _musicTracks)
+                  RadioListTile<String>(
+                    value: track.$1,
+                    enabled: !_musicRandom,
+                    title: Text(
+                      '${track.$2} ${track.$3}',
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: const Text('Auswahl wird lokal gespeichert.'),
+                  ),
+              ],
             ),
+          ),
           const Padding(
             padding: EdgeInsets.fromLTRB(18, 6, 18, 18),
             child: Text(
