@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/music_preferences.dart';
+import '../services/music_service.dart';
 import '../services/progress_service.dart';
 import '../services/settings_service.dart';
 
@@ -192,6 +193,7 @@ class _ParentsScreenState extends State<ParentsScreen> {
             onChanged: (value) async {
               if (_musicRandom || value == null) return;
               await _musicPreferences.setMusicTrack(value);
+              await MusicService.instance.selectTrack(value);
               if (!mounted) return;
               setState(() => _musicTrack = value);
             },
