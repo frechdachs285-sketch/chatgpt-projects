@@ -8,6 +8,7 @@ const englishColorPuzzles = <Puzzle>[
     correctAnswer: '🟥',
     speechLanguage: 'en-GB',
     speakTarget: 'red',
+    speakAnswers: false,
   ),
   Puzzle(
     question: 'Which colour is blue?',
@@ -16,6 +17,7 @@ const englishColorPuzzles = <Puzzle>[
     correctAnswer: '🟦',
     speechLanguage: 'en-GB',
     speakTarget: 'blue',
+    speakAnswers: false,
   ),
   Puzzle(
     question: 'Which colour is green?',
@@ -24,6 +26,7 @@ const englishColorPuzzles = <Puzzle>[
     correctAnswer: '🟩',
     speechLanguage: 'en-GB',
     speakTarget: 'green',
+    speakAnswers: false,
   ),
   Puzzle(
     question: 'Which colour is yellow?',
@@ -32,6 +35,7 @@ const englishColorPuzzles = <Puzzle>[
     correctAnswer: '🟨',
     speechLanguage: 'en-GB',
     speakTarget: 'yellow',
+    speakAnswers: false,
   ),
   Puzzle(
     question: 'Which colour is orange?',
@@ -40,6 +44,7 @@ const englishColorPuzzles = <Puzzle>[
     correctAnswer: '🟧',
     speechLanguage: 'en-GB',
     speakTarget: 'orange',
+    speakAnswers: false,
   ),
   Puzzle(
     question: 'Which colour is pink?',
@@ -48,6 +53,7 @@ const englishColorPuzzles = <Puzzle>[
     correctAnswer: '🩷',
     speechLanguage: 'en-GB',
     speakTarget: 'pink',
+    speakAnswers: false,
   ),
   Puzzle(
     question: 'Which colour is purple?',
@@ -56,6 +62,7 @@ const englishColorPuzzles = <Puzzle>[
     correctAnswer: '🟪',
     speechLanguage: 'en-GB',
     speakTarget: 'purple',
+    speakAnswers: false,
   ),
   Puzzle(
     question: 'Which colour is black?',
@@ -64,6 +71,7 @@ const englishColorPuzzles = <Puzzle>[
     correctAnswer: '⬛',
     speechLanguage: 'en-GB',
     speakTarget: 'black',
+    speakAnswers: false,
   ),
   Puzzle(
     question: 'Which colour is white?',
@@ -72,5 +80,6 @@ const englishColorPuzzles = <Puzzle>[
     correctAnswer: '⬜',
     speechLanguage: 'en-GB',
     speakTarget: 'white',
+    speakAnswers: false,
   ),
 ];
