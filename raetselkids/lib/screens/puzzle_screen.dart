@@ -176,7 +176,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
           ] else ...[
             const Text('🤩', style: TextStyle(fontSize: 62)),
             const SizedBox(height: 10),
-            const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Text(newBest ? 'Neue Bestleistung! ⭐ $stars von ${widget.puzzles.length}' : 'Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.', textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
           ],
