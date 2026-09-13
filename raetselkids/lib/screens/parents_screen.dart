@@ -179,7 +179,7 @@ class _ParentsScreenState extends State<ParentsScreen> {
               'Zufallsmodus 🔀',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
             ),
-            subtitle: const Text('Bei jedem Start wird später ein anderer Musiktitel gewählt.'),
+            subtitle: const Text('Bei jedem App-Start wird ein zufälliger Musiktitel gewählt.'),
             value: _musicRandom,
             onChanged: (value) async {
               await _musicPreferences.setMusicRandomEnabled(value);
@@ -215,7 +215,7 @@ class _ParentsScreenState extends State<ParentsScreen> {
           const Padding(
             padding: EdgeInsets.fromLTRB(18, 6, 18, 18),
             child: Text(
-              'Hinweis: Die Auswahl ist bereits vorbereitet. Musik wird erst abgespielt, sobald die MP3-Dateien eingebunden sind.',
+              'Die Musik läuft im Hintergrund und wird automatisch leiser, während Rätseli spricht.',
               style: TextStyle(fontSize: 13, height: 1.35, color: Color(0xFF6B6475)),
             ),
           ),
