@@ -71,8 +71,9 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
   Future<void> _speakQuestion() async {
     final puzzle = currentPuzzle;
-    final answers = _currentAnswers.asMap().entries.map((entry) => 'Antwort ${entry.key + 1}: ${entry.value}.').join(' ');
-    await _speechService.speak('${puzzle.question}. $answers');
+    final answerLabel = puzzle.speechLanguage.startsWith('en') ? 'Answer' : 'Antwort';
+    final answers = _currentAnswers.asMap().entries.map((entry) => '$answerLabel ${entry.key + 1}: ${entry.value}.').join(' ');
+    await _speechService.speak('${puzzle.question}. $answers', language: puzzle.speechLanguage);
   }
 
   Future<void> _playCorrectFeedback() async {
@@ -175,7 +176,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
           ] else ...[
             const Text('🤩', style: TextStyle(fontSize: 62)),
             const SizedBox(height: 10),
-            const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Text(newBest ? 'Neue Bestleistung! ⭐ $stars von ${widget.puzzles.length}' : 'Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.', textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
           ],
