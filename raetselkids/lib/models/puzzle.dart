@@ -6,6 +6,8 @@ class Puzzle {
   final List<String> answers;
   final String correctAnswer;
   final PuzzleDifficulty difficulty;
+  final String speechLanguage;
+  final String? speakTarget;
 
   const Puzzle({
     required this.question,
@@ -13,5 +15,7 @@ class Puzzle {
     required this.answers,
     required this.correctAnswer,
     this.difficulty = PuzzleDifficulty.easy,
+    this.speechLanguage = 'de-DE',
+    this.speakTarget,
   });
 }
