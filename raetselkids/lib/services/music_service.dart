@@ -29,31 +29,31 @@ class MusicService {
       id: 'rainbow',
       label: 'Regenbogen',
       emoji: '🌈',
-      assetPath: 'audio/music/rainbow.mp3',
+      assetPath: 'audio/music/rainbow.ogg',
     ),
     MusicTrack(
       id: 'adventure',
       label: 'Abenteuer',
       emoji: '🐾',
-      assetPath: 'audio/music/adventure.mp3',
+      assetPath: 'audio/music/adventure.ogg',
     ),
     MusicTrack(
       id: 'star_dance',
       label: 'Sternentanz',
       emoji: '⭐',
-      assetPath: 'audio/music/star_dance.mp3',
+      assetPath: 'audio/music/star_dance.ogg',
     ),
     MusicTrack(
       id: 'magic_forest',
       label: 'Zauberwald',
       emoji: '🌳',
-      assetPath: 'audio/music/magic_forest.mp3',
+      assetPath: 'audio/music/magic_forest.ogg',
     ),
     MusicTrack(
       id: 'dream_cloud',
       label: 'Traumwolke',
       emoji: '☁️',
-      assetPath: 'audio/music/dream_cloud.mp3',
+      assetPath: 'audio/music/dream_cloud.ogg',
     ),
   ];
 
