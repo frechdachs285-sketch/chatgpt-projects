@@ -138,6 +138,40 @@ class _ParentsScreenState extends State<ParentsScreen> {
     );
   }
 
+  Widget _musicPreviewCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF6E5),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFF0D8A5)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.music_note_rounded, color: Color(0xFF9A6B17), size: 30),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hintergrundmusik kommt bald 🎵',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  'Regenbogen, Abenteuer, Sternentanz, Zauberwald und Traumwolke sind vorbereitet. Die Auswahl wird freigeschaltet, sobald die Musikdateien in der App liegen.',
+                  style: TextStyle(fontSize: 14, height: 1.35),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -215,6 +249,10 @@ class _ParentsScreenState extends State<ParentsScreen> {
                       setState(() => _sound = value);
                     },
                   ),
+                  const SizedBox(height: 18),
+                  _sectionTitle('Musik', Icons.library_music_rounded),
+                  const SizedBox(height: 12),
+                  _musicPreviewCard(),
                   const SizedBox(height: 18),
                   _sectionTitle('Einführung', Icons.auto_stories_rounded),
                   const SizedBox(height: 12),
