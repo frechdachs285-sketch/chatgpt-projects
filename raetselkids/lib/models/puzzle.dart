@@ -8,6 +8,7 @@ class Puzzle {
   final PuzzleDifficulty difficulty;
   final String speechLanguage;
   final String? speakTarget;
+  final bool speakAnswers;
 
   const Puzzle({
     required this.question,
@@ -17,5 +18,6 @@ class Puzzle {
     this.difficulty = PuzzleDifficulty.easy,
     this.speechLanguage = 'de-DE',
     this.speakTarget,
+    this.speakAnswers = true,
   });
 }
