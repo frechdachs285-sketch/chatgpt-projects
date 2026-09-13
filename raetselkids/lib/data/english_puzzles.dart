@@ -37,12 +37,12 @@ const englishAnimalPuzzles = <Puzzle>[
 ];
 
 const englishLetterPuzzles = <Puzzle>[
-  Puzzle(question: 'Welches englische Wort gehört zu A?', emojiLine: 'A  🍎', answers: ['apple', 'ball', 'cat'], correctAnswer: 'apple', speechLanguage: 'de-DE', speakTarget: 'apple', targetSpeechLanguage: 'en-GB'),
-  Puzzle(question: 'Welches englische Wort gehört zu B?', emojiLine: 'B  ⚽', answers: ['dog', 'ball', 'fish'], correctAnswer: 'ball', speechLanguage: 'de-DE', speakTarget: 'ball', targetSpeechLanguage: 'en-GB'),
-  Puzzle(question: 'Welches englische Wort gehört zu C?', emojiLine: 'C  🐱', answers: ['cat', 'elephant', 'apple'], correctAnswer: 'cat', speechLanguage: 'de-DE', speakTarget: 'cat', targetSpeechLanguage: 'en-GB'),
-  Puzzle(question: 'Welches englische Wort gehört zu D?', emojiLine: 'D  🐶', answers: ['fish', 'dog', 'ball'], correctAnswer: 'dog', difficulty: PuzzleDifficulty.tricky, speechLanguage: 'de-DE', speakTarget: 'dog', targetSpeechLanguage: 'en-GB'),
-  Puzzle(question: 'Welches englische Wort gehört zu E?', emojiLine: 'E  🐘', answers: ['elephant', 'cat', 'fish'], correctAnswer: 'elephant', difficulty: PuzzleDifficulty.tricky, speechLanguage: 'de-DE', speakTarget: 'elephant', targetSpeechLanguage: 'en-GB'),
-  Puzzle(question: 'Welches englische Wort gehört zu F?', emojiLine: 'F  🐟', answers: ['apple', 'fish', 'dog'], correctAnswer: 'fish', difficulty: PuzzleDifficulty.tricky, speechLanguage: 'de-DE', speakTarget: 'fish', targetSpeechLanguage: 'en-GB'),
+  Puzzle(question: 'Welches englische Wort beginnt mit A?', emojiLine: 'A  🍎', answers: ['apple', 'ball', 'cat'], correctAnswer: 'apple', speechLanguage: 'de-DE', speakTarget: 'apple', targetSpeechLanguage: 'en-GB'),
+  Puzzle(question: 'Welches englische Wort beginnt mit B?', emojiLine: 'B  ⚽', answers: ['dog', 'ball', 'fish'], correctAnswer: 'ball', speechLanguage: 'de-DE', speakTarget: 'ball', targetSpeechLanguage: 'en-GB'),
+  Puzzle(question: 'Welches englische Wort beginnt mit C?', emojiLine: 'C  🐱', answers: ['cat', 'elephant', 'apple'], correctAnswer: 'cat', speechLanguage: 'de-DE', speakTarget: 'cat', targetSpeechLanguage: 'en-GB'),
+  Puzzle(question: 'Welches englische Wort beginnt mit D?', emojiLine: 'D  🐶', answers: ['fish', 'dog', 'ball'], correctAnswer: 'dog', difficulty: PuzzleDifficulty.tricky, speechLanguage: 'de-DE', speakTarget: 'dog', targetSpeechLanguage: 'en-GB'),
+  Puzzle(question: 'Welches englische Wort beginnt mit E?', emojiLine: 'E  🐘', answers: ['elephant', 'cat', 'fish'], correctAnswer: 'elephant', difficulty: PuzzleDifficulty.tricky, speechLanguage: 'de-DE', speakTarget: 'elephant', targetSpeechLanguage: 'en-GB'),
+  Puzzle(question: 'Welches englische Wort beginnt mit F?', emojiLine: 'F  🐟', answers: ['apple', 'fish', 'dog'], correctAnswer: 'fish', difficulty: PuzzleDifficulty.tricky, speechLanguage: 'de-DE', speakTarget: 'fish', targetSpeechLanguage: 'en-GB'),
 ];
 
 const englishAllCategoryIds = <String>[
