@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/puzzle.dart';
@@ -33,6 +34,18 @@ class _EnglishLearningPuzzleScreenState
   final SpeechService _speech = SpeechService();
   final ProgressService _progress = ProgressService();
   final SettingsService _settings = SettingsService();
+  final Random _random = Random();
+
+  static const _correctFeedback = <String>[
+    'Super gemacht!',
+    'Klasse! Das ist richtig!',
+    'Prima! Genau richtig!',
+    'Toll gemacht!',
+    'Sehr gut!',
+    'Richtig! Weiter so!',
+    'Großartig!',
+    'Spitze! Das stimmt!',
+  ];
 
   int _index = 0;
   int _stars = 0;
@@ -41,6 +54,7 @@ class _EnglishLearningPuzzleScreenState
   bool _advancing = false;
   String? _selected;
   late List<String> _answers;
+  String? _lastCorrectFeedback;
 
   Puzzle get puzzle => widget.puzzles[_index];
 
@@ -53,6 +67,15 @@ class _EnglishLearningPuzzleScreenState
 
   void _prepareAnswers() {
     _answers = List<String>.from(puzzle.answers)..shuffle();
+  }
+
+  String _nextCorrectFeedback() {
+    final choices = _correctFeedback
+        .where((text) => text != _lastCorrectFeedback)
+        .toList();
+    final feedback = choices[_random.nextInt(choices.length)];
+    _lastCorrectFeedback = feedback;
+    return feedback;
   }
 
   bool _speechStillCurrent(int sequence) {
@@ -107,7 +130,7 @@ class _EnglishLearningPuzzleScreenState
 
     if (!_speechStillCurrent(sequence)) return;
     await _speech.speak(
-      correct ? 'Juhu! Super gemacht!' : 'Fast! Die richtige Antwort ist markiert.',
+      correct ? _nextCorrectFeedback() : 'Fast! Die richtige Antwort ist markiert.',
       language: puzzle.speechLanguage,
     );
     if (!_speechStillCurrent(sequence)) return;
@@ -168,7 +191,7 @@ class _EnglishLearningPuzzleScreenState
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Juhu!'),
+            child: const Text('Weiter ⭐'),
           ),
         ],
       ),
