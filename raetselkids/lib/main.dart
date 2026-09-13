@@ -5,6 +5,7 @@ import 'package:shared_preferences/util/legacy_to_async_migration_util.dart';
 import 'screens/home_screen.dart';
 import 'screens/intro_screen.dart';
 import 'theme/app_theme.dart';
+import 'services/music_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +30,12 @@ Future<void> main() async {
     // Falling back to the introduction is the safest child-friendly default.
     introSeen = false;
   }
-
+try {
+  await MusicService.instance.initialize();
+  await MusicService.instance.startSelected();
+} catch (_) {
+  // Musik darf den App-Start niemals blockieren.
+}
   runApp(RaetselKidsApp(introSeen: introSeen));
 }
 
