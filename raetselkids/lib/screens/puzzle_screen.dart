@@ -39,6 +39,10 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     'shapes': 'Formenfinder',
     'opposites': 'Gegensatz-Genie',
     'letters': 'Buchstabenstar',
+    'english_colors': 'Colour Star',
+    'english_numbers': 'Number Star',
+    'english_animals': 'Animal Star',
+    'english_letters': 'Letter Star',
   };
 
   static const _moxMessages = <String>[
@@ -51,6 +55,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
   Puzzle get currentPuzzle => widget.puzzles[currentIndex];
   String get _moxMessage => _moxMessages[currentIndex % _moxMessages.length];
+  bool get _isEnglish => currentPuzzle.speechLanguage.startsWith('en');
 
   @override
   void initState() {
@@ -71,8 +76,15 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
   Future<void> _speakQuestion() async {
     final puzzle = currentPuzzle;
-    final answerLabel = puzzle.speechLanguage.startsWith('en') ? 'Answer' : 'Antwort';
-    final answers = _currentAnswers.asMap().entries.map((entry) => '$answerLabel ${entry.key + 1}: ${entry.value}.').join(' ');
+    if (puzzle.speechLanguage.startsWith('en')) {
+      await _speechService.speak(
+        '${puzzle.question}. Choose answer 1, 2 or 3.',
+        language: puzzle.speechLanguage,
+      );
+      return;
+    }
+
+    final answers = _currentAnswers.asMap().entries.map((entry) => 'Antwort ${entry.key + 1}: ${entry.value}.').join(' ');
     await _speechService.speak('${puzzle.question}. $answers', language: puzzle.speechLanguage);
   }
 
@@ -94,7 +106,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
   Future<void> checkAnswer(String answer) async {
     if (answered) return;
-    final correct = answer == currentPuzzle.correctAnswer;
+    final puzzle = currentPuzzle;
+    final correct = answer == puzzle.correctAnswer;
     setState(() {
       selectedAnswer = answer;
       answered = true;
@@ -102,11 +115,28 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     });
     if (correct) {
       await _playCorrectFeedback();
-      await _speechService.speak('Juhu! Super gemacht! Das ist richtig!');
+      if (puzzle.speechLanguage.startsWith('en')) {
+        final target = puzzle.speakTarget;
+        final message = target == null ? 'Great! That is correct!' : 'Great! That is correct. $target.';
+        await _speechService.speak(message, language: puzzle.speechLanguage);
+      } else {
+        await _speechService.speak('Juhu! Super gemacht! Das ist richtig!', language: puzzle.speechLanguage);
+      }
     } else {
       await _playWrongFeedback();
-      final correctIndex = _currentAnswers.indexOf(currentPuzzle.correctAnswer) + 1;
-      await _speechService.speak('Ups! Fast geschafft. Richtig ist Antwort $correctIndex: ${currentPuzzle.correctAnswer}.');
+      final correctIndex = _currentAnswers.indexOf(puzzle.correctAnswer) + 1;
+      if (puzzle.speechLanguage.startsWith('en')) {
+        final target = puzzle.speakTarget;
+        final message = target == null
+            ? 'Almost! The correct answer is number $correctIndex.'
+            : 'Almost! The correct answer is number $correctIndex. $target.';
+        await _speechService.speak(message, language: puzzle.speechLanguage);
+      } else {
+        await _speechService.speak(
+          'Ups! Fast geschafft. Richtig ist Antwort $correctIndex: ${puzzle.correctAnswer}.',
+          language: puzzle.speechLanguage,
+        );
+      }
     }
   }
 
@@ -138,13 +168,22 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     final perfect = stars == widget.puzzles.length;
     final firstPerfect = perfect && previousBest < widget.maxCategoryStars;
     final badgeName = _badgeNames[widget.categoryId] ?? '${widget.title}-Profi';
+    final language = currentPuzzle.speechLanguage;
 
-    if (firstPerfect) {
-      await _speechService.speak('Wow! Alle Rätsel richtig! Du bekommst das Abzeichen $badgeName!');
+    if (language.startsWith('en')) {
+      if (firstPerfect) {
+        await _speechService.speak('Wow! Every puzzle was correct! You earned the $badgeName badge!', language: language);
+      } else if (perfect) {
+        await _speechService.speak('Wow! Every puzzle was correct again! Your $badgeName badge is still shining!', language: language);
+      } else {
+        await _speechService.speak('Well done! You collected $stars out of ${widget.puzzles.length} stars.', language: language);
+      }
+    } else if (firstPerfect) {
+      await _speechService.speak('Wow! Alle Rätsel richtig! Du bekommst das Abzeichen $badgeName!', language: language);
     } else if (perfect) {
-      await _speechService.speak('Wow! Wieder alle Rätsel richtig! Dein Abzeichen $badgeName glänzt weiter!');
+      await _speechService.speak('Wow! Wieder alle Rätsel richtig! Dein Abzeichen $badgeName glänzt weiter!', language: language);
     } else {
-      await _speechService.speak('Geschafft! Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.');
+      await _speechService.speak('Geschafft! Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.', language: language);
     }
     if (!mounted) return;
 
@@ -176,7 +215,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
           ] else ...[
             const Text('🤩', style: TextStyle(fontSize: 62)),
             const SizedBox(height: 10),
-            const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const Text('Rätseli freut sich mit dir!', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Text(newBest ? 'Neue Bestleistung! ⭐ $stars von ${widget.puzzles.length}' : 'Du hast $stars von ${widget.puzzles.length} Sternen gesammelt.', textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
           ],
@@ -195,8 +234,10 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     final isCorrect = selectedAnswer == puzzle.correctAnswer;
     final isTricky = widget.title.contains('Knifflig');
     final mascotText = !answered
-        ? 'Ich lese dir alles vor. Tippe auf 🔊 zum Wiederholen.'
-        : isCorrect ? 'Jaaa! Genau richtig! ⭐' : 'Fast! Die richtige Antwort ist markiert 🙂';
+        ? (_isEnglish ? 'I read the question aloud. Tap 🔊 to hear it again.' : 'Ich lese dir alles vor. Tippe auf 🔊 zum Wiederholen.')
+        : isCorrect
+            ? (_isEnglish ? 'Yes! Exactly right! ⭐' : 'Jaaa! Genau richtig! ⭐')
+            : (_isEnglish ? 'Almost! The correct answer is marked 🙂' : 'Fast! Die richtige Antwort ist markiert 🙂');
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFCF5),
