@@ -28,6 +28,8 @@ class _EnglishCategoryScreenState extends State<EnglishCategoryScreen> {
     final result = <String, int>{};
     for (final id in englishAllCategoryIds) {
       result[id] = await _progress.getBestStars(id);
+      result['${id}_easy'] = await _progress.getBestStars('${id}_easy');
+      result['${id}_tricky'] = await _progress.getBestStars('${id}_tricky');
     }
     if (!mounted) return;
     setState(() {
@@ -218,8 +220,20 @@ class _EnglishCategoryScreenState extends State<EnglishCategoryScreen> {
     required Color color,
     required List<Puzzle> puzzles,
   }) {
-    final best = _best[id] ?? 0;
-    final complete = best >= puzzles.length;
+    final easyCount = puzzles
+        .where((p) => p.difficulty == PuzzleDifficulty.easy)
+        .length;
+    final trickyCount = puzzles
+        .where((p) => p.difficulty == PuzzleDifficulty.tricky)
+        .length;
+    final easyBest = _best['${id}_easy'] ?? 0;
+    final trickyBest = _best['${id}_tricky'] ?? 0;
+    final mixedBest = _best[id] ?? 0;
+    final earned = easyBest + trickyBest + mixedBest;
+    final possible = easyCount + trickyCount + puzzles.length;
+    final complete = easyBest >= easyCount &&
+        trickyBest >= trickyCount &&
+        mixedBest >= puzzles.length;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -285,9 +299,9 @@ class _EnglishCategoryScreenState extends State<EnglishCategoryScreen> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        best == 0
+                        earned == 0
                             ? '${puzzles.length} Rätsel'
-                            : '⭐ $best / ${puzzles.length}${complete ? '  🏅' : ''}',
+                            : '⭐ $earned / $possible${complete ? '  🏅' : ''}',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
