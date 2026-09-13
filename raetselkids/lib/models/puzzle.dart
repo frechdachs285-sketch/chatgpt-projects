@@ -14,4 +14,10 @@ class Puzzle {
     required this.question,
     required this.emojiLine,
     required this.answers,
-    required this.correct
+    required this.correctAnswer,
+    this.difficulty = PuzzleDifficulty.easy,
+    this.speechLanguage = 'de-DE',
+    this.speakTarget,
+    this.targetSpeechLanguage,
+  });
+}
