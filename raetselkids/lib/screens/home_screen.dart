@@ -62,66 +62,70 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openParentsArea() async {
-    final controller = TextEditingController();
+    var answer = '';
+    var showError = false;
+
     final allowed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        scrollable: true,
-        title: const Text('Nur für Erwachsene 🔒'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Bitte löse kurz diese Aufgabe:'),
-            const SizedBox(height: 10),
-            const Text(
-              '7 × 8 = ?',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          void submit() {
+            if (answer.trim() == '56') {
+              Navigator.pop(dialogContext, true);
+              return;
+            }
+            setDialogState(() => showError = true);
+          }
+
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Nur für Erwachsene 🔒'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Bitte löse kurz diese Aufgabe:'),
+                const SizedBox(height: 10),
+                const Text(
+                  '7 × 8 = ?',
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    hintText: 'Ergebnis',
+                    errorText: showError ? 'Das Ergebnis war noch nicht richtig.' : null,
+                  ),
+                  onChanged: (value) {
+                    answer = value;
+                    if (showError) {
+                      setDialogState(() => showError = false);
+                    }
+                  },
+                  onSubmitted: (_) => submit(),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              autofocus: true,
-              textInputAction: TextInputAction.done,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Ergebnis',
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Zurück'),
               ),
-              onSubmitted: (_) => Navigator.pop(
-                context,
-                controller.text.trim() == '56',
+              FilledButton(
+                onPressed: submit,
+                child: const Text('Öffnen'),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Zurück'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(
-              context,
-              controller.text.trim() == '56',
-            ),
-            child: const Text('Öffnen'),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
-    controller.dispose();
 
-    if (allowed != true || !mounted) {
-      if (allowed == false && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Das Ergebnis war noch nicht richtig.'),
-          ),
-        );
-      }
-      return;
-    }
+    if (allowed != true || !mounted) return;
 
     await Navigator.push(
       context,
