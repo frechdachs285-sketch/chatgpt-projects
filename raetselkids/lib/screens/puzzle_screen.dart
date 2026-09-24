@@ -71,9 +71,19 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
   Future<void> _speakQuestion() async {
     final puzzle = currentPuzzle;
-    final answerLabel = puzzle.speechLanguage.startsWith('en') ? 'Answer' : 'Antwort';
-    final answers = _currentAnswers.asMap().entries.map((entry) => '$answerLabel ${entry.key + 1}: ${entry.value}.').join(' ');
-    await _speechService.speak('${puzzle.question}. $answers', language: puzzle.speechLanguage);
+    final answerLabel =
+        puzzle.speechLanguage.startsWith('en') ? 'Answer' : 'Antwort';
+    final segments = <String>[puzzle.question];
+
+    for (final entry in _currentAnswers.asMap().entries) {
+      segments.add('$answerLabel ${entry.key + 1}');
+      segments.add(entry.value);
+    }
+
+    await _speechService.speakSegments(
+      segments,
+      language: puzzle.speechLanguage,
+    );
   }
 
   Future<void> _playCorrectFeedback() async {
