@@ -39,8 +39,8 @@ jobs:
           keytool -list -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey >/dev/null
 
       - name: Restore generated Mox voice cache
-        if: ${{ secrets.ELEVENLABS_API_KEY != '' && secrets.MOX_VOICE_ID != '' }}
-        uses: actions/cache@v4
+        id: mox-audio-cache
+        uses: actions/cache/restore@v4
         with:
           path: raetselkids/assets/audio/mox
           key: mox-audio-v1-${{ hashFiles('raetselkids/lib/data/sample_puzzles.dart', 'raetselkids/tool/generate_mox_audio.py') }}
@@ -51,6 +51,13 @@ jobs:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           MOX_VOICE_ID: ${{ secrets.MOX_VOICE_ID }}
         run: python3 tool/generate_mox_audio.py
+
+      - name: Save generated Mox voice cache
+        if: ${{ hashFiles('raetselkids/assets/audio/mox/manifest.json') != '' && steps.mox-audio-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: raetselkids/assets/audio/mox
+          key: mox-audio-v1-${{ hashFiles('raetselkids/lib/data/sample_puzzles.dart', 'raetselkids/tool/generate_mox_audio.py') }}
 
       - name: Build debug APK
         working-directory: raetselkids
