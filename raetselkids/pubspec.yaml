@@ -1,7 +1,7 @@
 name: raetselkids
 description: Eine kindgerechte Raetsel-App fuer Kinder ab 5 Jahren.
 publish_to: 'none'
-version: 1.1.0+15
+version: 1.2.0+16
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -12,6 +12,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.5.3
   flutter_tts: ^4.2.5
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -24,3 +25,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/app_icon.png
+    - assets/audio/mox/
