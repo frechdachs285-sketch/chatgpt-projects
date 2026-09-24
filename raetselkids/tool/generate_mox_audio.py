@@ -24,6 +24,7 @@ PUZZLES_FILE = ROOT / "lib" / "data" / "sample_puzzles.dart"
 OUT_DIR = ROOT / "assets" / "audio" / "mox"
 MANIFEST_FILE = OUT_DIR / "manifest.json"
 
+# Keep generation settings in this script so a settings change invalidates the cache.
 MODEL_ID = "eleven_multilingual_v2"
 OUTPUT_FORMAT = "mp3_44100_128"
 VOICE_SETTINGS = {
