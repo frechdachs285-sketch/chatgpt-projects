@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -15,6 +16,7 @@ class SpeechService {
   bool _moxManifestLoaded = false;
   Map<String, String> _moxClips = const {};
   int _playbackToken = 0;
+  Completer<void>? _cancelPlayback;
 
   Future<void> _ensureReady() async {
     if (_ready) return;
@@ -44,9 +46,28 @@ class SpeechService {
     }
   }
 
+  Completer<void> _startPlaybackSession() {
+    if (_cancelPlayback != null && !_cancelPlayback!.isCompleted) {
+      _cancelPlayback!.complete();
+    }
+    _cancelPlayback = Completer<void>();
+    return _cancelPlayback!;
+  }
+
+  Duration _pauseAfterSegment(int index, int total) {
+    if (index >= total - 1) return Duration.zero;
+
+    // Segment 0 is the question. Afterwards label and answer alternate:
+    // question -> Antwort 1 -> value -> Antwort 2 -> value -> Antwort 3 -> value.
+    if (index == 0) return const Duration(milliseconds: 450);
+    if (index.isOdd) return const Duration(milliseconds: 220);
+    return const Duration(milliseconds: 600);
+  }
+
   Future<bool> _playMoxSegments(
     List<String> segments,
     int playbackToken,
+    Completer<void> cancellation,
   ) async {
     await _loadMoxManifest();
     if (_moxClips.isEmpty) return false;
@@ -58,15 +79,30 @@ class SpeechService {
       filenames.add(filename);
     }
 
-    for (final filename in filenames) {
-      if (playbackToken != _playbackToken) return true;
+    for (var index = 0; index < filenames.length; index++) {
+      if (playbackToken != _playbackToken || cancellation.isCompleted) {
+        return true;
+      }
 
-      final finished = _audioPlayer.onPlayerStateChanged.firstWhere(
-        (state) =>
-            state == PlayerState.completed || state == PlayerState.stopped,
-      );
-      await _audioPlayer.play(AssetSource('audio/mox/$filename'));
-      await finished;
+      final completed = _audioPlayer.onPlayerComplete.first;
+      await _audioPlayer.play(AssetSource('audio/mox/${filenames[index]}'));
+
+      await Future.any<void>([
+        completed,
+        cancellation.future,
+      ]);
+
+      if (playbackToken != _playbackToken || cancellation.isCompleted) {
+        return true;
+      }
+
+      final pause = _pauseAfterSegment(index, filenames.length);
+      if (pause > Duration.zero) {
+        await Future.any<void>([
+          Future<void>.delayed(pause),
+          cancellation.future,
+        ]);
+      }
     }
     return true;
   }
@@ -75,11 +111,12 @@ class SpeechService {
     if (!await _settings.isSpeechEnabled()) return;
 
     final playbackToken = ++_playbackToken;
+    final cancellation = _startPlaybackSession();
     await _audioPlayer.stop();
     await _ensureReady();
     await _tts.stop();
 
-    if (playbackToken != _playbackToken) return;
+    if (playbackToken != _playbackToken || cancellation.isCompleted) return;
     await _tts.setLanguage(language);
     await _tts.speak(text);
   }
@@ -91,15 +128,16 @@ class SpeechService {
     if (segments.isEmpty || !await _settings.isSpeechEnabled()) return;
 
     final playbackToken = ++_playbackToken;
+    final cancellation = _startPlaybackSession();
     await _tts.stop();
     await _audioPlayer.stop();
 
     if (language.startsWith('de') &&
-        await _playMoxSegments(segments, playbackToken)) {
+        await _playMoxSegments(segments, playbackToken, cancellation)) {
       return;
     }
 
-    if (playbackToken != _playbackToken) return;
+    if (playbackToken != _playbackToken || cancellation.isCompleted) return;
     await _ensureReady();
     await _tts.setLanguage(language);
     await _tts.speak(segments.join('. '));
@@ -107,6 +145,9 @@ class SpeechService {
 
   Future<void> stop() async {
     _playbackToken++;
+    if (_cancelPlayback != null && !_cancelPlayback!.isCompleted) {
+      _cancelPlayback!.complete();
+    }
     await _audioPlayer.stop();
     await _tts.stop();
   }
