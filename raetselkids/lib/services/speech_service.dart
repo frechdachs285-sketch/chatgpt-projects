@@ -60,8 +60,13 @@ class SpeechService {
 
     for (final filename in filenames) {
       if (playbackToken != _playbackToken) return true;
+
+      final finished = _audioPlayer.onPlayerStateChanged.firstWhere(
+        (state) =>
+            state == PlayerState.completed || state == PlayerState.stopped,
+      );
       await _audioPlayer.play(AssetSource('audio/mox/$filename'));
-      await _audioPlayer.onPlayerComplete.first;
+      await finished;
     }
     return true;
   }
